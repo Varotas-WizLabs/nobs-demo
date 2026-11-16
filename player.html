@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script src="src/demoShim.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOBS — демо</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
+
+    <div class="nobs-layout">
+    <!-- Library (src/library.js): every completed analysis; click to switch. -->
+    <aside id="library" class="nobs-library" aria-label="Analyses"></aside>
+    <main>
+      <div id="player-container">
+        <div id="player"></div>
+
+        <!-- Flag/chain icon overlay, driven by bootstrapPlayerPage (src/main.js) via
+             overlay-container's data-mode/data-flag attributes and chain-icon's
+             display style. Lives inside #player-container (the element put into
+             fullscreen by the control bar) and is absolutely positioned within it
+             in styles.css, so it sits over the video and stays visible and
+             clickable in fullscreen too. -->
+        <div id="overlay-container" class="nobs-overlay" data-mode="processing" data-flag="">
+          <span id="processing-indicator" class="nobs-processing">Processing…</span>
+          <span id="failed-indicator" class="nobs-failed">Analysis failed.</span>
+          <button id="chain-icon" type="button" class="nobs-icon nobs-chain-icon" aria-label="Related claims" style="display: none;"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg></button>
+          <button id="flag-icon" type="button" class="nobs-icon nobs-flag-icon" aria-label="Claim fact-check"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M6 3h2v18H6zm3 1h9l-2 4 2 4H9z"/></svg></button>
+        </div>
+
+        <div id="popup-container" class="nobs-popup-container"></div>
+      </div>
+
+      <!-- Processing log (src/processingLog.js): outside #player-container so
+           it never depends on, or is replaced by, the YouTube player. -->
+      <section id="processing-log" aria-label="Processing log"></section>
+    </main>
+    <!-- Claim list (src/claimList.js) in a collapsible right-hand panel:
+         outside #player-container, so it is hidden in fullscreen; click a row
+         to jump there and play. -->
+    <aside id="claims-panel" class="nobs-claims-panel" aria-label="Claims">
+      <div class="nobs-claims-panel-bar"></div>
+      <div id="claim-list"></div>
+    </aside>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="module">
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js";
+      import { bootstrapPlayerPage } from "./src/main.js";
+      import { startProcessingLog } from "./src/processingLog.js";
+      import { startLibrary } from "./src/library.js";
+      import { renderClaimList } from "./src/claimList.js";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
+      import { downloadMarkdown, printReport } from "./src/report.js";
+      import { t } from "./src/i18n.js";
+      import { seekTarget } from "./src/settings.js";
+
+      {
+        const panel = document.getElementById("claims-panel");
+        const toggle = makePanelToggle(panel, {
+          contentId: "claim-list",
+          makeIcon: listIcon,
+          showLabel: "Show claims",
+          hideLabel: "Hide claims",
+        });
+        panel.querySelector(".nobs-claims-panel-bar").appendChild(toggle);
+        setCollapsed(panel, true);
+      }
+
+      // Download the full write-up of the loaded run: PDF (print dialog,
+      // "Save as PDF") or Markdown. Shown once the run is complete.
+      let exportRun = null;
+      function videoTitle() {
+        try {
+          return currentPlayer?.getVideoData?.().title ?? "";
+        } catch {
+          return "";
+        }
+      }
+      function setupExport(run) {
+        exportRun = run;
+        const bar = document.querySelector(".nobs-claims-panel-bar");
+        let wrap = bar.querySelector(".nobs-export");
+        const lang = run.caption_language ?? "en";
+        if (!wrap) {
+          wrap = document.createElement("div");
+          wrap.className = "nobs-export";
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "nobs-side-toggle nobs-export-button";
+          button.setAttribute("aria-haspopup", "menu");
+          button.setAttribute("aria-expanded", "false");
+          button.appendChild(downloadIcon(document));
+          const menu = document.createElement("div");
+          menu.className = "nobs-export-menu";
+          menu.setAttribute("role", "menu");
+          menu.hidden = true;
+          const item = (kind, action) => {
+            const entry = document.createElement("button");
+            entry.type = "button";
+            entry.setAttribute("role", "menuitem");
+            entry.dataset.export = kind;
+            entry.addEventListener("click", () => {
+              closeMenu();
+              if (exportRun) action(exportRun, { title: videoTitle() });
+            });
+            return entry;
+          };
+          menu.append(item("pdf", printReport), item("md", downloadMarkdown));
+          const closeMenu = () => {
+            menu.hidden = true;
+            button.setAttribute("aria-expanded", "false");
+          };
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            menu.hidden = !menu.hidden;
+            button.setAttribute("aria-expanded", String(!menu.hidden));
+          });
+          document.addEventListener("click", (event) => {
+            if (!wrap.contains(event.target)) closeMenu();
+          });
+          document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") closeMenu();
+          });
+          wrap.append(button, menu);
+          bar.insertBefore(wrap, bar.firstChild);
+        }
+        const button = wrap.querySelector(".nobs-export-button");
+        button.title = t("export.button", lang);
+        button.setAttribute("aria-label", button.title);
+        wrap.querySelector('[data-export="pdf"]').textContent = t("export.pdf", lang);
+        wrap.querySelector('[data-export="md"]').textContent = t("export.md", lang);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const runId = params.get("run_id");
+
+      startLibrary({ root: document.getElementById("library"), fetchImpl: fetch, currentRunId: runId });
+
+      // Started at once, independently of the YouTube player: the log and
+      // status show even while the video loads (or if it fails to).
+      if (runId) {
+        startProcessingLog({
+          runId,
+          fetchImpl: fetch,
+          pollIntervalMs: 1500,
+          root: document.getElementById("processing-log"),
+        });
+      }
+
+      let list = null;
+      let highlightTimer = null;
+      // Claim list, flag markers, and the tag marks / ad segments on the
+      // timeline (rebuilt when the tags arrive after the run).
+      function showRun(run) {
+        if (run.status !== "complete" || !currentPlayer) return;
+        if (controls) {
+          controls.setMarkers(run.claims ?? []);
+          controls.setTimelineItems(timelineItems(run));
+        }
+        setupExport(run);
+        document.body.dataset.lang = run.caption_language ?? "en";
+        const allItems = timelineItems(run);
+        list = renderClaimList(document.getElementById("claim-list"), run, {
+          // The list's flag and tag filters apply to the timeline too.
+          onFilterChange: ({ claims, flag, tag }) => {
+            if (!controls) return;
+            controls.setMarkers(claims);
+            controls.setTimelineItems(filterTimelineItems(allItems, { flag, tag }));
+          },
+          onSelect: (claim) => {
+            currentPlayer.seekTo(seekTarget(claim.start_sec), true);
+            currentPlayer.playVideo();
+          },
+        });
+        if (highlightTimer === null) {
+          highlightTimer = setInterval(() => list && list.highlight(currentPlayer.getCurrentTime()), 500);
+        }
+      }
+      let currentPlayer = null;
+
+      let apiReady = false;
+      let videoId = null;
+      let initStarted = false;
+      let controls = null;
+
+      function initPlayerIfReady() {
+        if (!apiReady || !videoId || initStarted) {
+          return;
+        }
+        initStarted = true;
+        new YT.Player("player", {
+          videoId,
+          playerVars: { controls: 0 },
+          events: {
+            // Keeps the play/pause glyph in step with the real player, whatever
+            // changed its state (video-surface click, popup, end, buffering).
+            onStateChange: (event) => {
+              if (controls) controls.setPlayerState(event.data);
+            },
+            onReady: (event) => {
+              const player = event.target;
+              currentPlayer = player;
+              controls = buildControlBar(player, document.getElementById("player-container"));
+
+              if (runId) {
+                bootstrapPlayerPage({
+                  player,
+                  fetchImpl: fetch,
+                  runId,
+                  pollIntervalMs: 2000,
+                  domRefs: {
+                    flagIcon: document.getElementById("flag-icon"),
+                    chainIcon: document.getElementById("chain-icon"),
+                    popupContainer: document.getElementById("popup-container"),
+                    overlayContainer: document.getElementById("overlay-container"),
+                    failedIndicator: document.getElementById("failed-indicator"),
+                  },
+                  onRunLoaded: (run) => showRun(run),
+                  // The presentation tags finished after the run was shown.
+                  onRunUpdated: (run) => showRun(run),
+                });
+              }
+            },
+          },
+        });
+      }
+
+      // Also covers the API having loaded before this deferred module ran.
+      whenYouTubeApiReady(window, () => {
+        apiReady = true;
+        initPlayerIfReady();
+      });
+
+      resolveVideoId(params, fetch)
+        .then((resolved) => {
+          videoId = resolved;
+          initPlayerIfReady();
+        })
+        .catch((err) => {
+          console.error(err);
+          const container = document.getElementById("player-container");
+          container.textContent = "Could not load this video: " + err.message;
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,307 @@
+// YouTube IFrame API player states (YT.PlayerState), duplicated here so this
+// module stays testable without the real API loaded.
+
+import { seekTarget } from "./settings.js";
+export const PLAYER_STATE = Object.freeze({
+  UNSTARTED: -1,
+  ENDED: 0,
+  PLAYING: 1,
+  PAUSED: 2,
+  BUFFERING: 3,
+  CUED: 5,
+});
+
+// True when the player is playing or about to (buffering mid-playback).
+export function isPlayerActive(player) {
+  const state = player.getPlayerState();
+  return state === PLAYER_STATE.PLAYING || state === PLAYER_STATE.BUFFERING;
+}
+
+// Seek bar resolution: the range input runs 0..SEEK_STEPS, so a long video
+// still seeks in fine increments (1 hour -> 3.6s steps).
+const SEEK_STEPS = 1000;
+const PROGRESS_INTERVAL_MS = 250;
+
+const ICONS = {
+  play: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
+  volume: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>',
+  muted: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>',
+  fullscreen: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 0h2v5h-5v-2h3z"/></svg>',
+};
+
+function makeButton(className) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  return button;
+}
+
+// buildControlBar creates a custom control bar for a YouTube IFrame player.
+//
+// `player` is any object exposing playVideo(), pauseVideo(), getPlayerState(),
+// seekTo(seconds, allowSeekAhead), setVolume(volume), getVolume(), mute(), unMute(),
+// isMuted(), getDuration(), getCurrentTime(). `container` is the DOM element the control
+// bar elements are appended to (and the element fullscreen is requested on).
+//
+// Play/pause decides what to do from player.getPlayerState() at click time (never a
+// cached boolean), so clicks on the video surface, popups pausing/resuming, buffering
+// and the video ending can't knock it out of step. The caller forwards the IFrame API's
+// onStateChange events to the returned setPlayerState() so the button glyph follows the
+// real player. The seek bar shows playback progress (refreshed on a timer, skipped while
+// the user drags it).
+//
+// Note: no quality-control button is included here on purpose — the YouTube IFrame API does
+// not support controlling playback quality, so a quality button would be non-functional.
+function formatClock(totalSec) {
+  const sec = Math.max(0, Math.floor(totalSec));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = String(sec % 60).padStart(2, "0");
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
+export function buildControlBar(player, container) {
+  const bar = document.createElement("div");
+  bar.className = "nobs-control-bar";
+
+  const playPause = makeButton("nobs-play-pause");
+  function setPlayerState(state) {
+    const active = state === PLAYER_STATE.PLAYING || state === PLAYER_STATE.BUFFERING;
+    playPause.innerHTML = active ? ICONS.pause : ICONS.play;
+    playPause.setAttribute("aria-label", active ? "Pause" : "Play");
+    updateProgress();
+  }
+  playPause.addEventListener("click", () => {
+    if (isPlayerActive(player)) {
+      player.pauseVideo();
+    } else {
+      player.playVideo();
+    }
+  });
+
+  const seekBar = document.createElement("input");
+  seekBar.type = "range";
+  seekBar.min = "0";
+  seekBar.max = String(SEEK_STEPS);
+  seekBar.step = "1";
+  seekBar.value = "0";
+  seekBar.className = "nobs-seek-bar";
+  seekBar.setAttribute("aria-label", "Seek");
+  let dragging = false;
+  seekBar.addEventListener("pointerdown", () => {
+    dragging = true;
+  });
+  const endDrag = () => {
+    dragging = false;
+  };
+  seekBar.addEventListener("pointerup", endDrag);
+  seekBar.addEventListener("pointercancel", endDrag);
+  seekBar.addEventListener("change", endDrag);
+  seekBar.addEventListener("input", () => {
+    const duration = player.getDuration();
+    // Before metadata loads getDuration() is 0; a seek then would jump to 0.
+    if (!(duration > 0)) return;
+    player.seekTo((Number(seekBar.value) / SEEK_STEPS) * duration, true);
+  });
+
+  // Flag markers on the timeline: one per claim, at its span, in its flag's
+  // colour; clicking one seeks to the claim's start and plays. Laid out in
+  // percent of the duration, so they wait until the duration is known.
+  const seekWrap = document.createElement("div");
+  seekWrap.className = "nobs-seek-wrap";
+  const markerLayer = document.createElement("div");
+  markerLayer.className = "nobs-seek-markers";
+  // A second layer above the flags: presentation-tag marks outside any flag
+  // (small diamonds) and ad-insert segments (a hatched band), each clickable
+  // to seek -- a distinct look so they never read as flags.
+  const tagLayer = document.createElement("div");
+  tagLayer.className = "nobs-seek-tagmarks";
+  seekWrap.append(seekBar, markerLayer, tagLayer);
+  let markerClaims = null;
+  let markersLaidOut = false;
+  let timelineItems = null;
+  let timelineLaidOut = false;
+
+  function layoutTimelineItems() {
+    if (!timelineItems || timelineLaidOut) return;
+    const duration = player.getDuration();
+    if (!(duration > 0)) return;
+    timelineLaidOut = true;
+    tagLayer.replaceChildren();
+    for (const item of timelineItems) {
+      const mark = document.createElement("button");
+      mark.type = "button";
+      mark.className = item.kind === "sponsored" ? "nobs-seek-segment" : "nobs-seek-tagmark";
+      mark.dataset.kind = item.kind;
+      const start = Math.min(Math.max(item.start_sec / duration, 0), 1);
+      const end = Math.min(Math.max((item.end_sec ?? item.start_sec) / duration, start), 1);
+      mark.style.left = `${(start * 100).toFixed(3)}%`;
+      if (item.kind === "sponsored") mark.style.width = `${((end - start) * 100).toFixed(3)}%`;
+      mark.title = item.title ?? item.label ?? "";
+      mark.setAttribute("aria-label", item.label ?? item.title ?? "");
+      mark.addEventListener("click", (event) => {
+        event.stopPropagation();
+        player.seekTo(seekTarget(item.start_sec), true);
+        player.playVideo();
+        updateProgress();
+      });
+      tagLayer.appendChild(mark);
+    }
+  }
+
+  function setTimelineItems(items) {
+    timelineItems = [...(items ?? [])].sort((a, b) => a.start_sec - b.start_sec);
+    timelineLaidOut = false;
+    layoutTimelineItems();
+  }
+
+  function layoutMarkers() {
+    if (!markerClaims || markersLaidOut) return;
+    const duration = player.getDuration();
+    if (!(duration > 0)) return;
+    markersLaidOut = true;
+    markerLayer.replaceChildren();
+    for (const claim of markerClaims) {
+      const marker = document.createElement("button");
+      marker.type = "button";
+      marker.className = "nobs-seek-marker";
+      marker.dataset.flag = claim.flag;
+      const start = Math.min(Math.max(claim.start_sec / duration, 0), 1);
+      const end = Math.min(Math.max(claim.end_sec / duration, start), 1);
+      marker.style.left = `${(start * 100).toFixed(3)}%`;
+      marker.style.width = `${((end - start) * 100).toFixed(3)}%`;
+      const label = `${formatClock(claim.start_sec)} ${claim.text ?? ""}`;
+      marker.title = label;
+      marker.setAttribute("aria-label", label);
+      marker.addEventListener("click", (event) => {
+        event.stopPropagation();
+        player.seekTo(seekTarget(claim.start_sec), true);
+        player.playVideo();
+        updateProgress();
+      });
+      markerLayer.appendChild(marker);
+    }
+  }
+
+  function setMarkers(claims) {
+    markerClaims = [...(claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
+    markersLaidOut = false;
+    layoutMarkers();
+  }
+
+  function updateProgress() {
+    if (dragging) return;
+    const duration = player.getDuration();
+    if (!(duration > 0)) return;
+    layoutMarkers();
+    layoutTimelineItems();
+    const fraction = Math.min(Math.max(player.getCurrentTime() / duration, 0), 1);
+    seekBar.value = String(Math.round(fraction * SEEK_STEPS));
+  }
+
+  const mute = makeButton("nobs-mute");
+  function renderMuted(muted) {
+    mute.innerHTML = muted ? ICONS.muted : ICONS.volume;
+    mute.setAttribute("aria-label", muted ? "Unmute" : "Mute");
+  }
+  mute.addEventListener("click", () => {
+    const wasMuted = player.isMuted();
+    if (wasMuted) {
+      player.unMute();
+    } else {
+      player.mute();
+    }
+    // isMuted() can lag a tick behind mute()/unMute() in the IFrame API, so
+    // render the state we just requested.
+    renderMuted(!wasMuted);
+  });
+
+  const volume = document.createElement("input");
+  volume.type = "range";
+  volume.min = "0";
+  volume.max = "100";
+  volume.value = String(player.getVolume());
+  volume.className = "nobs-volume";
+  volume.setAttribute("aria-label", "Volume");
+  volume.addEventListener("input", () => {
+    player.setVolume(Number(volume.value));
+  });
+
+  const fullscreen = makeButton("nobs-fullscreen");
+  fullscreen.innerHTML = ICONS.fullscreen;
+  fullscreen.setAttribute("aria-label", "Fullscreen");
+  fullscreen.addEventListener("click", () => {
+    if (document.fullscreenElement === container && document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (container.requestFullscreen) {
+      // The browser may refuse (no user activation, iframe policy); that is
+      // not an error worth surfacing as an unhandled rejection.
+      Promise.resolve(container.requestFullscreen()).catch(() => {});
+    }
+  });
+
+  setPlayerState(player.getPlayerState());
+  renderMuted(player.isMuted());
+
+  const progressIntervalId = setInterval(updateProgress, PROGRESS_INTERVAL_MS);
+  function stop() {
+    clearInterval(progressIntervalId);
+  }
+
+  bar.append(playPause, seekWrap, mute, volume, fullscreen);
+  container.appendChild(bar);
+
+  return {
+    playPause, seekBar, mute, volume, fullscreen, setPlayerState, updateProgress, setMarkers, setTimelineItems, stop,
+  };
+}
+
+// Run `callback` once the YouTube IFrame API is ready. The API calls
+// window.onYouTubeIframeAPIReady exactly once, when its widget script loads; a
+// deferred module script can be assigned after that has already happened (e.g.
+// with a warm cache), so also check YT.loaded and fire immediately in that case.
+export function whenYouTubeApiReady(win, callback) {
+  let fired = false;
+  const fire = () => {
+    if (fired) return;
+    fired = true;
+    callback();
+  };
+  const previous = win.onYouTubeIframeAPIReady;
+  win.onYouTubeIframeAPIReady = function () {
+    if (typeof previous === "function") previous();
+    fire();
+  };
+  if (win.YT && win.YT.loaded) {
+    fire();
+  }
+}
+
+// Resolve the YouTube video id to play from player.html's query string.
+//
+// Every link into player.html that the app produces (the submit page's
+// existing-run links and its redirects after submitting a URL or
+// triggering a fresh run) only ever carries `run_id` -- `video_id` is not
+// appended anywhere. So when `video_id` is absent, we resolve it from
+// `run_id` via GET /runs/{run_id} before constructing the player. A direct
+// `video_id` query param, if ever supplied, is honored as-is and skips the
+// network round trip.
+export async function resolveVideoId(params, fetchImpl) {
+  const directVideoId = params.get("video_id");
+  if (directVideoId) {
+    return directVideoId;
+  }
+
+  const runId = params.get("run_id");
+  if (!runId) {
+    throw new Error("player.html requires a video_id or run_id query parameter");
+  }
+
+  const response = await fetchImpl(`/runs/${runId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to resolve video id for run ${runId}: ${response.status}`);
+  }
+  const run = await response.json();
+  return run.video_id;
+}

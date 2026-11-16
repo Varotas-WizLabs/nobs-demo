@@ -1,0 +1,1340 @@
+/* web/styles.css
+ *
+ * Styles the custom control bar (Task 2) and the flag/chain icon overlay +
+ * popups (Tasks 4/5) that main.js (Task 6) drives.
+ *
+ * Fullscreen note: controlBar.js calls requestFullscreen() on #player-container,
+ * so #overlay-container and #popup-container -- both descendants of it -- stay
+ * part of the fullscreen element's subtree. Positioning them absolutely
+ * inside #player-container (position: relative) keeps them anchored over the
+ * video and clickable whether or not the browser is currently in fullscreen.
+ */
+
+:root {
+  --nobs-bg: #0b0b0f;
+  --nobs-surface: #16161c;
+  --nobs-text: #f2f2f5;
+  --nobs-muted: #9a9aa5;
+  --nobs-neutral: #6b6b76; /* neutral UI chrome */
+  --nobs-white: #f4f4f6; /* white flag: no fact-check available */
+  --nobs-green: #2ecc71;
+  --nobs-yellow: #f1c40f;
+  --nobs-red: #e74c3c;
+  --nobs-overlay-z: 2147483000; /* stays above the fullscreen element's own chrome */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--nobs-bg);
+  color: var(--nobs-text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+#player-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+#player,
+#player iframe {
+  width: 100%;
+  height: 100%;
+}
+
+/* Custom control bar (buildControlBar, Task 2) */
+.nobs-control-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+  z-index: 10;
+}
+
+.nobs-play-pause,
+.nobs-mute,
+.nobs-fullscreen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--nobs-text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.nobs-play-pause:hover,
+.nobs-mute:hover,
+.nobs-fullscreen:hover,
+.nobs-play-pause:focus-visible,
+.nobs-mute:focus-visible,
+.nobs-fullscreen:focus-visible {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nobs-seek-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.nobs-seek-bar {
+  flex: 1;
+  width: 100%;
+}
+
+/* Flag markers sit on the seek track; the gaps between them still reach
+   the range input underneath (the layer itself ignores the pointer). */
+.nobs-seek-markers {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  pointer-events: none;
+}
+
+.nobs-seek-marker {
+  position: absolute;
+  top: -5px;
+  height: 10px;
+  min-width: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--nobs-white);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.nobs-seek-marker[data-flag="green"] { background: var(--nobs-green); }
+.nobs-seek-marker[data-flag="yellow"] { background: var(--nobs-yellow); }
+.nobs-seek-marker[data-flag="red"] { background: var(--nobs-red); }
+.nobs-seek-marker[data-flag="white"] { background: #b9b9c2; opacity: 0.75; }
+
+.nobs-seek-marker:hover {
+  top: -7px;
+  height: 14px;
+  z-index: 1;
+}
+
+.nobs-volume {
+  width: 80px;
+}
+
+/* Flag/chain icon overlay (computeOverlayState, Task 4; wired in main.js) */
+.nobs-overlay {
+  position: absolute;
+  right: 16px;
+  bottom: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: var(--nobs-overlay-z);
+  pointer-events: none;
+}
+
+.nobs-processing,
+.nobs-failed {
+  display: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--nobs-surface);
+  color: var(--nobs-muted);
+  font-size: 13px;
+  pointer-events: auto;
+}
+
+.nobs-overlay[data-mode="processing"] .nobs-processing {
+  display: inline-block;
+}
+
+.nobs-overlay[data-mode="failed"] .nobs-failed {
+  display: inline-block;
+  /* Long enough to hold the stored failure reason without covering the video. */
+  max-width: min(60vw, 480px);
+  border-radius: 12px;
+}
+
+.nobs-overlay[data-mode="processing"] .nobs-icon,
+.nobs-overlay[data-mode="failed"] .nobs-icon {
+  display: none;
+}
+
+.nobs-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--nobs-surface);
+  background: var(--nobs-neutral);
+  color: #111;
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+}
+
+/* The flag icon's color reflects ONLY the active claim's own flag. A
+ * relation (chain icon) never changes it. With no active claim
+ * ([data-flag=""]) the flag icon is hidden -- never a leftover color from a
+ * previously active claim -- so it can't be confused with the explicit
+ * "white" flag (no fact-check available), which renders white. */
+.nobs-overlay[data-flag=""] .nobs-flag-icon {
+  display: none;
+}
+
+.nobs-overlay[data-flag="white"] .nobs-flag-icon {
+  background: var(--nobs-white);
+  border-color: var(--nobs-neutral);
+}
+
+.nobs-overlay[data-flag="green"] .nobs-flag-icon {
+  background: var(--nobs-green);
+}
+
+.nobs-overlay[data-flag="yellow"] .nobs-flag-icon {
+  background: var(--nobs-yellow);
+}
+
+.nobs-overlay[data-flag="red"] .nobs-flag-icon {
+  background: var(--nobs-red);
+}
+
+.nobs-chain-icon {
+  background: var(--nobs-surface);
+  border-color: var(--nobs-muted);
+  color: var(--nobs-text);
+}
+
+/* Popups (renderClaimPopup/renderRelationPopup, Task 5) */
+.nobs-popup-container {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--nobs-overlay-z) + 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.nobs-popup-container:empty {
+  display: none;
+}
+
+.popup {
+  pointer-events: auto;
+  max-width: 420px;
+  width: calc(100% - 48px);
+  max-height: calc(100% - 24px); /* the popup lives inside the 16:9 player box */
+  overflow-y: auto;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.popup[data-flag="green"] {
+  border-left: 6px solid var(--nobs-green);
+}
+
+.popup[data-flag="yellow"] {
+  border-left: 6px solid var(--nobs-yellow);
+}
+
+.popup[data-flag="red"] {
+  border-left: 6px solid var(--nobs-red);
+}
+
+.popup[data-flag="white"] {
+  border-left: 6px solid var(--nobs-white);
+}
+
+.claim-verdict {
+  margin-top: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 13px;
+}
+
+.popup[data-flag="green"] .claim-verdict { color: var(--nobs-green); }
+.popup[data-flag="yellow"] .claim-verdict { color: var(--nobs-yellow); }
+.popup[data-flag="red"] .claim-verdict { color: var(--nobs-red); }
+.popup[data-flag="white"] .claim-verdict { color: var(--nobs-white); }
+
+.relation-item > span {
+  display: block;
+}
+
+.relation-type {
+  font-weight: 600;
+}
+
+.relation-other {
+  color: var(--nobs-muted);
+  font-style: italic;
+}
+
+.relation-other-time {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.claim-sources,
+.relation-list {
+  padding-left: 18px;
+}
+
+.popup [data-action="close"] {
+  margin-top: 12px;
+  background: var(--nobs-neutral);
+  color: var(--nobs-text);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+/* Processing log panel (startProcessingLog, src/processingLog.js) */
+#processing-log {
+  margin-top: 12px;
+}
+
+.nobs-log {
+  background: var(--nobs-surface);
+  border-radius: 10px;
+  border-left: 4px solid var(--nobs-neutral);
+}
+
+.nobs-log[data-state="running"],
+.nobs-log[data-state="pending"] {
+  border-left-color: var(--nobs-yellow);
+}
+
+.nobs-log[data-state="complete"] {
+  border-left-color: var(--nobs-green);
+}
+
+.nobs-log[data-state="failed"] {
+  border-left-color: var(--nobs-red);
+}
+
+.nobs-log-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.nobs-log-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* display:flex drops the native disclosure triangle; draw our own. */
+.nobs-log-summary::before {
+  content: "\25B8";
+  color: var(--nobs-muted);
+  transition: transform 0.15s;
+}
+
+.nobs-log[open] > .nobs-log-summary::before {
+  transform: rotate(90deg);
+}
+
+.nobs-log-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.nobs-log-status {
+  color: var(--nobs-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.nobs-log[data-state="failed"] .nobs-log-status {
+  color: var(--nobs-red);
+}
+
+.nobs-log-list {
+  margin: 0;
+  padding: 0 14px 12px;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.nobs-log-row {
+  display: grid;
+  grid-template-columns: auto 72px 1fr;
+  gap: 10px;
+  padding: 2px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.nobs-log-time {
+  color: var(--nobs-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.nobs-log-stage {
+  color: var(--nobs-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding-top: 1px;
+}
+
+.nobs-log-message {
+  overflow-wrap: anywhere;
+}
+
+.nobs-log-row[data-level="warn"] .nobs-log-message,
+.nobs-log-row[data-level="warn"] .nobs-log-stage {
+  color: var(--nobs-yellow);
+}
+
+.nobs-log-row[data-level="error"] .nobs-log-message,
+.nobs-log-row[data-level="error"] .nobs-log-stage {
+  color: var(--nobs-red);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .nobs-log-row {
+    grid-template-columns: auto 1fr;
+  }
+  .nobs-log-message {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- Home / submit page ---- */
+.nobs-home {
+  max-width: 640px;
+  padding-top: 12vh;
+}
+
+.nobs-home h1 {
+  margin: 0 0 4px;
+  font-size: 40px;
+  letter-spacing: 0.04em;
+}
+
+.nobs-tagline {
+  margin: 0 0 24px;
+  color: var(--nobs-muted);
+}
+
+#submit-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nobs-upload {
+  flex-basis: 100%;
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+
+.nobs-upload summary {
+  cursor: pointer;
+}
+
+.nobs-upload label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin: 8px 12px 4px 0;
+}
+
+.nobs-upload input[type="text"] {
+  padding: 4px 6px;
+  border: 1px solid #2a2a33;
+  border-radius: 6px;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  font: inherit;
+}
+
+.nobs-upload small {
+  display: block;
+}
+
+#url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #2a2a33;
+  border-radius: 8px;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  font: inherit;
+}
+
+#url-input:focus {
+  outline: 2px solid var(--nobs-green);
+  outline-offset: 1px;
+}
+
+#submit-form button,
+#results button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--nobs-green);
+  color: #0b0b0f;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#results button.nobs-secondary {
+  margin-top: 12px;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  border: 1px solid #2a2a33;
+}
+
+#results {
+  margin-top: 20px;
+}
+
+.existing-run {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--nobs-surface);
+}
+
+.existing-run a {
+  color: var(--nobs-text);
+  text-decoration: none;
+}
+
+.existing-run a:hover {
+  text-decoration: underline;
+}
+
+#results .error {
+  color: var(--nobs-red);
+}
+
+@media (max-width: 480px) {
+  #submit-form {
+    flex-direction: column;
+  }
+}
+
+/* ---- Player page: library sidebar on the left ---- */
+.nobs-layout {
+  --nobs-left: 300px;
+  --nobs-right: 440px;
+  display: grid;
+  grid-template-columns: var(--nobs-left) minmax(0, 1fr) var(--nobs-right);
+  gap: 16px;
+  /* Full page width: the sidebar hugs the left edge, the player takes the rest. */
+  max-width: 2400px;
+  margin: 0;
+  padding-right: 16px;
+  align-items: start;
+}
+
+/* On a wide page the video is capped so it and its controls fit the screen
+   height; the claim list below still uses the full width. */
+.nobs-layout #player-container:not(:fullscreen) {
+  max-width: calc((100vh - 32px) * 16 / 9);
+  margin: 0 auto;
+}
+
+.nobs-layout > main {
+  max-width: none;
+  margin: 0;
+  min-width: 0;
+}
+
+.nobs-library {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 16px 0 16px 16px;
+}
+
+.nobs-library-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nobs-muted);
+}
+
+.nobs-library-new {
+  color: var(--nobs-green);
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.nobs-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nobs-library-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--nobs-text);
+  text-decoration: none;
+}
+
+.nobs-library-item:hover {
+  background: var(--nobs-surface);
+}
+
+.nobs-library-item[aria-current="page"] {
+  background: var(--nobs-surface);
+  border-color: #2f2f3a;
+  box-shadow: inset 3px 0 0 var(--nobs-green);
+}
+
+.nobs-library-thumb {
+  flex: none;
+  width: 96px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #000;
+}
+
+.nobs-library-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nobs-library-title {
+  font-size: 13px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nobs-library-meta {
+  font-size: 11px;
+  color: var(--nobs-muted);
+}
+
+.nobs-library-flags {
+  display: flex;
+  gap: 4px;
+}
+
+.nobs-library-flag {
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  color: #0b0b0f;
+}
+
+.nobs-library-flag-green { background: var(--nobs-green); }
+.nobs-library-flag-yellow { background: var(--nobs-yellow); }
+.nobs-library-flag-red { background: var(--nobs-red); color: #fff; }
+.nobs-library-flag-white { background: var(--nobs-white); }
+
+.nobs-library-empty {
+  color: var(--nobs-muted);
+  font-size: 13px;
+}
+
+/* Collapsed library (the default): a narrow rail with only the toggle. */
+.nobs-layout:has(> .nobs-library[data-collapsed="true"]) {
+  --nobs-left: 40px;
+}
+.nobs-layout:has(> .nobs-claims-panel[data-collapsed="true"]) {
+  --nobs-right: 40px;
+}
+
+/* Claim list panel on the right: sticky, scrolls on its own. */
+.nobs-claims-panel {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 16px 0 16px;
+  box-sizing: border-box;
+}
+.nobs-claims-panel-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.nobs-claims-panel-bar {
+  gap: 8px;
+}
+.nobs-claims-panel-bar .nobs-side-toggle {
+  margin-right: 0;
+}
+/* Download menu: shown only while the panel is open. */
+.nobs-export {
+  position: relative;
+}
+.nobs-claims-panel[data-collapsed="true"] .nobs-export {
+  display: none;
+}
+.nobs-export-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid #2f2f3a;
+  border-radius: 8px;
+  background: var(--nobs-surface);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+.nobs-export-menu[hidden] {
+  display: none;
+}
+.nobs-export-menu button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.nobs-export-menu button:hover,
+.nobs-export-menu button:focus-visible {
+  background: #2a2a33;
+}
+.nobs-claims-panel[data-collapsed="true"] {
+  overflow: visible;
+}
+.nobs-claims-panel .nobs-claims {
+  margin-top: 0;
+}
+.nobs-claims-panel .nobs-claims-list {
+  max-height: none;
+}
+#claim-list[hidden] {
+  display: none;
+}
+.nobs-library[data-collapsed="true"] {
+  padding: 16px 0 0 8px;
+  overflow: visible;
+}
+.nobs-library[data-collapsed="true"] .nobs-library-label,
+.nobs-library[data-collapsed="true"] .nobs-library-new {
+  display: none;
+}
+.nobs-library-list[hidden] {
+  display: none;
+}
+.nobs-library-heading .nobs-library-label {
+  flex: 1;
+}
+.nobs-side-toggle {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nobs-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.nobs-side-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nobs-side-toggle[aria-expanded="true"] {
+  color: inherit;
+  background: rgba(255, 255, 255, 0.08);
+}
+.nobs-side-toggle:hover {
+  color: inherit;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Narrow screens: the player first, the library below it. */
+@media (max-width: 900px) {
+  .nobs-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nobs-layout,
+  .nobs-layout:has(> .nobs-library[data-collapsed="true"]),
+  .nobs-layout:has(> .nobs-claims-panel[data-collapsed="true"]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nobs-claims-panel {
+    order: 1;
+    position: static;
+    max-height: none;
+    padding: 0 16px;
+  }
+  .nobs-library {
+    order: 2;
+    position: static;
+    max-height: none;
+    padding: 0 16px 16px;
+  }
+}
+
+/* ---- Processing log: time/cost/models line ---- */
+.nobs-log-usage {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 12px;
+  color: var(--nobs-muted);
+  text-align: right;
+}
+
+/* ---- Claim popup: plain summary first, details on demand ---- */
+.claim-summary {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.claim-details > summary {
+  cursor: pointer;
+  color: var(--nobs-muted);
+  font-size: 13px;
+  margin: 4px 0 8px;
+}
+
+.claim-details > summary:hover {
+  color: var(--nobs-text);
+}
+
+/* ---- Quotes: who is quoted, the original, the assessment ---- */
+.claim-quote-mark {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--nobs-muted);
+}
+
+.claim-quote-glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.claim-original-figure {
+  margin: 4px 0 10px;
+}
+
+.claim-original {
+  margin: 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--nobs-muted);
+  font-style: italic;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.claim-original-source {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--nobs-muted);
+}
+
+.claim-original-source a {
+  color: #8ab4ff;
+}
+
+.claim-quote-assessment {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.claim-quote-label {
+  color: var(--nobs-muted);
+}
+
+.claim-quote-context {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ---- Claim list under the player ---- */
+.nobs-claims {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--nobs-surface);
+}
+
+.nobs-claims-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.nobs-claims-title {
+  margin: 0;
+  font-size: 15px;
+}
+
+.nobs-claims-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nobs-claims-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #2f2f3a;
+  background: transparent;
+  color: var(--nobs-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nobs-claims-chip[aria-pressed="true"] {
+  background: #2a2a33;
+  color: var(--nobs-text);
+}
+
+.nobs-claims-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.nobs-claims-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nobs-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nobs-claims-row:hover {
+  background: #1f1f27;
+}
+
+.nobs-claims-item[aria-current="true"] .nobs-claims-row {
+  background: #23232d;
+  box-shadow: inset 3px 0 0 var(--nobs-green);
+}
+
+.nobs-claims-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--nobs-white);
+}
+
+.nobs-claims-dot[data-flag="green"] { background: var(--nobs-green); }
+.nobs-claims-dot[data-flag="yellow"] { background: var(--nobs-yellow); }
+.nobs-claims-dot[data-flag="red"] { background: var(--nobs-red); }
+
+/* Coloured dot at the start of a verdict filter chip. "Not supported" is a
+   white dot; "not checked" a hollow ring (no verdict at all). */
+.nobs-chip-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 0;
+  background: var(--nobs-white);
+}
+.nobs-chip-dot[data-verdict="green"] { background: var(--nobs-green); }
+.nobs-chip-dot[data-verdict="yellow"] { background: var(--nobs-yellow); }
+.nobs-chip-dot[data-verdict="red"] { background: var(--nobs-red); }
+.nobs-chip-dot[data-verdict="white"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--nobs-white);
+}
+
+.nobs-claims-time {
+  flex: none;
+  min-width: 42px;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--nobs-muted);
+}
+
+.nobs-claims-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nobs-claims-text {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.nobs-claims-quote {
+  font-size: 12px;
+  color: var(--nobs-muted);
+}
+
+.nobs-claims-summary {
+  font-size: 12px;
+  color: var(--nobs-muted);
+  line-height: 1.35;
+}
+
+.nobs-claims-empty {
+  color: var(--nobs-muted);
+  font-size: 13px;
+}
+
+/* Close stays reachable while a long popup scrolls. */
+.popup > button[data-action="close"] {
+  position: sticky;
+  bottom: -20px;
+  margin-top: 8px;
+}
+
+.claim-sources a {
+  color: #8ab4ff;
+}
+
+/* ---- Presentation tags: "how it's phrased" (outlined, never flag colours) ---- */
+.claim-tags {
+  margin: 8px 0 6px;
+}
+
+.claim-tags-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--nobs-muted);
+  text-transform: none;
+}
+
+.tag-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.tag-item {
+  display: contents;
+}
+
+.tag-chip {
+  padding: 2px 9px;
+  border: 1px dashed #6d6d7a;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.tag-chip[aria-expanded="true"] {
+  border-style: solid;
+  background: #24242c;
+}
+
+.tag-chip-small {
+  display: inline-block;
+  padding: 0 7px;
+  font-size: 11px;
+  color: var(--nobs-muted);
+  cursor: default;
+}
+
+.tag-more {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--nobs-muted);
+}
+
+.nobs-claims-tags {
+  display: block;
+  margin-top: 3px;
+}
+
+.tag-panel {
+  flex-basis: 100%;
+  margin: 2px 0 4px;
+  padding: 6px 8px;
+  border-left: 2px solid #3a3a46;
+  font-size: 13px;
+}
+
+.tag-literature {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--nobs-muted);
+}
+
+.tag-evidence {
+  margin: 0 0 4px;
+  font-style: italic;
+}
+
+.tag-explanation {
+  margin: 0;
+}
+
+.tag-seek {
+  padding: 0 5px;
+  border: 1px solid #3a3a46;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--nobs-muted);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.tag-seek:hover,
+.tag-chip:hover {
+  color: var(--nobs-text);
+  border-color: #9a9aa5;
+}
+
+.tag-disclaimer {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--nobs-muted);
+}
+
+.verdict-reasons {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 13px;
+}
+
+.verdict-reason-label {
+  color: var(--nobs-muted);
+}
+
+.nobs-tag-filters {
+  margin-top: 6px;
+  align-items: center;
+}
+
+.nobs-tag-filter-label {
+  font-size: 12px;
+  color: var(--nobs-muted);
+}
+
+.nobs-tag-filter {
+  border-style: dashed;
+}
+
+.nobs-claims-disclaimer {
+  flex-basis: 100%;
+}
+
+.nobs-tags-running {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--nobs-muted);
+}
+
+/* Timeline: tag marks outside any flag (diamonds above the track) and
+   ad-insert segments (hatched band under the track). */
+.nobs-seek-tagmarks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  pointer-events: none;
+}
+
+.nobs-seek-tagmark {
+  position: absolute;
+  top: -15px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3px;
+  padding: 0;
+  border: 1px solid #c9c9d2;
+  background: var(--nobs-bg);
+  transform: rotate(45deg);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.nobs-seek-tagmark:hover {
+  background: #c9c9d2;
+  z-index: 2;
+}
+
+.nobs-seek-segment {
+  position: absolute;
+  top: 7px;
+  height: 4px;
+  min-width: 4px;
+  padding: 0;
+  border: 0;
+  background: repeating-linear-gradient(45deg, #8a8a96 0 3px, transparent 3px 6px);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.nobs-seek-segment:hover {
+  height: 6px;
+}
+
+/* ---- Settings: gear in the analyses panel, modal dialog ---- */
+.nobs-library-heading .nobs-settings-button {
+  margin: 0 0 0 8px;
+}
+/* Collapsed rail: the gear sits under the library toggle. */
+.nobs-library[data-collapsed="true"] .nobs-library-heading {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.nobs-library[data-collapsed="true"] .nobs-settings-button {
+  margin: 0;
+}
+.nobs-settings {
+  width: min(420px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid #2f2f3a;
+  border-radius: 12px;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+}
+.nobs-settings::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.nobs-settings h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+.nobs-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.nobs-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nobs-settings-row input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid #3a3a46;
+  border-radius: 6px;
+  background: #0f0f14;
+  color: var(--nobs-text);
+  font: inherit;
+}
+.nobs-settings small {
+  color: var(--nobs-muted);
+  font-size: 12px;
+}
+.nobs-settings-close {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #3a3a46;
+  color: var(--nobs-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---- Static public demo (scripts/build_demo.py) ---- */
+.nobs-demo-banner {
+  margin: 0;
+  padding: 8px 16px;
+  background: #2a2410;
+  color: #f1dfa0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+[data-demo="1"] .nobs-library-new {
+  display: none;
+}
