@@ -99,7 +99,11 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       });
       return chip;
     };
-    tagChips.appendChild(el(doc, "span", "nobs-tag-filter-label", `${t("tags.filter", lang)}:`));
+    // The disclaimer lives in the label's tooltip (and on every chip and
+    // popup), not as a paragraph in the pinned header.
+    const tagLabel = el(doc, "span", "nobs-tag-filter-label", `${t("tags.filter", lang)}:`);
+    tagLabel.title = t("tags.disclaimer", lang);
+    tagChips.appendChild(tagLabel);
     tagChips.appendChild(tagChipFor("all", t("list.all", lang), claims.length));
     for (const option of tagOptions) {
       const title = option.possible ? `${option.possible} ${t("tags.possibleCount", lang)}` : "";
@@ -108,7 +112,6 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       tagChips.appendChild(chip);
     }
     header.appendChild(tagChips);
-    header.appendChild(el(doc, "p", "tag-disclaimer nobs-claims-disclaimer", t("tags.disclaimer", lang)));
   }
   if (run.tags_status === "running") {
     header.appendChild(el(doc, "p", "nobs-tags-running", t("tags.running", lang)));
