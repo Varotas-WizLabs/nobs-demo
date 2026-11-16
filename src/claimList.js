@@ -40,7 +40,7 @@ function el(doc, tag, className, text) {
  *   onFilterChange gets the claims the filters leave visible (so the
  *   timeline can show only their markers) after every filter change.
  */
-export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting }) {
+export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting, showTagFilter = () => true }) {
   const doc = root.ownerDocument;
   const lang = run.caption_language ?? "en";
   const claims = [...(run.claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
@@ -84,7 +84,8 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   // Tag filter row: only tags present in this video; with a disclaimer.
   const tagOptions = tagFilterOptions(run);
   const tagChips = el(doc, "div", "nobs-claims-filters nobs-tag-filters");
-  if (tagOptions.length) {
+  // The "Подача" (tag) filter row is optional (setting "showTagFilter").
+  if (tagOptions.length && showTagFilter()) {
     tagChips.setAttribute("aria-label", t("tags.filter", lang));
     const tagChipFor = (value, label, count, title) => {
       const chip = el(doc, "button", "nobs-claims-chip nobs-tag-filter", `${label} ${count}`);

@@ -18,7 +18,7 @@ import { t } from "./i18n.js";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -63,6 +63,11 @@ export function setSetting(name, value) {
       console.error("settings listener failed", err);
     }
   }
+}
+
+/** The "Подача" (presentation tag) filter row in the claim list (off by default). */
+export function showTagFilter() {
+  return read().showTagFilter === true;
 }
 
 /** YouTube's own captions over the video (off by default). */
@@ -223,7 +228,21 @@ export function openSettingsDialog(doc, lang = "en") {
   cc.append(ccRow);
   ccBox.addEventListener("change", () => setSetting("youtubeCaptions", ccBox.checked));
 
-  dialog.append(title, field, possible, follow, cc, close);
+  const tagRow = doc.createElement("label");
+  tagRow.className = "nobs-settings-field nobs-settings-check";
+  const tagBox = doc.createElement("input");
+  tagBox.type = "checkbox";
+  tagBox.name = "showTagFilter";
+  tagBox.checked = showTagFilter();
+  const tagLabel = doc.createElement("span");
+  tagLabel.textContent = t("settings.tagFilter", lang);
+  const tagLine = doc.createElement("span");
+  tagLine.className = "nobs-settings-row";
+  tagLine.append(tagBox, tagLabel);
+  tagRow.append(tagLine);
+  tagBox.addEventListener("change", () => setSetting("showTagFilter", tagBox.checked));
+
+  dialog.append(title, field, possible, follow, tagRow, cc, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
