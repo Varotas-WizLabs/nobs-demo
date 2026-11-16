@@ -1415,3 +1415,28 @@ main {
   color: #111;
   pointer-events: auto;
 }
+
+/* "Back to top": pinned to the bottom left of the scrolling claims panel. */
+.nobs-to-top {
+  position: sticky;
+  bottom: 12px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-top: 8px;
+  border: 1px solid #3a3a46;
+  border-radius: 50%;
+  background: #22222b;
+  color: var(--nobs-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+.nobs-to-top[hidden] {
+  display: none;
+}
+.nobs-to-top:hover {
+  background: #2e2e39;
+}

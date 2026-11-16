@@ -191,10 +191,17 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   }
 
   // Scrolling along with playback (setting "followPlayback"). The list
-  // scrolls inside its own scrolling panel only, never the page, and pauses
-  // for a few seconds after the viewer scrolls it by hand.
+  // scrolls inside its own scrolling panel only, never the page. The playing
+  // claim (or the "now" line) is kept in the vertical middle of the visible
+  // list; near the start the panel simply stays at the top. When the viewer
+  // scrolls by hand, following pauses until they have not scrolled for
+  // RESUME_MS, then it returns to the middle.
+  const RESUME_MS = 5000;
+  const CENTER_SLACK_PX = 24;
   let lastFollowed = null;
   let pausedUntil = 0;
+  let programmaticUntil = 0;
+  let watchedScroller = null;
   const now = () => (globalThis.performance?.now?.() ?? Date.now());
   const follow = () => (followPlaybackSetting?.() ?? true) && now() >= pausedUntil;
   const scrollerOf = () => {
@@ -205,22 +212,71 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     return null;
   };
   const pause = () => {
-    pausedUntil = now() + 6000;
+    pausedUntil = now() + RESUME_MS;
   };
   for (const type of ["wheel", "touchmove", "keydown"]) root.addEventListener(type, pause, { passive: true });
+
+  // "Back to top" button, pinned to the bottom left of the panel.
+  const toTop = el(doc, "button", "nobs-to-top");
+  toTop.type = "button";
+  toTop.title = t("list.toTop", lang);
+  toTop.setAttribute("aria-label", toTop.title);
+  toTop.hidden = true;
+  {
+    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2.2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    const path = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M12 19V5M5 12l7-7 7 7");
+    svg.appendChild(path);
+    toTop.appendChild(svg);
+  }
+  toTop.addEventListener("click", () => {
+    const scroller = scrollerOf() ?? watchedScroller;
+    pause();
+    scroller?.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // Watch the panel's own scrolling: a scroll we did not start is the
+  // viewer's (scrollbar drag included) and pauses following; it also shows
+  // or hides the "back to top" button.
+  function watch(scroller) {
+    if (!scroller || scroller === watchedScroller) return;
+    watchedScroller = scroller;
+    scroller.addEventListener(
+      "scroll",
+      () => {
+        if (now() > programmaticUntil) pause();
+        toTop.hidden = scroller.scrollTop < 300;
+      },
+      { passive: true }
+    );
+  }
+
   function scrollIntoPanel(item) {
     const scroller = scrollerOf();
+    watch(scroller);
     if (!scroller || item.offsetParent === null) return;
     const box = scroller.getBoundingClientRect();
     const rect = item.getBoundingClientRect();
     // The pinned header covers the top of the panel: the visible list starts below it.
     const pinned = header.getBoundingClientRect?.().height ?? 0;
     const viewTop = box.top + pinned;
-    const viewHeight = Math.max(box.bottom - viewTop, 0);
-    // Already comfortably in view: leave it.
-    if (rect.top >= viewTop + 40 && rect.bottom <= box.bottom - 40) return;
-    const top = scroller.scrollTop + (rect.top - viewTop) - viewHeight / 3;
-    scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    const viewMiddle = viewTop + Math.max(box.bottom - viewTop, 0) / 2;
+    const itemMiddle = rect.top + (rect.bottom - rect.top) / 2;
+    const delta = itemMiddle - viewMiddle;
+    const target = Math.max(0, Math.min(scroller.scrollTop + delta, scroller.scrollHeight - scroller.clientHeight));
+    // Close enough (or pinned at the top / bottom already): leave it.
+    if (Math.abs(target - scroller.scrollTop) < CENTER_SLACK_PX) return;
+    programmaticUntil = now() + 1200;
+    scroller.scrollTo({ top: target, behavior: "smooth" });
   }
 
   // The "now" line: absolutely positioned in the list, so rows never move.
@@ -267,7 +323,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     return nowLine;
   }
 
-  section.append(header, list, empty);
+  section.append(header, list, empty, toTop);
   root.replaceChildren(section);
 
   return {
@@ -284,13 +340,12 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       // line between the visible rows, laid over the gap without moving them.
       const target = first ?? placeNowLine(timeSec);
       if (first) nowLine.hidden = true;
-      // Follow playback: when a new claim starts (or the line moves to
-      // another gap), scroll it into view.
-      const key = first ?? nowKey;
-      if (target && key !== lastFollowed) {
-        lastFollowed = key;
-        if (follow()) scrollIntoPanel(target);
-      }
+      // Follow playback: keep the playing claim (or the "now" line) in the
+      // middle of the panel; checked on every tick, so it also returns there
+      // after a manual scroll once the pause is over.
+      lastFollowed = first ?? nowKey;
+      if (target && follow()) scrollIntoPanel(target);
+      else watch(scrollerOf());
     },
   };
 }
