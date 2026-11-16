@@ -13,7 +13,7 @@
 import { formatTimecode } from "./claimSync.js";
 import { t } from "./i18n.js";
 import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
-import { isNote, isPossible, qualifierLine, tagLabel, visibleTags } from "./tags.js";
+import { isNote, isPossible, qualifierLine, segmentSource, tagLabel, visibleTags } from "./tags.js";
 
 const VERDICT_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 
@@ -124,11 +124,15 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
   }));
   const sponsoredName = run.tag_catalogue?.markers?.sponsored?.name ?? t("tags.sponsored", lang);
   const ads = (run.segment_markers ?? []).map((s) => ({
-    name: s.subtype_name || s.name || sponsoredName,
+    name: s.subtype_name || run.tag_catalogue?.markers?.sponsored?.subtypes?.[s.subtype]?.name || s.name || sponsoredName,
     start: s.start_sec,
     end: s.end_sec,
     spans: s.evidence_spans?.length ? s.evidence_spans : s.evidence ? [s.evidence] : [],
+    // «по данным SponsorBlock» / "also marked in SponsorBlock" ('' for ours alone).
+    source: segmentSource(s, lang)?.note ?? "",
   }));
+  // A whole-video SponsorBlock label (sponsored / exclusive access).
+  const sponsorBlockVideo = run.sponsorblock_note ? t("tags.sponsorBlockVideo", lang) : "";
 
   const items = claims.map((claim) => {
     const notes = (list) =>
@@ -180,6 +184,7 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
     observations,
     offFlag,
     ads,
+    sponsorBlockVideo,
     items,
     tagDisclaimer: t("tags.disclaimer", lang),
     run,
@@ -213,7 +218,7 @@ export function reportMarkdown(run, options = {}) {
   for (const c of r.counts) out.push(`- ${c.label}: ${c.count}`);
   out.push("", `> ${w.disclaimerFacts}`, ">", `> ${r.tagDisclaimer}`, "");
 
-  if (r.observations.length || r.offFlag.length || r.ads.length) {
+  if (r.observations.length || r.offFlag.length || r.ads.length || r.sponsorBlockVideo) {
     out.push(`## ${w.observations}`, "");
     for (const o of r.observations) {
       out.push(`**${mdEscape(o.name)}**${o.literature ? ` (${mdEscape(o.literature)})` : ""}${o.explanation ? ` — ${mdEscape(o.explanation)}` : ""}`);
@@ -226,10 +231,11 @@ export function reportMarkdown(run, options = {}) {
       for (const m of r.offFlag) out.push(`- ${mdTime(r, m.sec)} **${mdEscape(m.name)}** — «${mdEscape(m.text)}»${m.explanation ? `. ${mdEscape(m.explanation)}` : ""}${m.qualifier ? ` *${mdEscape(m.qualifier)}*` : ""}`);
       out.push("");
     }
-    if (r.ads.length) {
+    if (r.ads.length || r.sponsorBlockVideo) {
       out.push(`### ${w.ads}`, "");
+      if (r.sponsorBlockVideo) out.push(`*${mdEscape(r.sponsorBlockVideo)}*`, "");
       for (const a of r.ads) {
-        out.push(`- ${mdTime(r, a.start)}–${formatTimecode(a.end)} ${mdEscape(a.name)}${a.spans.length ? `: «${a.spans.map(mdEscape).join("» … «")}»` : ""}`);
+        out.push(`- ${mdTime(r, a.start)}–${formatTimecode(a.end)} ${mdEscape(a.name)}${a.spans.length ? `: «${a.spans.map(mdEscape).join("» … «")}»` : ""}${a.source ? ` *(${mdEscape(a.source)})*` : ""}`);
       }
       out.push("");
     }
@@ -326,7 +332,7 @@ export function reportHtml(run, options = {}) {
   parts.push(`<ul class="counts">${r.counts.map((c) => `<li>${esc(c.label)}: ${c.count}</li>`).join("")}</ul>`);
   parts.push(`<p class="note">${esc(w.disclaimerFacts)}<br>${esc(r.tagDisclaimer)}</p>`);
 
-  if (r.observations.length || r.offFlag.length || r.ads.length) {
+  if (r.observations.length || r.offFlag.length || r.ads.length || r.sponsorBlockVideo) {
     parts.push(`<h2>${esc(w.observations)}</h2>`);
     for (const o of r.observations) {
       parts.push(`<p${o.possible ? ' class="possible"' : ""}><span class="label">${esc(o.name)}</span>${o.literature ? ` (${esc(o.literature)})` : ""}${o.explanation ? ` — ${esc(o.explanation)}` : ""}</p>`);
@@ -336,8 +342,8 @@ export function reportHtml(run, options = {}) {
     if (r.offFlag.length) {
       parts.push(`<h3>${esc(w.offFlag)}</h3><ul>${r.offFlag.map((m) => `<li${m.possible ? ' class="possible"' : ""}>${htmlTime(r, m.sec)} <span class="label">${esc(m.name)}</span> — «${esc(m.text)}»${m.explanation ? `. ${esc(m.explanation)}` : ""}${m.qualifier ? ` <span class="qualifier">${esc(m.qualifier)}</span>` : ""}</li>`).join("")}</ul>`);
     }
-    if (r.ads.length) {
-      parts.push(`<h3>${esc(w.ads)}</h3><ul>${r.ads.map((a) => `<li>${htmlTime(r, a.start)}–${formatTimecode(a.end)} ${esc(a.name)}${a.spans.length ? `: «${a.spans.map(esc).join("» … «")}»` : ""}</li>`).join("")}</ul>`);
+    if (r.ads.length || r.sponsorBlockVideo) {
+      parts.push(`<h3>${esc(w.ads)}</h3>${r.sponsorBlockVideo ? `<p class="note">${esc(r.sponsorBlockVideo)}</p>` : ""}<ul>${r.ads.map((a) => `<li>${htmlTime(r, a.start)}–${formatTimecode(a.end)} ${esc(a.name)}${a.spans.length ? `: «${a.spans.map(esc).join("» … «")}»` : ""}${a.source ? ` <span class="qualifier">(${esc(a.source)})</span>` : ""}</li>`).join("")}</ul>`);
     }
   }
 

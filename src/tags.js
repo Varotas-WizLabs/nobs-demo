@@ -297,6 +297,22 @@ function observationItems(run, lang) {
   return items;
 }
 
+/**
+ * Where an ad segment comes from, for its tooltip and the export: null for
+ * our own detector alone; "both" when SponsorBlock marks it too;
+ * "sponsorblock" / "sponsorblock_unconfirmed" (no votes, not locked) for a
+ * SponsorBlock-only segment. `note` is the line to show.
+ */
+export function segmentSource(segment, lang) {
+  const sources = segment?.sources ?? ["nobs"];
+  if (!sources.includes("sponsorblock")) return null;
+  if (sources.includes("nobs")) return { kind: "both", note: t("tags.alsoSponsorBlock", lang) };
+  if (segment.confidence === "unconfirmed") {
+    return { kind: "sponsorblock_unconfirmed", note: t("tags.perSponsorBlockUnconfirmed", lang) };
+  }
+  return { kind: "sponsorblock", note: t("tags.perSponsorBlock", lang) };
+}
+
 /** Timeline items: off-flag marks, video-level marks and ad segments, for the control bar. */
 export function timelineItems(run) {
   const lang = run?.caption_language ?? "en";
@@ -323,12 +339,17 @@ export function timelineItems(run) {
     // Each phrase is verbatim caption text, quoted on its own (never stitched).
     const spans = segment.evidence_spans?.length ? segment.evidence_spans : segment.evidence ? [segment.evidence] : [];
     const quoted = spans.map((s) => `«${s}»`).join(" … ");
+    const source = segmentSource(segment, lang);
+    const sbOnly = source && source.kind !== "both";
     return {
       kind: "sponsored",
       start_sec: segment.start_sec,
       end_sec: segment.end_sec,
-      label: `${formatTimecode(segment.start_sec)} ${name}`,
-      title: `${name}${quoted ? `: ${quoted}` : ""}${definition ? `\n${definition}` : ""}`,
+      ...(source ? { source: source.kind } : {}),
+      label: `${formatTimecode(segment.start_sec)} ${name}${sbOnly ? ` (${source.note})` : ""}`,
+      title:
+        `${name}${quoted ? `: ${quoted}` : ""}${definition ? `\n${definition}` : ""}` +
+        (source ? `\n${source.note}${sbOnly ? `\n${t("tags.sponsorBlockHint", lang)}` : ""}` : ""),
     };
   });
   return [...segments, ...marks, ...observationItems(run, lang)];

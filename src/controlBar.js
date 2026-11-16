@@ -150,6 +150,8 @@ export function buildControlBar(player, container) {
       mark.className = item.kind === "sponsored" ? "nobs-seek-segment" : "nobs-seek-tagmark";
       mark.dataset.kind = item.kind;
       if (item.tier) mark.dataset.tier = item.tier;
+      // An ad segment's source: a SponsorBlock-only unconfirmed one is drawn fainter.
+      if (item.source) mark.dataset.source = item.source;
       const start = Math.min(Math.max(item.start_sec / duration, 0), 1);
       const end = Math.min(Math.max((item.end_sec ?? item.start_sec) / duration, start), 1);
       mark.style.left = `${(start * 100).toFixed(3)}%`;

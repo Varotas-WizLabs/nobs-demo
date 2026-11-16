@@ -1386,6 +1386,11 @@ main {
   height: 6px;
 }
 
+/* A SponsorBlock-only segment nobody has voted for: fainter. */
+.nobs-seek-segment[data-source="sponsorblock_unconfirmed"] {
+  opacity: 0.45;
+}
+
 /* ---- Settings: gear in the analyses panel, modal dialog ---- */
 .nobs-library-heading .nobs-settings-button {
   margin: 0 0 0 8px;
