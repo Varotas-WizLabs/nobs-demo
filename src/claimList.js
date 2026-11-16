@@ -16,7 +16,7 @@
 import { formatTimecode } from "./claimSync.js";
 import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
 import { t } from "./i18n.js";
-import { claimHasTag, claimTags, isPossible, tagFilterOptions, tagLabel, tagTooltip } from "./tags.js";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
@@ -142,12 +142,12 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     body.appendChild(el(doc, "span", "nobs-claims-text", claim.text));
     const summary = String(claim.summary ?? "").trim();
     if (summary) body.appendChild(el(doc, "span", "nobs-claims-summary", summary));
-    // Solid tags first: the row's one chip is the surest.
-    const rowTags = claimTags(claim).sort((a, b) => Number(isPossible(a)) - Number(isPossible(b)));
+    // Solid tags first, then possible ones, then notes («Личное мнение»): the row's one chip is the surest.
+    const rowTags = claimTags(claim).sort(byTier);
     if (rowTags.length) {
       const tagLine = el(doc, "span", "nobs-claims-tags");
       const first = el(doc, "span", "tag-chip tag-chip-small", tagLabel(rowTags[0], lang));
-      first.dataset.tier = isPossible(rowTags[0]) ? "possible" : "solid";
+      first.dataset.tier = tierOf(rowTags[0]);
       first.title = tagTooltip(rowTags[0], lang);
       tagLine.appendChild(first);
       if (rowTags.length > 1) {
@@ -271,8 +271,10 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     const box = scroller.getBoundingClientRect();
     const rect = item.getBoundingClientRect();
     // The pinned header covers the top of the panel: the visible list starts below it.
-    const pinned = header.getBoundingClientRect?.().height ?? 0;
-    const viewTop = box.top + pinned;
+    // Everything pinned above the list (the panel's button bar, then the
+    // header) ends at the header's bottom edge.
+    const headerBox = header.getBoundingClientRect?.();
+    const viewTop = headerBox && headerBox.bottom > box.top ? headerBox.bottom : box.top;
     const viewMiddle = viewTop + Math.max(box.bottom - viewTop, 0) / 2;
     const itemMiddle = rect.top + (rect.bottom - rect.top) / 2;
     const delta = itemMiddle - viewMiddle;

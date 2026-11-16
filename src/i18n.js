@@ -75,6 +75,9 @@ const STRINGS = {
     "tags.possible": "possibly",
     "tags.possibleHint": "The automatic check was not sure about this tag.",
     "tags.possibleCount": "possible",
+    "tags.qualifierLater": "The speaker qualifies this later",
+    "tags.qualifierEarlier": "The speaker qualifies this earlier",
+    "tags.noteHint": "A note, not a technique: the speaker's own view, said as a view.",
   },
   ru: {
     "verdict.green": "Подтверждается",
@@ -148,6 +151,9 @@ const STRINGS = {
     "tags.possible": "возможно",
     "tags.possibleHint": "Автоматическая проверка не уверена в этом теге.",
     "tags.possibleCount": "возможных",
+    "tags.qualifierLater": "Дальше — оговорка автора",
+    "tags.qualifierEarlier": "Выше — оговорка автора",
+    "tags.noteHint": "Пометка, а не приём: мнение автора, сказанное как мнение.",
   },
 };
 

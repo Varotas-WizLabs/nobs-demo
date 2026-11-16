@@ -6,11 +6,14 @@
 // Built from the run JSON the player already has (GET /runs/{id}?tags=all).
 // "Possible" tags are named «возможно: …» / "possibly: …" and marked pale in
 // the PDF; with "Show possible tags" off they are left out (settings.js).
+// A note («Личное мнение», not a technique) is listed plainly and not
+// counted among the claims "with phrasing notes"; a tag the speaker
+// qualifies elsewhere carries the line «Дальше — оговорка автора: «…» (mm:ss)».
 
 import { formatTimecode } from "./claimSync.js";
 import { t } from "./i18n.js";
 import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
-import { isPossible, tagLabel, visibleTags } from "./tags.js";
+import { isNote, isPossible, qualifierLine, tagLabel, visibleTags } from "./tags.js";
 
 const VERDICT_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 
@@ -107,10 +110,13 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
       literature: obs.literature ?? "",
       explanation: obs.explanation ?? obs.definition ?? "",
       places: places.map((p) => ({ sec: p.start_sec ?? null, text: p.text ?? "" })),
+      qualifier: qualifierLine(obs, lang),
     });
   }
   const offFlag = visibleTags(run.timeline_marks).map((tag) => ({
     possible: isPossible(tag),
+    note: isNote(tag),
+    qualifier: qualifierLine(tag, lang),
     name: tagLabel(tag, lang),
     explanation: tag.explanation ?? "",
     sec: tag.evidence?.start_sec ?? null,
@@ -128,6 +134,8 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
     const notes = (list) =>
       visibleTags(list).map((tag) => ({
         possible: isPossible(tag),
+        note: isNote(tag),
+        qualifier: qualifierLine(tag, lang),
         name: tagLabel(tag, lang),
         literature: tag.literature ?? "",
         explanation: tag.explanation ?? "",
@@ -166,7 +174,8 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
     created: now.toISOString().slice(0, 10),
     total: claims.length,
     quotes: items.filter((i) => i.quote).length,
-    tagged: items.filter((i) => i.reasons.length || i.phrasing.length).length,
+    // A note («Личное мнение») is not a technique: it does not make a claim "tagged".
+    tagged: items.filter((i) => i.reasons.length || i.phrasing.some((n) => !n.note)).length,
     counts,
     observations,
     offFlag,
@@ -209,11 +218,12 @@ export function reportMarkdown(run, options = {}) {
     for (const o of r.observations) {
       out.push(`**${mdEscape(o.name)}**${o.literature ? ` (${mdEscape(o.literature)})` : ""}${o.explanation ? ` — ${mdEscape(o.explanation)}` : ""}`);
       for (const p of o.places) out.push(`- ${mdTime(r, p.sec)} «${mdEscape(p.text)}»`);
+      if (o.qualifier) out.push(`- *${mdEscape(o.qualifier)}*`);
       out.push("");
     }
     if (r.offFlag.length) {
       out.push(`### ${w.offFlag}`, "");
-      for (const m of r.offFlag) out.push(`- ${mdTime(r, m.sec)} **${mdEscape(m.name)}** — «${mdEscape(m.text)}»${m.explanation ? `. ${mdEscape(m.explanation)}` : ""}`);
+      for (const m of r.offFlag) out.push(`- ${mdTime(r, m.sec)} **${mdEscape(m.name)}** — «${mdEscape(m.text)}»${m.explanation ? `. ${mdEscape(m.explanation)}` : ""}${m.qualifier ? ` *${mdEscape(m.qualifier)}*` : ""}`);
       out.push("");
     }
     if (r.ads.length) {
@@ -240,7 +250,7 @@ export function reportMarkdown(run, options = {}) {
       if (!list.length) continue;
       out.push(`**${label}:**`);
       for (const n of list) {
-        out.push(`- ${mdEscape(n.name)}${n.literature ? ` (${mdEscape(n.literature)})` : ""}: ${mdEscape(n.explanation)}${n.text ? ` — «${mdEscape(n.text)}»` : ""}`);
+        out.push(`- ${mdEscape(n.name)}${n.literature ? ` (${mdEscape(n.literature)})` : ""}: ${mdEscape(n.explanation)}${n.text ? ` — «${mdEscape(n.text)}»` : ""}${n.qualifier ? ` *${mdEscape(n.qualifier)}*` : ""}`);
       }
       out.push("");
     }
@@ -301,6 +311,8 @@ const PRINT_CSS = `
   blockquote { margin: 3pt 0; padding-left: 8pt; border-left: 2px solid #ddd; color: #333; }
   a { color: inherit; }
   .possible { color: #777; }
+  .opinion-note { color: #666; }
+  .qualifier { color: #555; font-style: italic; }
 `;
 
 export function reportHtml(run, options = {}) {
@@ -319,9 +331,10 @@ export function reportHtml(run, options = {}) {
     for (const o of r.observations) {
       parts.push(`<p${o.possible ? ' class="possible"' : ""}><span class="label">${esc(o.name)}</span>${o.literature ? ` (${esc(o.literature)})` : ""}${o.explanation ? ` — ${esc(o.explanation)}` : ""}</p>`);
       if (o.places.length) parts.push(`<ul>${o.places.map((p) => `<li>${htmlTime(r, p.sec)} «${esc(p.text)}»</li>`).join("")}</ul>`);
+      if (o.qualifier) parts.push(`<p class="qualifier">${esc(o.qualifier)}</p>`);
     }
     if (r.offFlag.length) {
-      parts.push(`<h3>${esc(w.offFlag)}</h3><ul>${r.offFlag.map((m) => `<li${m.possible ? ' class="possible"' : ""}>${htmlTime(r, m.sec)} <span class="label">${esc(m.name)}</span> — «${esc(m.text)}»${m.explanation ? `. ${esc(m.explanation)}` : ""}</li>`).join("")}</ul>`);
+      parts.push(`<h3>${esc(w.offFlag)}</h3><ul>${r.offFlag.map((m) => `<li${m.possible ? ' class="possible"' : ""}>${htmlTime(r, m.sec)} <span class="label">${esc(m.name)}</span> — «${esc(m.text)}»${m.explanation ? `. ${esc(m.explanation)}` : ""}${m.qualifier ? ` <span class="qualifier">${esc(m.qualifier)}</span>` : ""}</li>`).join("")}</ul>`);
     }
     if (r.ads.length) {
       parts.push(`<h3>${esc(w.ads)}</h3><ul>${r.ads.map((a) => `<li>${htmlTime(r, a.start)}–${formatTimecode(a.end)} ${esc(a.name)}${a.spans.length ? `: «${a.spans.map(esc).join("» … «")}»` : ""}</li>`).join("")}</ul>`);
@@ -332,7 +345,7 @@ export function reportHtml(run, options = {}) {
   for (const i of r.items) {
     const notes = (label, list) =>
       list.length
-        ? `<p class="label">${esc(label)}:</p><ul>${list.map((n) => `<li${n.possible ? ' class="possible"' : ""}>${esc(n.name)}${n.literature ? ` (${esc(n.literature)})` : ""}: ${esc(n.explanation)}${n.text ? ` — «${esc(n.text)}»` : ""}</li>`).join("")}</ul>`
+        ? `<p class="label">${esc(label)}:</p><ul>${list.map((n) => `<li${n.possible ? ' class="possible"' : n.note ? ' class="opinion-note"' : ""}>${esc(n.name)}${n.literature ? ` (${esc(n.literature)})` : ""}: ${esc(n.explanation)}${n.text ? ` — «${esc(n.text)}»` : ""}${n.qualifier ? ` <span class="qualifier">${esc(n.qualifier)}</span>` : ""}</li>`).join("")}</ul>`
         : "";
     parts.push(`<section class="claim">
       <div class="claim-head"><span class="dot" data-flag="${esc(i.flag)}"></span>${htmlTime(r, i.sec)} <span class="verdict">${esc(i.verdict)}</span></div>

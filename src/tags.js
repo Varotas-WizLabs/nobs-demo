@@ -15,6 +15,17 @@
 // "possibly:" and a tooltip line saying so -- in the popup, the claim list,
 // the filters, the timeline and the export -- and is left out everywhere
 // when the viewer switches "Show possible tags" off (settings.js).
+//
+// Round 5 (owner decisions):
+// - tier "note" («Личное мнение» / "Personal opinion", catalogue
+//   `technique: false`) is a neutral note, not a technique: a quiet grey
+//   chip, never «возможно:», always shown, left out of the technique counts
+//   and the tag filter;
+// - a tag or an observation the speaker qualifies elsewhere carries
+//   `qualifier` {text, start_sec, end_sec}: shown as «Дальше — оговорка
+//   автора» / "The speaker qualifies this later" with its timecode and the
+//   verbatim words, in the popup, the tooltips (list chip, timeline) and the
+//   export.
 
 import { formatTimecode } from "./claimSync.js";
 import { t } from "./i18n.js";
@@ -24,9 +35,48 @@ export function isPossible(tag) {
   return tag?.tier === "possible";
 }
 
+/** A neutral note («Личное мнение»), not a technique. */
+export function isNote(tag) {
+  return tag?.tier === "note" || tag?.technique === false;
+}
+
+/** "solid" | "possible" | "note": the display tier. */
+export function tierOf(tag) {
+  if (isNote(tag)) return "note";
+  return isPossible(tag) ? "possible" : "solid";
+}
+
+const TIER_ORDER = { solid: 0, possible: 1, note: 2 };
+
+/** Solid tags first, then possible ones, then notes. */
+export function byTier(a, b) {
+  return TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)];
+}
+
 /** The tags to show under the viewer's setting (possible ones only when on). */
 export function visibleTags(list, showPossible = showPossibleTags()) {
-  return (list ?? []).filter((tag) => showPossible || !isPossible(tag));
+  return (list ?? []).filter((tag) => showPossible || isNote(tag) || !isPossible(tag));
+}
+
+/** The speaker's own qualification of a tag or observation, if any. */
+export function qualifierOf(tag) {
+  const q = tag?.qualifier;
+  return q && typeof q.text === "string" && q.text.trim() ? q : null;
+}
+
+function qualifierLabel(tag, lang) {
+  const q = qualifierOf(tag);
+  const at = tag?.evidence?.start_sec ?? tag?.spans?.[0]?.start_sec;
+  const earlier = typeof q?.start_sec === "number" && typeof at === "number" && q.start_sec < at;
+  return t(earlier ? "tags.qualifierEarlier" : "tags.qualifierLater", lang);
+}
+
+/** "The speaker qualifies this later: «…» (12:34)", or "" without a qualifier. */
+export function qualifierLine(tag, lang = "en") {
+  const q = qualifierOf(tag);
+  if (!q) return "";
+  const time = typeof q.start_sec === "number" && Number.isFinite(q.start_sec) ? ` (${formatTimecode(q.start_sec)})` : "";
+  return `${qualifierLabel(tag, lang)}: «${q.text}»${time}`;
 }
 
 /** A tag's display name: "possibly: <name>" for a possible one. */
@@ -66,12 +116,15 @@ function evidenceTime(tag) {
 /** Plain-text tooltip: literature term, explanation, evidence with timecode, disclaimer. */
 export function tagTooltip(tag, lang = "en") {
   const lines = [];
-  if (isPossible(tag)) lines.push(t("tags.possibleHint", lang));
+  if (isNote(tag)) lines.push(t("tags.noteHint", lang));
+  else if (isPossible(tag)) lines.push(t("tags.possibleHint", lang));
   if (tag.literature) lines.push(`${t("tags.literature", lang)}: ${tag.literature}`);
   if (tag.subtype_name) lines.push(tag.subtype_name);
   if (tag.explanation) lines.push(tag.explanation);
   const start = evidenceTime(tag);
   if (tag.evidence?.text) lines.push(`«${tag.evidence.text}»${start != null ? ` (${formatTimecode(start)})` : ""}`);
+  const qualifier = qualifierLine(tag, lang);
+  if (qualifier) lines.push(qualifier);
   lines.push(t("tags.notIntent", lang));
   return lines.join("\n");
 }
@@ -85,16 +138,28 @@ function evidenceHtml(tag, lang) {
     start != null
       ? `<button type="button" class="tag-seek" data-seek="${start}" aria-label="${escapeHtml(t("tags.seek", lang))} ${formatTimecode(start)}">${formatTimecode(start)}</button>`
       : "";
-  return `${quote}<p class="tag-explanation">${seek} ${escapeHtml(tag.explanation ?? "")}</p>`;
+  return `${quote}<p class="tag-explanation">${seek} ${escapeHtml(tag.explanation ?? "")}</p>${qualifierHtml(tag, lang)}`;
+}
+
+/** «Дальше — оговорка автора» with its timecode (a seek button) and the verbatim words. */
+function qualifierHtml(tag, lang) {
+  const q = qualifierOf(tag);
+  if (!q) return "";
+  const start = typeof q.start_sec === "number" && Number.isFinite(q.start_sec) ? q.start_sec : null;
+  const seek =
+    start != null
+      ? ` <button type="button" class="tag-seek" data-seek="${start}" aria-label="${escapeHtml(t("tags.seek", lang))} ${formatTimecode(start)}">${formatTimecode(start)}</button>`
+      : "";
+  return `<p class="tag-qualifier"><span class="tag-qualifier-label">${escapeHtml(qualifierLabel(tag, lang))}</span>${seek} «${escapeHtml(q.text)}»</p>`;
 }
 
 /** The "how it is phrased" block of the claim popup ("" without tags). */
 function tierAttr(tag) {
-  return ` data-tier="${isPossible(tag) ? "possible" : "solid"}"`;
+  return ` data-tier="${tierOf(tag)}"`;
 }
 
 export function renderTagChipsHtml(claim, lang = "en") {
-  const tags = visibleTags(claim?.tags);
+  const tags = [...visibleTags(claim?.tags)].sort(byTier);
   if (!tags.length) return "";
   const chips = tags
     .map(
@@ -164,7 +229,8 @@ export function claimTags(claim) {
 export function tagFilterOptions(run) {
   const counts = new Map();
   for (const claim of run?.claims ?? []) {
-    for (const tag of claimTags(claim)) {
+    // A note («Личное мнение») is not a technique: no filter chip for it.
+    for (const tag of claimTags(claim).filter((tag) => !isNote(tag))) {
       if (!counts.has(tag.tag_id)) counts.set(tag.tag_id, { tag_id: tag.tag_id, name: tag.name, count: 0, possible: 0 });
       const entry = counts.get(tag.tag_id);
       entry.count += 1;
@@ -213,12 +279,14 @@ function observationItems(run, lang) {
       if (obs.explanation) lines.push(obs.explanation);
       lines.push(all);
       if (span.text) lines.push(`«${span.text}» (${formatTimecode(span.start_sec)})`);
+      const qualifier = qualifierLine(obs, lang);
+      if (qualifier) lines.push(qualifier);
       lines.push(t("tags.notIntent", lang));
       lines.push(t("tags.disclaimer", lang));
       items.push({
         kind: "observation",
         observation: obs.kind,
-        tier: isPossible(obs) ? "possible" : "solid",
+        tier: tierOf(obs),
         start_sec: span.start_sec,
         end_sec: span.end_sec ?? span.start_sec,
         label: `${formatTimecode(span.start_sec)} ${name}: «${span.text ?? ""}»`,
@@ -239,7 +307,7 @@ export function timelineItems(run) {
     .map((tag) => ({
       kind: "tag",
       tag_id: tag.tag_id,
-      tier: isPossible(tag) ? "possible" : "solid",
+      tier: tierOf(tag),
       start_sec: tag.evidence.start_sec,
       end_sec: tag.evidence.end_sec ?? tag.evidence.start_sec,
       label: `${formatTimecode(tag.evidence.start_sec)} ${tagLabel(tag, lang)}: «${tag.evidence.text ?? ""}»`,
