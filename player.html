@@ -58,7 +58,7 @@
       import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
       import { downloadMarkdown, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
-      import { followPlayback, onSettingsChange, seekTarget } from "./src/settings.js";
+      import { followPlayback, onSettingsChange, seekTarget, youtubeCaptions } from "./src/settings.js";
 
       {
         const panel = document.getElementById("claims-panel");
@@ -198,6 +198,19 @@
       let initStarted = false;
       let controls = null;
 
+      // YouTube's own captions: off unless the setting turns them on.
+      function applyCaptions(player) {
+        try {
+          if (youtubeCaptions()) player.loadModule?.("captions");
+          else player.unloadModule?.("captions");
+        } catch {
+          // Older players without the module API: nothing to do.
+        }
+      }
+      onSettingsChange((_settings, name) => {
+        if (name === "youtubeCaptions" && currentPlayer) applyCaptions(currentPlayer);
+      });
+
       function initPlayerIfReady() {
         if (!apiReady || !videoId || initStarted) {
           return;
@@ -205,16 +218,21 @@
         initStarted = true;
         new YT.Player("player", {
           videoId,
-          playerVars: { controls: 0 },
+          // cc_load_policy 0: YouTube captions are not forced on; the
+          // "youtubeCaptions" setting turns them on (applyCaptions).
+          playerVars: { controls: 0, cc_load_policy: 0 },
           events: {
             // Keeps the play/pause glyph in step with the real player, whatever
             // changed its state (video-surface click, popup, end, buffering).
             onStateChange: (event) => {
               if (controls) controls.setPlayerState(event.data);
+              // YouTube loads its captions module when playback starts.
+              if (event.data === 1) applyCaptions(event.target);
             },
             onReady: (event) => {
               const player = event.target;
               currentPlayer = player;
+              applyCaptions(player);
               controls = buildControlBar(player, document.getElementById("player-container"));
 
               if (runId) {

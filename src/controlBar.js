@@ -88,6 +88,20 @@ export function buildControlBar(player, container) {
   seekBar.value = "0";
   seekBar.className = "nobs-seek-bar";
   seekBar.setAttribute("aria-label", "Seek");
+
+  // Playback time next to the timeline: "12:34 / 41:20".
+  const time = document.createElement("span");
+  time.className = "nobs-time";
+  time.setAttribute("aria-live", "off");
+  time.textContent = "0:00 / 0:00";
+  let lastTimeText = "";
+  function renderTime(current, duration) {
+    const text = `${formatClock(current)} / ${formatClock(duration)}`;
+    if (text !== lastTimeText) {
+      lastTimeText = text;
+      time.textContent = text;
+    }
+  }
   let dragging = false;
   seekBar.addEventListener("pointerdown", () => {
     dragging = true;
@@ -103,6 +117,7 @@ export function buildControlBar(player, container) {
     // Before metadata loads getDuration() is 0; a seek then would jump to 0.
     if (!(duration > 0)) return;
     player.seekTo((Number(seekBar.value) / SEEK_STEPS) * duration, true);
+    renderTime((Number(seekBar.value) / SEEK_STEPS) * duration, duration);
   });
 
   // Flag markers on the timeline: one per claim, at its span, in its flag's
@@ -199,34 +214,62 @@ export function buildControlBar(player, container) {
     layoutTimelineItems();
     const fraction = Math.min(Math.max(player.getCurrentTime() / duration, 0), 1);
     seekBar.value = String(Math.round(fraction * SEEK_STEPS));
+    renderTime(player.getCurrentTime(), duration);
   }
 
+  // Volume: an icon; clicking it opens a vertical slider above it. Sliding
+  // to 0 mutes, sliding up unmutes. The icon shows "muted" when silent.
   const mute = makeButton("nobs-mute");
-  function renderMuted(muted) {
-    mute.innerHTML = muted ? ICONS.muted : ICONS.volume;
-    mute.setAttribute("aria-label", muted ? "Unmute" : "Mute");
-  }
-  mute.addEventListener("click", () => {
-    const wasMuted = player.isMuted();
-    if (wasMuted) {
-      player.unMute();
-    } else {
-      player.mute();
-    }
-    // isMuted() can lag a tick behind mute()/unMute() in the IFrame API, so
-    // render the state we just requested.
-    renderMuted(!wasMuted);
-  });
-
+  mute.setAttribute("aria-haspopup", "true");
+  mute.setAttribute("aria-expanded", "false");
+  const volumePop = document.createElement("div");
+  volumePop.className = "nobs-volume-pop";
+  volumePop.hidden = true;
   const volume = document.createElement("input");
   volume.type = "range";
   volume.min = "0";
   volume.max = "100";
   volume.value = String(player.getVolume());
   volume.className = "nobs-volume";
+  volume.setAttribute("orient", "vertical");
   volume.setAttribute("aria-label", "Volume");
+  volume.setAttribute("aria-orientation", "vertical");
+  const volumeWrap = document.createElement("div");
+  volumeWrap.className = "nobs-volume-wrap";
+  volumePop.append(volume);
+  volumeWrap.append(volumePop, mute);
+
+  let mutedNow = player.isMuted();
+  function renderMuted(muted) {
+    mutedNow = muted;
+    const silent = muted || Number(volume.value) === 0;
+    mute.innerHTML = silent ? ICONS.muted : ICONS.volume;
+    mute.setAttribute("aria-label", silent ? "Volume (muted)" : "Volume");
+  }
+  function setPopOpen(open) {
+    volumePop.hidden = !open;
+    mute.setAttribute("aria-expanded", String(open));
+  }
+  mute.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setPopOpen(volumePop.hidden);
+  });
   volume.addEventListener("input", () => {
-    player.setVolume(Number(volume.value));
+    const level = Number(volume.value);
+    player.setVolume(level);
+    if (level === 0 && !mutedNow) {
+      player.mute();
+      renderMuted(true);
+    } else if (level > 0 && mutedNow) {
+      player.unMute();
+      renderMuted(false);
+    } else {
+      renderMuted(mutedNow);
+    }
+  });
+  // A click anywhere else closes the slider.
+  document.addEventListener("click", (event) => {
+    if (!volumeWrap.contains(event.target)) setPopOpen(false);
   });
 
   const fullscreen = makeButton("nobs-fullscreen");
@@ -250,11 +293,11 @@ export function buildControlBar(player, container) {
     clearInterval(progressIntervalId);
   }
 
-  bar.append(playPause, seekWrap, mute, volume, fullscreen);
+  bar.append(playPause, seekWrap, time, volumeWrap, fullscreen);
   container.appendChild(bar);
 
   return {
-    playPause, seekBar, mute, volume, fullscreen, setPlayerState, updateProgress, setMarkers, setTimelineItems, stop,
+    playPause, seekBar, time, mute, volume, volumePop, fullscreen, setPlayerState, updateProgress, setMarkers, setTimelineItems, stop,
   };
 }
 

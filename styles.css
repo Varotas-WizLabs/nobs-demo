@@ -141,8 +141,49 @@ main {
   z-index: 1;
 }
 
+/* Playback time next to the timeline. */
+.nobs-time {
+  flex: none;
+  min-width: 84px;
+  color: var(--nobs-text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Volume: an icon with a vertical slider that opens above it. */
+.nobs-volume-wrap {
+  position: relative;
+  flex: none;
+}
+.nobs-volume-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: 8px;
+  background: rgba(20, 20, 26, 0.95);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+.nobs-volume-pop[hidden] {
+  display: none;
+}
 .nobs-volume {
-  width: 80px;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 24px;
+  height: 100px;
+  margin: 0;
+}
+/* While the volume slider is open, the bar sits above the flag overlay. */
+.nobs-control-bar:has(.nobs-volume-pop:not([hidden])) {
+  z-index: calc(var(--nobs-overlay-z) + 1);
 }
 
 /* Flag/chain icon overlay (computeOverlayState, Task 4; wired in main.js) */

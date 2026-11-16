@@ -18,7 +18,7 @@ import { t } from "./i18n.js";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -65,12 +65,17 @@ export function setSetting(name, value) {
   }
 }
 
-/** Whether "possible" (pale) tags are shown; on unless switched off. */
+/** YouTube's own captions over the video (off by default). */
+export function youtubeCaptions() {
+  return read().youtubeCaptions === true;
+}
+
 /** The claim list scrolls along with playback, keeping the current claim in view. */
 export function followPlayback() {
   return read().followPlayback !== false;
 }
 
+/** Whether "possible" (pale) tags are shown; on unless switched off. */
 export function showPossibleTags() {
   return read().showPossibleTags !== false;
 }
@@ -204,7 +209,21 @@ export function openSettingsDialog(doc, lang = "en") {
   follow.append(followRow, followHint);
   followBox.addEventListener("change", () => setSetting("followPlayback", followBox.checked));
 
-  dialog.append(title, field, possible, follow, close);
+  const cc = doc.createElement("label");
+  cc.className = "nobs-settings-field nobs-settings-check";
+  const ccBox = doc.createElement("input");
+  ccBox.type = "checkbox";
+  ccBox.name = "youtubeCaptions";
+  ccBox.checked = youtubeCaptions();
+  const ccLabel = doc.createElement("span");
+  ccLabel.textContent = t("settings.captions", lang);
+  const ccRow = doc.createElement("span");
+  ccRow.className = "nobs-settings-row";
+  ccRow.append(ccBox, ccLabel);
+  cc.append(ccRow);
+  ccBox.addEventListener("change", () => setSetting("youtubeCaptions", ccBox.checked));
+
+  dialog.append(title, field, possible, follow, cc, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
