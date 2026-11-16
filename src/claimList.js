@@ -8,12 +8,15 @@
 // narrow the list by flag; a second row narrows it by presentation tag
 // (combined with the flag filter: both must match). A row shows at most one
 // tag chip ("+N" for the rest). The claim playing now is highlighted.
+// "Possible" tags (tier) are pale with a «возможно:» prefix, count in the
+// tag filters and match them; with "Show possible tags" off they are left
+// out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
 import { formatTimecode } from "./claimSync.js";
 import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
 import { t } from "./i18n.js";
-import { claimHasTag, tagFilterOptions, tagTooltip } from "./tags.js";
+import { claimHasTag, claimTags, isPossible, tagFilterOptions, tagLabel, tagTooltip } from "./tags.js";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
@@ -37,7 +40,7 @@ function el(doc, tag, className, text) {
  *   onFilterChange gets the claims the filters leave visible (so the
  *   timeline can show only their markers) after every filter change.
  */
-export function renderClaimList(root, run, { onSelect, onFilterChange }) {
+export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting }) {
   const doc = root.ownerDocument;
   const lang = run.caption_language ?? "en";
   const claims = [...(run.claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
@@ -98,7 +101,12 @@ export function renderClaimList(root, run, { onSelect, onFilterChange }) {
     };
     tagChips.appendChild(el(doc, "span", "nobs-tag-filter-label", `${t("tags.filter", lang)}:`));
     tagChips.appendChild(tagChipFor("all", t("list.all", lang), claims.length));
-    for (const option of tagOptions) tagChips.appendChild(tagChipFor(option.tag_id, option.name, option.count));
+    for (const option of tagOptions) {
+      const title = option.possible ? `${option.possible} ${t("tags.possibleCount", lang)}` : "";
+      const chip = tagChipFor(option.tag_id, option.name, option.count, title);
+      if (option.possible === option.count) chip.dataset.tier = "possible";
+      tagChips.appendChild(chip);
+    }
     header.appendChild(tagChips);
     header.appendChild(el(doc, "p", "tag-disclaimer nobs-claims-disclaimer", t("tags.disclaimer", lang)));
   }
@@ -130,21 +138,23 @@ export function renderClaimList(root, run, { onSelect, onFilterChange }) {
     body.appendChild(el(doc, "span", "nobs-claims-text", claim.text));
     const summary = String(claim.summary ?? "").trim();
     if (summary) body.appendChild(el(doc, "span", "nobs-claims-summary", summary));
-    const rowTags = [...(claim.tags ?? []), ...(claim.verdict_reasons ?? [])];
+    // Solid tags first: the row's one chip is the surest.
+    const rowTags = claimTags(claim).sort((a, b) => Number(isPossible(a)) - Number(isPossible(b)));
     if (rowTags.length) {
       const tagLine = el(doc, "span", "nobs-claims-tags");
-      const first = el(doc, "span", "tag-chip tag-chip-small", rowTags[0].name);
+      const first = el(doc, "span", "tag-chip tag-chip-small", tagLabel(rowTags[0], lang));
+      first.dataset.tier = isPossible(rowTags[0]) ? "possible" : "solid";
       first.title = tagTooltip(rowTags[0], lang);
       tagLine.appendChild(first);
       if (rowTags.length > 1) {
         const more = el(doc, "span", "tag-more", `+${rowTags.length - 1}`);
-        more.title = rowTags.slice(1).map((tag) => tag.name).join(", ");
+        more.title = rowTags.slice(1).map((tag) => tagLabel(tag, lang)).join(", ");
         tagLine.appendChild(more);
       }
       body.appendChild(tagLine);
       button.setAttribute(
         "aria-label",
-        `${button.getAttribute("aria-label")} (${t("tags.heading", lang)}: ${rowTags.map((tag) => tag.name).join(", ")})`
+        `${button.getAttribute("aria-label")} (${t("tags.heading", lang)}: ${rowTags.map((tag) => tagLabel(tag, lang)).join(", ")})`
       );
     }
     button.append(dot, time, body);
@@ -173,15 +183,55 @@ export function renderClaimList(root, run, { onSelect, onFilterChange }) {
     });
   }
 
+  // Scrolling along with playback (setting "followPlayback"). The list
+  // scrolls inside its own scrolling panel only, never the page, and pauses
+  // for a few seconds after the viewer scrolls it by hand.
+  let lastFollowed = null;
+  let pausedUntil = 0;
+  const now = () => (globalThis.performance?.now?.() ?? Date.now());
+  const follow = () => (followPlaybackSetting?.() ?? true) && now() >= pausedUntil;
+  const scrollerOf = () => {
+    for (let node = root; node && node !== doc.body; node = node.parentElement) {
+      const style = doc.defaultView?.getComputedStyle?.(node);
+      if (style && /(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight) return node;
+    }
+    return null;
+  };
+  const pause = () => {
+    pausedUntil = now() + 6000;
+  };
+  for (const type of ["wheel", "touchmove", "keydown"]) root.addEventListener(type, pause, { passive: true });
+  function scrollIntoPanel(item) {
+    const scroller = scrollerOf();
+    if (!scroller || item.offsetParent === null) return;
+    const box = scroller.getBoundingClientRect();
+    const rect = item.getBoundingClientRect();
+    // The pinned header covers the top of the panel: the visible list starts below it.
+    const pinned = header.getBoundingClientRect?.().height ?? 0;
+    const viewTop = box.top + pinned;
+    const viewHeight = Math.max(box.bottom - viewTop, 0);
+    // Already comfortably in view: leave it.
+    if (rect.top >= viewTop + 40 && rect.bottom <= box.bottom - 40) return;
+    const top = scroller.scrollTop + (rect.top - viewTop) - viewHeight / 3;
+    scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }
+
   section.append(header, list, empty);
   root.replaceChildren(section);
 
   return {
     highlight(timeSec) {
+      let first = null;
       for (const { claim, item } of rows) {
         const active = timeSec >= claim.start_sec && timeSec < claim.end_sec;
         if (active) item.setAttribute("aria-current", "true");
         else item.removeAttribute("aria-current");
+        if (active && !first && !item.hidden) first = item;
+      }
+      // Follow playback: when a new claim starts, scroll it into view.
+      if (first && first !== lastFollowed) {
+        lastFollowed = first;
+        if (follow()) scrollIntoPanel(first);
       }
     },
   };

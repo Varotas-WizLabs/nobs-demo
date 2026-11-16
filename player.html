@@ -58,7 +58,7 @@
       import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
       import { downloadMarkdown, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
-      import { seekTarget } from "./src/settings.js";
+      import { followPlayback, onSettingsChange, seekTarget } from "./src/settings.js";
 
       {
         const panel = document.getElementById("claims-panel");
@@ -155,10 +155,18 @@
 
       let list = null;
       let highlightTimer = null;
+      let shownRun = null;
+      // "Show possible tags" switched in the settings dialog: redraw the
+      // list, its filters and the timeline at once (the popup and the
+      // export read the setting when they open).
+      onSettingsChange((_settings, name) => {
+        if (name === "showPossibleTags" && shownRun) showRun(shownRun);
+      });
       // Claim list, flag markers, and the tag marks / ad segments on the
       // timeline (rebuilt when the tags arrive after the run).
       function showRun(run) {
         if (run.status !== "complete" || !currentPlayer) return;
+        shownRun = run;
         if (controls) {
           controls.setMarkers(run.claims ?? []);
           controls.setTimelineItems(timelineItems(run));
@@ -167,6 +175,7 @@
         document.body.dataset.lang = run.caption_language ?? "en";
         const allItems = timelineItems(run);
         list = renderClaimList(document.getElementById("claim-list"), run, {
+          followPlayback,
           // The list's flag and tag filters apply to the timeline too.
           onFilterChange: ({ claims, flag, tag }) => {
             if (!controls) return;

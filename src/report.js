@@ -4,10 +4,13 @@
 // a print-ready HTML document that the browser saves as PDF (print dialog,
 // "Save as PDF"; Cyrillic and every other script render as on screen).
 // Built from the run JSON the player already has (GET /runs/{id}?tags=all).
+// "Possible" tags are named «возможно: …» / "possibly: …" and marked pale in
+// the PDF; with "Show possible tags" off they are left out (settings.js).
 
 import { formatTimecode } from "./claimSync.js";
 import { t } from "./i18n.js";
 import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
+import { isPossible, tagLabel, visibleTags } from "./tags.js";
 
 const VERDICT_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 
@@ -96,17 +99,19 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
   })).filter((c) => c.count > 0);
 
   const observations = [];
-  for (const obs of run.observations ?? []) {
+  for (const obs of visibleTags(run.observations)) {
     const places = (obs.spans ?? []).filter(Boolean);
     observations.push({
-      name: obs.name ?? obs.tag_id ?? "",
+      possible: isPossible(obs),
+      name: tagLabel({ ...obs, name: obs.name ?? obs.tag_id ?? "" }, lang),
       literature: obs.literature ?? "",
       explanation: obs.explanation ?? obs.definition ?? "",
       places: places.map((p) => ({ sec: p.start_sec ?? null, text: p.text ?? "" })),
     });
   }
-  const offFlag = (run.timeline_marks ?? []).map((tag) => ({
-    name: tag.name,
+  const offFlag = visibleTags(run.timeline_marks).map((tag) => ({
+    possible: isPossible(tag),
+    name: tagLabel(tag, lang),
     explanation: tag.explanation ?? "",
     sec: tag.evidence?.start_sec ?? null,
     text: tag.evidence?.text ?? "",
@@ -121,8 +126,9 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
 
   const items = claims.map((claim) => {
     const notes = (list) =>
-      (list ?? []).map((tag) => ({
-        name: tag.name,
+      visibleTags(list).map((tag) => ({
+        possible: isPossible(tag),
+        name: tagLabel(tag, lang),
         literature: tag.literature ?? "",
         explanation: tag.explanation ?? "",
         sec: tag.evidence?.start_sec ?? null,
@@ -294,6 +300,7 @@ const PRINT_CSS = `
   .src a { color: #1a55a8; word-break: break-all; }
   blockquote { margin: 3pt 0; padding-left: 8pt; border-left: 2px solid #ddd; color: #333; }
   a { color: inherit; }
+  .possible { color: #777; }
 `;
 
 export function reportHtml(run, options = {}) {
@@ -310,11 +317,11 @@ export function reportHtml(run, options = {}) {
   if (r.observations.length || r.offFlag.length || r.ads.length) {
     parts.push(`<h2>${esc(w.observations)}</h2>`);
     for (const o of r.observations) {
-      parts.push(`<p><span class="label">${esc(o.name)}</span>${o.literature ? ` (${esc(o.literature)})` : ""}${o.explanation ? ` — ${esc(o.explanation)}` : ""}</p>`);
+      parts.push(`<p${o.possible ? ' class="possible"' : ""}><span class="label">${esc(o.name)}</span>${o.literature ? ` (${esc(o.literature)})` : ""}${o.explanation ? ` — ${esc(o.explanation)}` : ""}</p>`);
       if (o.places.length) parts.push(`<ul>${o.places.map((p) => `<li>${htmlTime(r, p.sec)} «${esc(p.text)}»</li>`).join("")}</ul>`);
     }
     if (r.offFlag.length) {
-      parts.push(`<h3>${esc(w.offFlag)}</h3><ul>${r.offFlag.map((m) => `<li>${htmlTime(r, m.sec)} <span class="label">${esc(m.name)}</span> — «${esc(m.text)}»${m.explanation ? `. ${esc(m.explanation)}` : ""}</li>`).join("")}</ul>`);
+      parts.push(`<h3>${esc(w.offFlag)}</h3><ul>${r.offFlag.map((m) => `<li${m.possible ? ' class="possible"' : ""}>${htmlTime(r, m.sec)} <span class="label">${esc(m.name)}</span> — «${esc(m.text)}»${m.explanation ? `. ${esc(m.explanation)}` : ""}</li>`).join("")}</ul>`);
     }
     if (r.ads.length) {
       parts.push(`<h3>${esc(w.ads)}</h3><ul>${r.ads.map((a) => `<li>${htmlTime(r, a.start)}–${formatTimecode(a.end)} ${esc(a.name)}${a.spans.length ? `: «${a.spans.map(esc).join("» … «")}»` : ""}</li>`).join("")}</ul>`);
@@ -325,7 +332,7 @@ export function reportHtml(run, options = {}) {
   for (const i of r.items) {
     const notes = (label, list) =>
       list.length
-        ? `<p class="label">${esc(label)}:</p><ul>${list.map((n) => `<li>${esc(n.name)}${n.literature ? ` (${esc(n.literature)})` : ""}: ${esc(n.explanation)}${n.text ? ` — «${esc(n.text)}»` : ""}</li>`).join("")}</ul>`
+        ? `<p class="label">${esc(label)}:</p><ul>${list.map((n) => `<li${n.possible ? ' class="possible"' : ""}>${esc(n.name)}${n.literature ? ` (${esc(n.literature)})` : ""}: ${esc(n.explanation)}${n.text ? ` — «${esc(n.text)}»` : ""}</li>`).join("")}</ul>`
         : "";
     parts.push(`<section class="claim">
       <div class="claim-head"><span class="dot" data-flag="${esc(i.flag)}"></span>${htmlTime(r, i.sec)} <span class="verdict">${esc(i.verdict)}</span></div>

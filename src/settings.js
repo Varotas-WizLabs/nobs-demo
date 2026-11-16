@@ -7,12 +7,18 @@
 // seekLeadSec: jumping to a finding (a timeline marker, a row in the claim
 // list, a tag's timecode) starts playback this many seconds earlier, so the
 // lead-in to the phrase is heard.
+//
+// showPossibleTags: show the "possible" presentation tags (the automatic
+// check was not sure: kept by a minority of votes or below the bar) as pale
+// chips and marks. Off hides them everywhere -- popup chips, the claim list
+// and its filters, the timeline and the export -- without a reload
+// (`onSettingsChange` tells the page to redraw).
 
 import { t } from "./i18n.js";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3 });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -33,13 +39,40 @@ export function getSettings() {
   return { ...read() };
 }
 
+const listeners = new Set();
+
+/** Call `fn(settings, name)` after every change; returns an unsubscribe function. */
+export function onSettingsChange(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
 export function setSetting(name, value) {
+  const changed = read()[name] !== value;
   cache = { ...read(), [name]: value };
   try {
     globalThis.localStorage?.setItem(KEY, JSON.stringify(cache));
   } catch {
     // Storage blocked: the setting still holds for this page.
   }
+  if (!changed) return;
+  for (const fn of [...listeners]) {
+    try {
+      fn(getSettings(), name);
+    } catch (err) {
+      console.error("settings listener failed", err);
+    }
+  }
+}
+
+/** Whether "possible" (pale) tags are shown; on unless switched off. */
+/** The claim list scrolls along with playback, keeping the current claim in view. */
+export function followPlayback() {
+  return read().followPlayback !== false;
+}
+
+export function showPossibleTags() {
+  return read().showPossibleTags !== false;
 }
 
 /** Test hook: forget the cached settings. */
@@ -139,7 +172,39 @@ export function openSettingsDialog(doc, lang = "en") {
     if (event.target === dialog) dialog.close();
   });
 
-  dialog.append(title, field, close);
+  const possible = doc.createElement("label");
+  possible.className = "nobs-settings-field nobs-settings-check";
+  const box = doc.createElement("input");
+  box.type = "checkbox";
+  box.name = "showPossibleTags";
+  box.checked = showPossibleTags();
+  const boxLabel = doc.createElement("span");
+  boxLabel.textContent = t("settings.showPossible", lang);
+  const boxRow = doc.createElement("span");
+  boxRow.className = "nobs-settings-row";
+  boxRow.append(box, boxLabel);
+  const boxHint = doc.createElement("small");
+  boxHint.textContent = t("settings.showPossibleHint", lang);
+  possible.append(boxRow, boxHint);
+  box.addEventListener("change", () => setSetting("showPossibleTags", box.checked));
+
+  const follow = doc.createElement("label");
+  follow.className = "nobs-settings-field nobs-settings-check";
+  const followBox = doc.createElement("input");
+  followBox.type = "checkbox";
+  followBox.name = "followPlayback";
+  followBox.checked = followPlayback();
+  const followLabel = doc.createElement("span");
+  followLabel.textContent = t("settings.follow", lang);
+  const followRow = doc.createElement("span");
+  followRow.className = "nobs-settings-row";
+  followRow.append(followBox, followLabel);
+  const followHint = doc.createElement("small");
+  followHint.textContent = t("settings.followHint", lang);
+  follow.append(followRow, followHint);
+  followBox.addEventListener("change", () => setSetting("followPlayback", followBox.checked));
+
+  dialog.append(title, field, possible, follow, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");

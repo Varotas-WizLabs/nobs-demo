@@ -8,9 +8,46 @@
 // the server's catalogue (one table, nobs/tags/catalogue.py); fixed UI
 // strings (heading, disclaimer) from i18n.js. A tag describes the wording,
 // never the speaker's intent, and every chip says so.
+//
+// Every tag, mark and observation has a `tier`: "solid", or "possible" (the
+// automatic check was not sure: a minority of votes kept it, or it is below
+// the bar). A possible one is drawn pale with the prefix «возможно:» /
+// "possibly:" and a tooltip line saying so -- in the popup, the claim list,
+// the filters, the timeline and the export -- and is left out everywhere
+// when the viewer switches "Show possible tags" off (settings.js).
 
 import { formatTimecode } from "./claimSync.js";
 import { t } from "./i18n.js";
+import { showPossibleTags } from "./settings.js";
+
+export function isPossible(tag) {
+  return tag?.tier === "possible";
+}
+
+/** The tags to show under the viewer's setting (possible ones only when on). */
+export function visibleTags(list, showPossible = showPossibleTags()) {
+  return (list ?? []).filter((tag) => showPossible || !isPossible(tag));
+}
+
+/** A tag's display name: "possibly: <name>" for a possible one. */
+export function tagLabel(tag, lang = "en") {
+  return isPossible(tag) ? `${t("tags.possible", lang)}: ${tag.name}` : tag.name;
+}
+
+/** The run with only the tags the viewer's setting shows (claims, marks, observations). */
+export function visibleRun(run, showPossible = showPossibleTags()) {
+  if (!run || showPossible) return run;
+  return {
+    ...run,
+    claims: (run.claims ?? []).map((claim) => ({
+      ...claim,
+      tags: visibleTags(claim.tags, false),
+      verdict_reasons: visibleTags(claim.verdict_reasons, false),
+    })),
+    timeline_marks: visibleTags(run.timeline_marks, false),
+    observations: visibleTags(run.observations, false),
+  };
+}
 
 export function escapeHtml(value) {
   return String(value ?? "")
@@ -29,6 +66,7 @@ function evidenceTime(tag) {
 /** Plain-text tooltip: literature term, explanation, evidence with timecode, disclaimer. */
 export function tagTooltip(tag, lang = "en") {
   const lines = [];
+  if (isPossible(tag)) lines.push(t("tags.possibleHint", lang));
   if (tag.literature) lines.push(`${t("tags.literature", lang)}: ${tag.literature}`);
   if (tag.subtype_name) lines.push(tag.subtype_name);
   if (tag.explanation) lines.push(tag.explanation);
@@ -51,15 +89,19 @@ function evidenceHtml(tag, lang) {
 }
 
 /** The "how it is phrased" block of the claim popup ("" without tags). */
+function tierAttr(tag) {
+  return ` data-tier="${isPossible(tag) ? "possible" : "solid"}"`;
+}
+
 export function renderTagChipsHtml(claim, lang = "en") {
-  const tags = claim?.tags ?? [];
+  const tags = visibleTags(claim?.tags);
   if (!tags.length) return "";
   const chips = tags
     .map(
       (tag, i) => `
         <li class="tag-item">
-          <button type="button" class="tag-chip" data-action="toggle-tag" data-tag-id="${escapeHtml(tag.tag_id)}"
-            aria-expanded="false" aria-controls="tag-panel-${i}" title="${escapeHtml(tagTooltip(tag, lang))}">${escapeHtml(tag.name)}</button>
+          <button type="button" class="tag-chip" data-action="toggle-tag" data-tag-id="${escapeHtml(tag.tag_id)}"${tierAttr(tag)}
+            aria-expanded="false" aria-controls="tag-panel-${i}" title="${escapeHtml(tagTooltip(tag, lang))}">${escapeHtml(tagLabel(tag, lang))}</button>
           <div class="tag-panel" id="tag-panel-${i}" hidden>
             ${tag.literature ? `<p class="tag-literature">${escapeHtml(t("tags.literature", lang))}: ${escapeHtml(tag.literature)}</p>` : ""}
             ${evidenceHtml(tag, lang)}
@@ -78,13 +120,13 @@ export function renderTagChipsHtml(claim, lang = "en") {
 /** Layer A: "Reason: <name>" lines inside the verdict details ("" without).
  * `disclaimer: false` when the popup already shows it under the chips. */
 export function renderVerdictReasonsHtml(claim, lang = "en", { disclaimer = true } = {}) {
-  const reasons = claim?.verdict_reasons ?? [];
+  const reasons = visibleTags(claim?.verdict_reasons);
   if (!reasons.length) return "";
   const items = reasons
     .map(
       (tag) => `
-        <li class="verdict-reason" title="${escapeHtml(tagTooltip(tag, lang))}">
-          <span class="verdict-reason-label">${escapeHtml(t("tags.reason", lang))}:</span> ${escapeHtml(tag.name)}
+        <li class="verdict-reason"${tierAttr(tag)} title="${escapeHtml(tagTooltip(tag, lang))}">
+          <span class="verdict-reason-label">${escapeHtml(t("tags.reason", lang))}:</span> ${escapeHtml(tagLabel(tag, lang))}
           ${evidenceHtml(tag, lang)}
         </li>`
     )
@@ -110,13 +152,23 @@ export function wireTagInteractions(container, { onSeek } = {}) {
   });
 }
 
-/** Tag ids present on a run's claims, in catalogue order, with counts. */
+/** A claim's shown tags (chips and verdict reasons) under the viewer's setting. */
+export function claimTags(claim) {
+  return visibleTags([...(claim?.tags ?? []), ...(claim?.verdict_reasons ?? [])]);
+}
+
+/**
+ * Tag ids present on a run's claims, in catalogue order, with counts: `count`
+ * = solid + possible shown, `possible` = how many of them are possible.
+ */
 export function tagFilterOptions(run) {
   const counts = new Map();
   for (const claim of run?.claims ?? []) {
-    for (const tag of [...(claim.tags ?? []), ...(claim.verdict_reasons ?? [])]) {
-      if (!counts.has(tag.tag_id)) counts.set(tag.tag_id, { tag_id: tag.tag_id, name: tag.name, count: 0 });
-      counts.get(tag.tag_id).count += 1;
+    for (const tag of claimTags(claim)) {
+      if (!counts.has(tag.tag_id)) counts.set(tag.tag_id, { tag_id: tag.tag_id, name: tag.name, count: 0, possible: 0 });
+      const entry = counts.get(tag.tag_id);
+      entry.count += 1;
+      if (isPossible(tag)) entry.possible += 1;
     }
   }
   const order = (run?.tag_catalogue?.tags ?? []).map((tag) => tag.id);
@@ -128,7 +180,7 @@ export function tagFilterOptions(run) {
 }
 
 export function claimHasTag(claim, tagId) {
-  return [...(claim.tags ?? []), ...(claim.verdict_reasons ?? [])].some((tag) => tag.tag_id === tagId);
+  return claimTags(claim).some((tag) => tag.tag_id === tagId);
 }
 
 /**
@@ -150,11 +202,13 @@ export function filterTimelineItems(items, { flag = "all", tag = "all" } = {}) {
  */
 function observationItems(run, lang) {
   const items = [];
-  for (const obs of run?.observations ?? []) {
+  for (const obs of visibleTags(run?.observations)) {
     const spans = (obs.spans ?? []).filter((span) => typeof span.start_sec === "number" && Number.isFinite(span.start_sec));
     const all = spans.map((span) => formatTimecode(span.start_sec)).join(", ");
     for (const span of spans) {
-      const lines = [obs.name];
+      const name = tagLabel(obs, lang);
+      const lines = [name];
+      if (isPossible(obs)) lines.push(t("tags.possibleHint", lang));
       if (obs.literature) lines.push(`${t("tags.literature", lang)}: ${obs.literature}`);
       if (obs.explanation) lines.push(obs.explanation);
       lines.push(all);
@@ -164,9 +218,10 @@ function observationItems(run, lang) {
       items.push({
         kind: "observation",
         observation: obs.kind,
+        tier: isPossible(obs) ? "possible" : "solid",
         start_sec: span.start_sec,
         end_sec: span.end_sec ?? span.start_sec,
-        label: `${formatTimecode(span.start_sec)} ${obs.name}: «${span.text ?? ""}»`,
+        label: `${formatTimecode(span.start_sec)} ${name}: «${span.text ?? ""}»`,
         title: lines.join("\n"),
       });
     }
@@ -179,16 +234,17 @@ export function timelineItems(run) {
   const lang = run?.caption_language ?? "en";
   const sponsoredName = run?.tag_catalogue?.markers?.sponsored?.name ?? t("tags.sponsored", lang);
   const sponsoredDefinition = run?.tag_catalogue?.markers?.sponsored?.definition ?? "";
-  const marks = (run?.timeline_marks ?? [])
+  const marks = visibleTags(run?.timeline_marks)
     .filter((tag) => evidenceTime(tag) != null)
     .map((tag) => ({
       kind: "tag",
       tag_id: tag.tag_id,
+      tier: isPossible(tag) ? "possible" : "solid",
       start_sec: tag.evidence.start_sec,
       end_sec: tag.evidence.end_sec ?? tag.evidence.start_sec,
-      label: `${formatTimecode(tag.evidence.start_sec)} ${tag.name}: «${tag.evidence.text ?? ""}»`,
+      label: `${formatTimecode(tag.evidence.start_sec)} ${tagLabel(tag, lang)}: «${tag.evidence.text ?? ""}»`,
       // A mark outside any flag has no popup: its tooltip carries the disclaimer.
-      title: `${tag.name}\n${tagTooltip(tag, lang)}\n${t("tags.disclaimer", lang)}`,
+      title: `${tagLabel(tag, lang)}\n${tagTooltip(tag, lang)}\n${t("tags.disclaimer", lang)}`,
     }));
   const subtypes = run?.tag_catalogue?.markers?.sponsored?.subtypes ?? {};
   const segments = (run?.segment_markers ?? []).map((segment) => {

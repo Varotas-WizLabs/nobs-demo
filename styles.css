@@ -1338,3 +1338,49 @@ main {
 [data-demo="1"] .nobs-library-new {
   display: none;
 }
+
+/* "Possible" presentation tags (the automatic check was not sure): pale,
+   dashed, prefixed «возможно:» -- chips, verdict reasons, list rows, tag
+   filters and timeline marks. */
+.tag-chip[data-tier="possible"],
+.nobs-tag-filter[data-tier="possible"] {
+  opacity: 0.55;
+  border-style: dashed;
+  border-color: #55555f;
+  font-style: italic;
+}
+
+.tag-chip[data-tier="possible"]:hover,
+.tag-chip[data-tier="possible"][aria-expanded="true"] {
+  opacity: 0.85;
+}
+
+.verdict-reason[data-tier="possible"] {
+  opacity: 0.6;
+  padding-left: 6px;
+  border-left: 1px dashed #55555f;
+}
+
+.nobs-seek-tagmark[data-tier="possible"] {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.nobs-settings-check .nobs-settings-row {
+  align-items: center;
+  gap: 8px;
+}
+
+/* In the right panel the list's header (title, filters, disclaimer) stays
+   pinned at the top while the claims scroll under it. */
+.nobs-claims-panel .nobs-claims-header {
+  position: sticky;
+  /* The panel has 16px of top padding: stick over it so nothing shows above. */
+  top: -16px;
+  z-index: 3;
+  margin: -12px -12px 8px;
+  padding: 28px 12px 8px;
+  background: var(--nobs-surface);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.6);
+}

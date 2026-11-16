@@ -16,6 +16,11 @@ const STRINGS = {
     "settings.seekLead": "Jump to a finding this many seconds early",
     "settings.seconds": "s",
     "settings.seekLeadHint": "Clicking a marker on the timeline or a row in the claim list starts playback a little before the phrase.",
+    "settings.follow": "Scroll the claim list with playback",
+    "settings.followHint": "The list on the right follows the video and keeps the current claim in view. Scrolling it yourself pauses this for a few seconds.",
+    "settings.showPossible": "Show “possible” tags",
+    "settings.showPossibleHint":
+      "Pale tags the automatic check was not sure about. Off: only the tags it is sure about are shown everywhere, including the export.",
     "white.unchecked": "Not fact-checked (opinion, prediction or not verifiable)",
     "white.insufficient": "Not enough evidence for a verdict",
     confidence: "Confidence",
@@ -63,6 +68,9 @@ const STRINGS = {
     "tags.running": "Analysing how claims are phrased…",
     "tags.filter": "Phrasing",
     "tags.sponsored": "Sponsored segment",
+    "tags.possible": "possibly",
+    "tags.possibleHint": "The automatic check was not sure about this tag.",
+    "tags.possibleCount": "possible",
   },
   ru: {
     "verdict.green": "Подтверждается",
@@ -77,6 +85,11 @@ const STRINGS = {
     "settings.seekLead": "Отступ назад при переходе к находке",
     "settings.seconds": "сек",
     "settings.seekLeadHint": "При нажатии на метку на таймлайне или строку в списке видео начнёт играть чуть раньше фразы.",
+    "settings.follow": "Прокручивать список вместе с видео",
+    "settings.followHint": "Список справа следует за видео и держит текущее утверждение на виду. Если прокрутить его вручную, слежение приостановится на несколько секунд.",
+    "settings.showPossible": "Показывать „возможные“ теги",
+    "settings.showPossibleHint":
+      "Бледные теги, в которых автоматическая проверка не уверена. Если выключить, везде, включая выгрузку, останутся только уверенные.",
     "white.unchecked": "Проверка не проводилась (мнение, прогноз или непроверяемо)",
     "white.insufficient": "Недостаточно данных для вердикта",
     confidence: "Уверенность",
@@ -124,6 +137,9 @@ const STRINGS = {
     "tags.running": "Анализ подачи…",
     "tags.filter": "Подача",
     "tags.sponsored": "Рекламная вставка",
+    "tags.possible": "возможно",
+    "tags.possibleHint": "Автоматическая проверка не уверена в этом теге.",
+    "tags.possibleCount": "возможных",
   },
 };
 
