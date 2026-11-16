@@ -11,16 +11,90 @@
  */
 
 :root {
+  /* Theme tokens: dark is the default, [data-theme="light"] overrides them.
+     Colours drawn over the video (control bar, timeline marks, flag icon)
+     stay the same in both themes. */
+  color-scheme: dark;
   --nobs-bg: #0b0b0f;
   --nobs-surface: #16161c;
   --nobs-text: #f2f2f5;
   --nobs-muted: #9a9aa5;
   --nobs-neutral: #6b6b76; /* neutral UI chrome */
+  --nobs-border: #2f2f3a;
+  --nobs-border-strong: #3a3a46;
+  --nobs-border-faint: #55555f;
+  --nobs-hover: #1f1f27;
+  --nobs-current: #23232d;
+  --nobs-pressed: #2a2a33;
+  --nobs-raised: #22222b;
+  --nobs-raised-hover: #2e2e39;
+  --nobs-input-bg: #0f0f14;
+  --nobs-note-bg: #2a2a31;
+  --nobs-note-border: #44444e;
+  --nobs-chip-dash: #6d6d7a;
+  --nobs-link: #8ab4ff;
+  --nobs-line-faint: rgba(255, 255, 255, 0.04);
+  --nobs-toggle-border: rgba(255, 255, 255, 0.15);
+  --nobs-toggle-border-hover: rgba(255, 255, 255, 0.35);
+  --nobs-toggle-on: rgba(255, 255, 255, 0.08);
+  --nobs-now-line: rgba(255, 255, 255, 0.85);
+  --nobs-shadow: rgba(0, 0, 0, 0.5);
+  --nobs-on-flag: #0b0b0f; /* text on a coloured flag chip */
+  --nobs-banner-bg: #2a2410;
+  --nobs-banner-text: #f1dfa0;
   --nobs-white: #f4f4f6; /* white flag: no fact-check available */
+  --nobs-white-edge: transparent; /* outline that keeps a white dot visible */
   --nobs-green: #2ecc71;
   --nobs-yellow: #f1c40f;
   --nobs-red: #e74c3c;
   --nobs-overlay-z: 2147483000; /* stays above the fullscreen element's own chrome */
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --nobs-bg: #f4f4f7;
+  --nobs-surface: #ffffff;
+  --nobs-text: #17171c;
+  --nobs-muted: #5c5c68;
+  --nobs-neutral: #8a8a95;
+  --nobs-border: #dcdce3;
+  --nobs-border-strong: #c6c6cf;
+  --nobs-border-faint: #b4b4bf;
+  --nobs-hover: #eeeef3;
+  --nobs-current: #e6eefc;
+  --nobs-pressed: #e3e3ea;
+  --nobs-raised: #ffffff;
+  --nobs-raised-hover: #f0f0f5;
+  --nobs-input-bg: #ffffff;
+  --nobs-note-bg: #f0f0f4;
+  --nobs-note-border: #d0d0d8;
+  --nobs-chip-dash: #9a9aa6;
+  --nobs-link: #1a5fd0;
+  --nobs-line-faint: rgba(0, 0, 0, 0.06);
+  --nobs-toggle-border: rgba(0, 0, 0, 0.18);
+  --nobs-toggle-border-hover: rgba(0, 0, 0, 0.4);
+  --nobs-toggle-on: rgba(0, 0, 0, 0.06);
+  --nobs-now-line: rgba(23, 23, 28, 0.8);
+  --nobs-shadow: rgba(20, 20, 40, 0.18);
+  --nobs-banner-bg: #fff4cc;
+  --nobs-banner-text: #5a4600;
+  --nobs-white: #ffffff;
+  --nobs-white-edge: #8f8f9b;
+  --nobs-green: #22a85a;
+  --nobs-yellow: #e0b000;
+  --nobs-red: #d63c2e;
+}
+
+/* Over the video (control bar, flag/processing overlay) the controls keep
+   the dark palette in both themes. */
+:root[data-theme="light"] .nobs-control-bar,
+:root[data-theme="light"] .nobs-overlay {
+  --nobs-surface: #16161c;
+  --nobs-text: #f2f2f5;
+  --nobs-muted: #9a9aa5;
+  --nobs-neutral: #6b6b76;
+  --nobs-white: #f4f4f6;
+  --nobs-white-edge: transparent;
 }
 
 * {
@@ -297,7 +371,7 @@ main {
   color: var(--nobs-text);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 40px var(--nobs-shadow);
 }
 
 .popup[data-flag="green"] {
@@ -441,7 +515,7 @@ main {
   grid-template-columns: auto 72px 1fr;
   gap: 10px;
   padding: 2px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--nobs-line-faint);
 }
 
 .nobs-log-time {
@@ -524,7 +598,7 @@ main {
 
 .nobs-upload input[type="text"] {
   padding: 4px 6px;
-  border: 1px solid #2a2a33;
+  border: 1px solid var(--nobs-border);
   border-radius: 6px;
   background: var(--nobs-surface);
   color: var(--nobs-text);
@@ -539,7 +613,7 @@ main {
   flex: 1;
   min-width: 0;
   padding: 12px 14px;
-  border: 1px solid #2a2a33;
+  border: 1px solid var(--nobs-border);
   border-radius: 8px;
   background: var(--nobs-surface);
   color: var(--nobs-text);
@@ -557,7 +631,7 @@ main {
   border: 0;
   border-radius: 8px;
   background: var(--nobs-green);
-  color: #0b0b0f;
+  color: var(--nobs-on-flag);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -567,7 +641,7 @@ main {
   margin-top: 12px;
   background: var(--nobs-surface);
   color: var(--nobs-text);
-  border: 1px solid #2a2a33;
+  border: 1px solid var(--nobs-border);
 }
 
 #results {
@@ -676,7 +750,7 @@ main {
 
 .nobs-library-item[aria-current="page"] {
   background: var(--nobs-surface);
-  border-color: #2f2f3a;
+  border-color: var(--nobs-border);
   box-shadow: inset 3px 0 0 var(--nobs-green);
 }
 
@@ -723,7 +797,7 @@ main {
   font-weight: 600;
   line-height: 16px;
   text-align: center;
-  color: #0b0b0f;
+  color: var(--nobs-on-flag);
 }
 
 .nobs-library-flag-green { background: var(--nobs-green); }
@@ -786,10 +860,10 @@ main {
   flex-direction: column;
   min-width: 180px;
   padding: 4px;
-  border: 1px solid #2f2f3a;
+  border: 1px solid var(--nobs-border);
   border-radius: 8px;
   background: var(--nobs-surface);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px var(--nobs-shadow);
 }
 .nobs-export-menu[hidden] {
   display: none;
@@ -807,7 +881,7 @@ main {
 }
 .nobs-export-menu button:hover,
 .nobs-export-menu button:focus-visible {
-  background: #2a2a33;
+  background: var(--nobs-pressed);
 }
 .nobs-claims-panel[data-collapsed="true"] {
   overflow: visible;
@@ -841,7 +915,7 @@ main {
   height: 28px;
   margin-right: 8px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--nobs-toggle-border);
   border-radius: 6px;
   background: transparent;
   color: var(--nobs-muted);
@@ -856,11 +930,11 @@ main {
 }
 .nobs-side-toggle[aria-expanded="true"] {
   color: inherit;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--nobs-toggle-on);
 }
 .nobs-side-toggle:hover {
   color: inherit;
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: var(--nobs-toggle-border-hover);
 }
 
 /* Narrow screens: the player first, the library below it. */
@@ -946,7 +1020,7 @@ main {
 }
 
 .claim-original-source a {
-  color: #8ab4ff;
+  color: var(--nobs-link);
 }
 
 .claim-quote-assessment {
@@ -997,7 +1071,7 @@ main {
 .nobs-claims-chip {
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid #2f2f3a;
+  border: 1px solid var(--nobs-border);
   background: transparent;
   color: var(--nobs-muted);
   font: inherit;
@@ -1006,7 +1080,7 @@ main {
 }
 
 .nobs-claims-chip[aria-pressed="true"] {
-  background: #2a2a33;
+  background: var(--nobs-pressed);
   color: var(--nobs-text);
 }
 
@@ -1035,11 +1109,11 @@ main {
 }
 
 .nobs-claims-row:hover {
-  background: #1f1f27;
+  background: var(--nobs-hover);
 }
 
 .nobs-claims-item[aria-current="true"] .nobs-claims-row {
-  background: #23232d;
+  background: var(--nobs-current);
   box-shadow: inset 3px 0 0 var(--nobs-green);
 }
 
@@ -1119,7 +1193,7 @@ main {
 }
 
 .claim-sources a {
-  color: #8ab4ff;
+  color: var(--nobs-link);
 }
 
 /* ---- Presentation tags: "how it's phrased" (outlined, never flag colours) ---- */
@@ -1149,7 +1223,7 @@ main {
 
 .tag-chip {
   padding: 2px 9px;
-  border: 1px dashed #6d6d7a;
+  border: 1px dashed var(--nobs-chip-dash);
   border-radius: 999px;
   background: transparent;
   color: var(--nobs-text);
@@ -1161,7 +1235,7 @@ main {
 
 .tag-chip[aria-expanded="true"] {
   border-style: solid;
-  background: #24242c;
+  background: var(--nobs-current);
 }
 
 .tag-chip-small {
@@ -1187,7 +1261,7 @@ main {
   flex-basis: 100%;
   margin: 2px 0 4px;
   padding: 6px 8px;
-  border-left: 2px solid #3a3a46;
+  border-left: 2px solid var(--nobs-border-strong);
   font-size: 13px;
 }
 
@@ -1208,7 +1282,7 @@ main {
 
 .tag-seek {
   padding: 0 5px;
-  border: 1px solid #3a3a46;
+  border: 1px solid var(--nobs-border-strong);
   border-radius: 4px;
   background: transparent;
   color: var(--nobs-muted);
@@ -1221,7 +1295,7 @@ main {
 .tag-seek:hover,
 .tag-chip:hover {
   color: var(--nobs-text);
-  border-color: #9a9aa5;
+  border-color: var(--nobs-muted);
 }
 
 .tag-disclaimer {
@@ -1328,7 +1402,7 @@ main {
 .nobs-settings {
   width: min(420px, calc(100vw - 32px));
   padding: 20px;
-  border: 1px solid #2f2f3a;
+  border: 1px solid var(--nobs-border);
   border-radius: 12px;
   background: var(--nobs-surface);
   color: var(--nobs-text);
@@ -1354,9 +1428,9 @@ main {
 .nobs-settings-row input {
   width: 80px;
   padding: 6px 8px;
-  border: 1px solid #3a3a46;
+  border: 1px solid var(--nobs-border-strong);
   border-radius: 6px;
-  background: #0f0f14;
+  background: var(--nobs-input-bg);
   color: var(--nobs-text);
   font: inherit;
 }
@@ -1368,7 +1442,7 @@ main {
   padding: 6px 14px;
   border: 0;
   border-radius: 6px;
-  background: #3a3a46;
+  background: var(--nobs-pressed);
   color: var(--nobs-text);
   font: inherit;
   cursor: pointer;
@@ -1378,8 +1452,8 @@ main {
 .nobs-demo-banner {
   margin: 0;
   padding: 8px 16px;
-  background: #2a2410;
-  color: #f1dfa0;
+  background: var(--nobs-banner-bg);
+  color: var(--nobs-banner-text);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -1394,7 +1468,7 @@ main {
 .nobs-tag-filter[data-tier="possible"] {
   opacity: 0.55;
   border-style: dashed;
-  border-color: #55555f;
+  border-color: var(--nobs-border-faint);
   font-style: italic;
 }
 
@@ -1406,7 +1480,7 @@ main {
 .verdict-reason[data-tier="possible"] {
   opacity: 0.6;
   padding-left: 6px;
-  border-left: 1px dashed #55555f;
+  border-left: 1px dashed var(--nobs-border-faint);
 }
 
 .nobs-seek-tagmark[data-tier="possible"] {
@@ -1417,8 +1491,8 @@ main {
 /* «Личное мнение» / "Personal opinion": a neutral note, not a technique --
    a quiet grey chip (no dashed "possible" look, no prefix). */
 .tag-chip[data-tier="note"] {
-  border: 1px solid #44444e;
-  background: #2a2a31;
+  border: 1px solid var(--nobs-note-border);
+  background: var(--nobs-note-bg);
   color: var(--nobs-muted);
 }
 
@@ -1454,7 +1528,7 @@ main {
   padding: 12px 12px 8px;
   background: var(--nobs-surface);
   border-radius: 8px 8px 0 0;
-  box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 8px -6px var(--nobs-shadow);
 }
 
 /* "Now" line between findings: a thin white line laid over the gap
@@ -1464,7 +1538,7 @@ main {
   left: 4px;
   right: 4px;
   height: 0;
-  border-top: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-top: 1.5px solid var(--nobs-now-line);
   pointer-events: none;
   z-index: 1;
 }
@@ -1482,8 +1556,8 @@ main {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #fff;
-  color: #111;
+  background: var(--nobs-text);
+  color: var(--nobs-bg);
   pointer-events: auto;
 }
 
@@ -1498,18 +1572,18 @@ main {
   width: 34px;
   height: 34px;
   margin-top: 8px;
-  border: 1px solid #3a3a46;
+  border: 1px solid var(--nobs-border-strong);
   border-radius: 50%;
-  background: #22222b;
+  background: var(--nobs-raised);
   color: var(--nobs-text);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px var(--nobs-shadow);
   cursor: pointer;
 }
 .nobs-to-top[hidden] {
   display: none;
 }
 .nobs-to-top:hover {
-  background: #2e2e39;
+  background: var(--nobs-raised-hover);
 }
 
 /* The checked statement is shown in quotation marks (popup, claim list):
@@ -1529,4 +1603,22 @@ main {
 .claim-popup .claim-text::after,
 .nobs-claims-text::after {
   content: close-quote;
+}
+
+/* White flag/verdict dots and chips keep an outline on a light page. */
+.nobs-claims-dot[data-flag="white"],
+.nobs-chip-dot[data-verdict="insufficient"],
+.nobs-library-flag-white {
+  box-shadow: inset 0 0 0 1px var(--nobs-white-edge);
+}
+
+.nobs-settings-select {
+  width: fit-content;
+  min-width: 180px;
+  padding: 6px 8px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 6px;
+  background: var(--nobs-input-bg);
+  color: var(--nobs-text);
+  font: inherit;
 }

@@ -3,6 +3,17 @@
   <head>
     <script src="src/demoShim.js"></script>
 
+    <!-- Theme before first paint (settings: dark / light / system). -->
+    <script>
+      try {
+        var nobsTheme = (JSON.parse(localStorage.getItem("nobs.settings") || "{}").theme) || "dark";
+        if (nobsTheme === "system") nobsTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = nobsTheme === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
@@ -58,7 +69,8 @@
       import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
       import { downloadMarkdown, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
-      import { followPlayback, onSettingsChange, seekTarget, showTagFilter, youtubeCaptions } from "./src/settings.js";
+      import { applyTheme, followPlayback, onSettingsChange, seekTarget, showTagFilter, youtubeCaptions } from "./src/settings.js";
+      applyTheme(document);
 
       {
         const panel = document.getElementById("claims-panel");
@@ -200,13 +212,24 @@
       let controls = null;
 
       // YouTube's own captions: off unless the setting turns them on.
-      function applyCaptions(player) {
+      function applyCaptionsNow(player) {
         try {
-          if (youtubeCaptions()) player.loadModule?.("captions");
-          else player.unloadModule?.("captions");
+          if (youtubeCaptions()) {
+            player.loadModule?.("captions");
+          } else {
+            player.setOption?.("captions", "track", {});
+            player.unloadModule?.("captions");
+          }
         } catch {
           // Older players without the module API: nothing to do.
         }
+      }
+      // YouTube loads its captions module a moment after playback starts
+      // (and again after seeks), so apply now and once more shortly after.
+      function applyCaptions(player) {
+        applyCaptionsNow(player);
+        setTimeout(() => applyCaptionsNow(player), 800);
+        setTimeout(() => applyCaptionsNow(player), 2500);
       }
       onSettingsChange((_settings, name) => {
         if (name === "youtubeCaptions" && currentPlayer) applyCaptions(currentPlayer);

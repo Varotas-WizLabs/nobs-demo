@@ -18,7 +18,7 @@ import { t } from "./i18n.js";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark" });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -62,6 +62,35 @@ export function setSetting(name, value) {
     } catch (err) {
       console.error("settings listener failed", err);
     }
+  }
+}
+
+export const THEMES = ["dark", "light", "system"];
+
+/** The page theme setting: "dark" (default), "light" or "system". */
+export function themeSetting() {
+  const value = read().theme;
+  return THEMES.includes(value) ? value : "dark";
+}
+
+/** The theme to draw now: "system" follows the OS light/dark preference. */
+export function resolvedTheme(win = globalThis) {
+  const theme = themeSetting();
+  if (theme !== "system") return theme;
+  return win.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+let systemWatch = null;
+/** Put the theme on <html data-theme> and follow OS changes while "system". */
+export function applyTheme(doc = globalThis.document) {
+  if (!doc?.documentElement) return;
+  const win = doc.defaultView ?? globalThis;
+  doc.documentElement.dataset.theme = resolvedTheme(win);
+  if (!systemWatch && win.matchMedia) {
+    systemWatch = win.matchMedia("(prefers-color-scheme: light)");
+    systemWatch.addEventListener?.("change", () => {
+      if (themeSetting() === "system") doc.documentElement.dataset.theme = resolvedTheme(win);
+    });
   }
 }
 
@@ -242,7 +271,27 @@ export function openSettingsDialog(doc, lang = "en") {
   tagRow.append(tagLine);
   tagBox.addEventListener("change", () => setSetting("showTagFilter", tagBox.checked));
 
-  dialog.append(title, field, possible, follow, tagRow, cc, close);
+  const themeField = doc.createElement("label");
+  themeField.className = "nobs-settings-field";
+  const themeLabel = doc.createElement("span");
+  themeLabel.textContent = t("settings.theme", lang);
+  const themeSelect = doc.createElement("select");
+  themeSelect.name = "theme";
+  themeSelect.className = "nobs-settings-select";
+  for (const value of THEMES) {
+    const option = doc.createElement("option");
+    option.value = value;
+    option.textContent = t(`settings.theme.${value}`, lang);
+    themeSelect.appendChild(option);
+  }
+  themeSelect.value = themeSetting();
+  themeSelect.addEventListener("change", () => {
+    setSetting("theme", themeSelect.value);
+    applyTheme(doc);
+  });
+  themeField.append(themeLabel, themeSelect);
+
+  dialog.append(title, themeField, field, possible, follow, tagRow, cc, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
