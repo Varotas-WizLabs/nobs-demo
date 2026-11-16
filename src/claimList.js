@@ -176,6 +176,13 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       if (visible) shown += 1;
     }
     empty.hidden = shown > 0;
+    if (lastTime != null) {
+      lastFollowed = null;
+      placeNowLine(lastTime);
+      for (const { claim, item } of rows) {
+        if (!item.hidden && lastTime >= claim.start_sec && lastTime < claim.end_sec) nowLine.hidden = true;
+      }
+    }
     onFilterChange?.({
       claims: rows.filter(({ item }) => !item.hidden).map(({ claim }) => claim),
       flag: filter,
@@ -216,11 +223,56 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }
 
+  // The "now" line: absolutely positioned in the list, so rows never move.
+  let lastTime = null;
+  let nowKey = null;
+  const nowLine = el(doc, "li", "nobs-claims-now");
+  nowLine.setAttribute("aria-hidden", "true");
+  nowLine.hidden = true;
+  const nowIcon = el(doc, "span", "nobs-claims-now-icon");
+  nowIcon.title = t("list.playingHere", lang);
+  const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 10 10");
+  svg.setAttribute("width", "8");
+  svg.setAttribute("height", "8");
+  const tri = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+  tri.setAttribute("d", "M2 1l7 4-7 4z");
+  tri.setAttribute("fill", "currentColor");
+  svg.appendChild(tri);
+  nowIcon.appendChild(svg);
+  nowLine.appendChild(nowIcon);
+  list.appendChild(nowLine);
+
+  function placeNowLine(timeSec) {
+    const visible = rows.filter(({ item }) => !item.hidden);
+    if (!visible.length || timeSec == null) {
+      nowLine.hidden = true;
+      nowKey = null;
+      return null;
+    }
+    const nextIndex = visible.findIndex(({ claim }) => claim.start_sec > timeSec);
+    let top;
+    if (nextIndex === 0) top = visible[0].item.offsetTop;
+    else if (nextIndex === -1) {
+      const last = visible[visible.length - 1].item;
+      top = last.offsetTop + last.offsetHeight;
+    } else {
+      const prev = visible[nextIndex - 1].item;
+      const next = visible[nextIndex].item;
+      top = (prev.offsetTop + prev.offsetHeight + next.offsetTop) / 2;
+    }
+    nowLine.style.top = `${top}px`;
+    nowLine.hidden = false;
+    nowKey = `gap:${nextIndex === -1 ? "end" : visible[nextIndex].claim.id}`;
+    return nowLine;
+  }
+
   section.append(header, list, empty);
   root.replaceChildren(section);
 
   return {
     highlight(timeSec) {
+      lastTime = timeSec;
       let first = null;
       for (const { claim, item } of rows) {
         const active = timeSec >= claim.start_sec && timeSec < claim.end_sec;
@@ -228,10 +280,16 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
         else item.removeAttribute("aria-current");
         if (active && !first && !item.hidden) first = item;
       }
-      // Follow playback: when a new claim starts, scroll it into view.
-      if (first && first !== lastFollowed) {
-        lastFollowed = first;
-        if (follow()) scrollIntoPanel(first);
+      // Between findings (or on a claim the filters hide): a thin "now"
+      // line between the visible rows, laid over the gap without moving them.
+      const target = first ?? placeNowLine(timeSec);
+      if (first) nowLine.hidden = true;
+      // Follow playback: when a new claim starts (or the line moves to
+      // another gap), scroll it into view.
+      const key = first ?? nowKey;
+      if (target && key !== lastFollowed) {
+        lastFollowed = key;
+        if (follow()) scrollIntoPanel(target);
       }
     },
   };

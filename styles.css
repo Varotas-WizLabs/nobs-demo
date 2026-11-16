@@ -964,6 +964,7 @@ main {
 }
 
 .nobs-claims-list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1383,4 +1384,34 @@ main {
   background: var(--nobs-surface);
   border-radius: 8px 8px 0 0;
   box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* "Now" line between findings: a thin white line laid over the gap
+   (absolutely positioned, so rows never move) with a small play icon. */
+.nobs-claims-now {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 0;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  z-index: 1;
+}
+.nobs-claims-now[hidden] {
+  display: none;
+}
+.nobs-claims-now-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  pointer-events: auto;
 }
