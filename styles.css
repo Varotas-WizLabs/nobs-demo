@@ -1481,3 +1481,22 @@ main {
 .nobs-to-top:hover {
   background: #2e2e39;
 }
+
+/* The checked statement is shown in quotation marks (popup, claim list):
+   «…» in Russian, “…” otherwise. */
+.claim-popup .claim-text,
+.nobs-claims-text {
+  quotes: "\201C" "\201D";
+}
+.claim-popup:lang(ru) .claim-text,
+.nobs-claims:lang(ru) .nobs-claims-text {
+  quotes: "\00AB" "\00BB";
+}
+.claim-popup .claim-text::before,
+.nobs-claims-text::before {
+  content: open-quote;
+}
+.claim-popup .claim-text::after,
+.nobs-claims-text::after {
+  content: close-quote;
+}

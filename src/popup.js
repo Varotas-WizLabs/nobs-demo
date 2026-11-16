@@ -167,7 +167,7 @@ export function renderClaimPopup(claim, lang = "en") {
       ${sourcesList}`;
 
   return `
-    <div class="popup claim-popup" data-flag="${escapeHtml(claim.flag)}"${quote ? ' data-quote="true"' : ""}>
+    <div class="popup claim-popup" lang="${escapeHtml(lang)}" data-flag="${escapeHtml(claim.flag)}"${quote ? ' data-quote="true"' : ""}>
       <p class="claim-verdict">${escapeHtml(claimVerdictLabel(claim, lang))}</p>
       ${quote ? quoteMark(claim, lang) : ""}
       <p class="claim-text">${escapeHtml(claim.text)}</p>

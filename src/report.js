@@ -229,7 +229,7 @@ export function reportMarkdown(run, options = {}) {
   for (const i of r.items) {
     out.push(`### ${mdTime(r, i.sec)} — ${mdEscape(i.verdict)}`, "");
     if (i.quote) out.push(`*${w.quoteOf}${i.quote.author ? `: ${mdEscape(i.quote.author)}` : ""}*`, "");
-    out.push(`> ${mdEscape(i.text)}`, "");
+    out.push(`> ${r.lang.startsWith("ru") ? "«" : "“"}${mdEscape(i.text)}${r.lang.startsWith("ru") ? "»" : "”"}`, "");
     if (i.summary) out.push(`**${w.summary}:** ${mdEscape(i.summary)}`, "");
     if (i.quote?.original) {
       out.push(`**${w.original}:** «${mdEscape(i.quote.original)}»${i.quote.source ? ` — ${i.quote.source}` : ""}`, "");
@@ -337,7 +337,7 @@ export function reportHtml(run, options = {}) {
     parts.push(`<section class="claim">
       <div class="claim-head"><span class="dot" data-flag="${esc(i.flag)}"></span>${htmlTime(r, i.sec)} <span class="verdict">${esc(i.verdict)}</span></div>
       ${i.quote ? `<p class="who">${esc(w.quoteOf)}${i.quote.author ? `: ${esc(i.quote.author)}` : ""}</p>` : ""}
-      <p class="text">${esc(i.text)}</p>
+      <p class="text">${r.lang.startsWith("ru") ? "«" : "“"}${esc(i.text)}${r.lang.startsWith("ru") ? "»" : "”"}</p>
       ${i.summary ? `<p><span class="label">${esc(w.summary)}:</span> ${esc(i.summary)}</p>` : ""}
       ${i.quote?.original ? `<blockquote>${esc(i.quote.original)}${i.quote.source ? ` — <a href="${esc(safeUrl(i.quote.source))}">${esc(hostOf(i.quote.source))}</a>` : ""}</blockquote>` : ""}
       ${i.argument ? `<p><span class="label">${esc(w.argument)}:</span> ${esc(i.argument)}</p>` : ""}
