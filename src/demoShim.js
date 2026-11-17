@@ -29,6 +29,8 @@
     if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
     // No local Silero voice here; the player uses in-browser voices.
     if (url === "/voice/health") return Promise.resolve(json({ ok: false }));
+    // No local engines either (Carmit, Pocket): Hebrew uses the browser's voice.
+    if (url === "/voice/engines") return Promise.resolve(json({}));
     if (url === "/runs") return realFetch("data/runs.json");
     if ((m = url.match(/^\/runs\/(\d+)\/status$/))) return realFetch(`data/runs/${m[1]}.status.json`);
     if ((m = url.match(/^\/runs\/(\d+)\/events(?:\?after=(\d+))?$/))) {

@@ -10,9 +10,17 @@
 //                   denis, ruslan), in a module Web Worker (piperWorker.js);
 //                   the ~63 MB model downloads once and is cached by the
 //                   browser (OPFS). Needs WebAssembly.
-//   "system"        the browser's own speech (Web Speech API, a ru-RU voice
-//                   when there is one). Also the stand-in while a Piper model
-//                   is still downloading or when Piper fails.
+//   "system"        the browser's own speech (Web Speech API, a voice in the
+//                   run's language when there is one: ru-RU, he-IL). Also the
+//                   stand-in while a Piper model is still downloading or when
+//                   Piper fails.
+//   "local:<lang>:<engine>"  a local engine of the voice sidecar through the
+//                   backend (GET /voice/say?lang=<lang>&engine=<engine>), e.g.
+//                   "local:he:say" (macOS Carmit) or "local:he:pocket:liat";
+//                   offered only when GET /voice/engines lists it available.
+//
+// Languages: Russian has Piper, Silero and the system voice; Hebrew has the
+// system voice (he-IL) and the local engines. Piper has no Hebrew voice.
 //
 // Blob engines: {id, kind: "blob", isReady(), synthesize(text, {isWanted}) ->
 // Promise<Blob>}. Speech engines: {id, kind: "speech", speak(text, {volume,
@@ -129,8 +137,20 @@ export function enWordToRu(word) {
   return /^[A-Z]/.test(word) ? out.charAt(0).toUpperCase() + out.slice(1) : out;
 }
 
+// Hebrew text for the browser's voice: "+" read as "פלוס", Russian stress
+// marks (combining acute) dropped; Latin and digits stay as they are.
+export function normalizeHebrew(text) {
+  return String(text ?? "")
+    .replace(/\u0301/g, "")
+    .replace(/\+/g, " פלוס ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([,.:;!?…])/g, "$1")
+    .trim();
+}
+
 /** Text ready for Piper / the system voice (not needed for Silero). */
-export function normalizeForSynth(text) {
+export function normalizeForSynth(text, lang = "ru") {
+  if (baseLang(lang) === "he") return normalizeHebrew(text);
   let s = String(text ?? "");
   s = s.replace(/\+/g, " плюс ");
   s = s.replace(/&/g, " и ").replace(/№/g, " номер ");
@@ -141,6 +161,64 @@ export function normalizeForSynth(text) {
   s = s.replace(/(?<![A-Za-zА-Яа-яЁё0-9\-])[A-Z](?![A-Za-zА-Яа-яЁё0-9\-])/g, (m) => RU_LETTER[m]);
   s = s.replace(/[A-Za-z][A-Za-z']*/g, (m) => enWordToRu(m));
   return s.replace(/[ \t]{2,}/g, " ").replace(/\s+([,.:;!?…])/g, "$1").trim();
+}
+
+// ---- Languages ----
+
+// "iw" (YouTube's old code for Hebrew) and "he-IL" -> "he"; "ru-RU" -> "ru".
+export function baseLang(lang) {
+  const base = String(lang ?? "").split(/[-_]/)[0].toLowerCase();
+  return base === "iw" ? "he" : base;
+}
+
+// BCP-47 tag the browser voice is asked for, per base language.
+export const SPEECH_LANG = Object.freeze({ ru: "ru-RU", he: "he-IL" });
+
+/** A browser voice for `lang` ("he" matches he-IL, he, iw-IL), or null. */
+export function findSystemVoice(lang, synth = globalThis.speechSynthesis) {
+  try {
+    const want = baseLang(lang);
+    const tag = (SPEECH_LANG[want] ?? want).toLowerCase();
+    const voices = synth?.getVoices?.() ?? [];
+    const norm = (v) => String(v?.lang ?? "").toLowerCase().replace("_", "-");
+    return voices.find((v) => norm(v) === tag) ?? voices.find((v) => baseLang(norm(v)) === want) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** The local engine id for a /voice/engines option ("say" -> "local:he:say"). */
+export function localEngineId(lang, option) {
+  return `local:${baseLang(lang)}:${option}`;
+}
+
+/**
+ * The local engines GET /voice/engines lists as available for `lang`:
+ * [{id: "local:he:say", engine: "say", label}]. {} (sidecar down) -> [].
+ */
+export function localEngines(enginesBody, lang) {
+  const entry = enginesBody?.[baseLang(lang)];
+  const options = Array.isArray(entry?.options) ? entry.options : [];
+  return options
+    .filter((o) => o && o.available === true && typeof o.id === "string" && o.id)
+    .map((o) => ({ id: localEngineId(lang, o.id), engine: o.id, label: String(o.label ?? o.id) }));
+}
+
+/** GET /voice/engines; {} when it fails or the sidecar is down. */
+export async function fetchVoiceEngines(fetchImpl) {
+  try {
+    const response = await fetchImpl("/voice/engines");
+    if (!response.ok) return {};
+    const body = await response.json();
+    return body && typeof body === "object" && !Array.isArray(body) ? body : {};
+  } catch {
+    return {};
+  }
+}
+
+/** The default Hebrew choice: local Carmit when available, else the system voice. */
+export function defaultHebrewEngine(localIds = []) {
+  return localIds.includes("local:he:say") ? "local:he:say" : "system";
 }
 
 // ---- Availability ----
@@ -158,7 +236,8 @@ export function systemSupported(g = globalThis) {
  * an unavailable choice falls back to Piper (dmitri), then the system voice.
  * Null when nothing can speak.
  */
-export function resolveEngineId(wanted, { silero = false, piper = false, system = false } = {}) {
+export function resolveEngineId(wanted, { silero = false, piper = false, system = false, local = [] } = {}, lang = "ru") {
+  if (baseLang(lang) === "he") return resolveHebrewEngineId(wanted, { system, local });
   const ok = (id) => (id === "silero" ? silero : id === "system" ? system : id.startsWith("piper:") ? piper : false);
   const id = ENGINE_IDS.includes(wanted) ? wanted : DEFAULT_ENGINE;
   if (ok(id)) return id;
@@ -168,7 +247,40 @@ export function resolveEngineId(wanted, { silero = false, piper = false, system 
   return null;
 }
 
+/**
+ * Hebrew: the wanted engine when it can speak here; otherwise local Carmit,
+ * the system voice (only when the browser has a Hebrew voice), any local
+ * engine; null when none (the toggle is then disabled for the run).
+ * `local`: ids of the available local engines ("local:he:say", ...).
+ */
+export function resolveHebrewEngineId(wanted, { system = false, local = [] } = {}) {
+  const ids = Array.isArray(local) ? local : [];
+  if (wanted === "system" && system) return "system";
+  if (typeof wanted === "string" && wanted.startsWith("local:he:") && ids.includes(wanted)) return wanted;
+  if (ids.includes("local:he:say")) return "local:he:say";
+  if (system) return "system";
+  return ids[0] ?? null;
+}
+
 // ---- Engines ----
+
+/** A local sidecar engine ("local:he:say", "local:he:pocket:liat") through /voice/say. */
+export function createLocalEngine({ fetchImpl, id }) {
+  const [, lang = "he", ...rest] = String(id).split(":");
+  const engine = rest.join(":");
+  return {
+    id,
+    kind: "blob",
+    isReady: () => true,
+    async synthesize(text) {
+      const response = await fetchImpl(
+        `/voice/say?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}&engine=${encodeURIComponent(engine)}`
+      );
+      if (!response.ok) throw new Error(`voice/say HTTP ${response.status}`);
+      return response.blob();
+    },
+  };
+}
 
 /** The local Silero sidecar through the backend proxy. */
 export function createSileroEngine({ fetchImpl, lang = "ru" }) {
@@ -186,19 +298,9 @@ export function createSileroEngine({ fetchImpl, lang = "ru" }) {
 
 /** The browser's Web Speech API. */
 export function createSystemEngine({ synth = globalThis.speechSynthesis, Utterance = globalThis.SpeechSynthesisUtterance, lang = "ru-RU" } = {}) {
-  function pickVoice() {
-    try {
-      const voices = synth.getVoices?.() ?? [];
-      const base = lang.split("-")[0].toLowerCase();
-      return (
-        voices.find((v) => String(v.lang).toLowerCase().replace("_", "-") === lang.toLowerCase()) ??
-        voices.find((v) => String(v.lang).toLowerCase().startsWith(base)) ??
-        null
-      );
-    } catch {
-      return null;
-    }
-  }
+  const base = baseLang(lang);
+  const tag = SPEECH_LANG[base] ?? lang;
+  const pickVoice = () => findSystemVoice(base, synth);
   // Chrome fills the voice list asynchronously; ask early.
   try {
     synth?.getVoices?.();
@@ -208,6 +310,7 @@ export function createSystemEngine({ synth = globalThis.speechSynthesis, Utteran
   return {
     id: "system",
     kind: "speech",
+    lang: base,
     isReady: () => true,
     speak(text, { volume = 1, rate = 1, onEnd = () => {}, onError = () => {} } = {}) {
       let done = false;
@@ -216,8 +319,8 @@ export function createSystemEngine({ synth = globalThis.speechSynthesis, Utteran
         done = true;
         fn(arg);
       };
-      const utterance = new Utterance(normalizeForSynth(text));
-      utterance.lang = lang;
+      const utterance = new Utterance(normalizeForSynth(text, base));
+      utterance.lang = tag;
       const voice = pickVoice();
       if (voice) utterance.voice = voice;
       utterance.rate = rate;
@@ -263,7 +366,7 @@ function mainThreadPort() {
       handle.then(run);
       return;
     }
-    handle = import("./piperWorker.js?v=fbb1d99ceb").then(({ createPiperHandler }) => createPiperHandler(post));
+    handle = import("./piperWorker.js?v=dae8a662ba").then(({ createPiperHandler }) => createPiperHandler(post));
     handle.then(run, (err) => port.onerror?.(err));
   };
   port.terminate = () => {
@@ -394,10 +497,11 @@ export function createPiperEngine({ voice = "dmitri", workerFactory = defaultWor
   };
 }
 
-/** The engine for an id ("piper:dmitri", "silero", "system"). */
+/** The engine for an id ("piper:dmitri", "silero", "system", "local:he:say"). */
 export function createEngine(id, { fetchImpl, lang = "ru", workerFactory, onProgress, onState, synth, Utterance } = {}) {
   if (id === "silero") return createSileroEngine({ fetchImpl, lang });
-  if (id === "system") return createSystemEngine({ synth, Utterance });
+  if (id === "system") return createSystemEngine({ synth, Utterance, lang });
+  if (String(id).startsWith("local:")) return createLocalEngine({ fetchImpl, id });
   const voice = String(id).split(":")[1] ?? "dmitri";
   return createPiperEngine({ voice, workerFactory, onProgress, onState });
 }

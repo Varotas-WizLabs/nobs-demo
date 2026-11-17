@@ -1,7 +1,7 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=fbb1d99ceb";
+import { seekTarget } from "./settings.js?v=dae8a662ba";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -290,9 +290,14 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
     event.stopPropagation();
     onVoiceToggle?.();
   });
-  function setVoiceState({ available = false, on = false, title = "", label = title } = {}) {
-    voice.hidden = !available;
-    voice.setAttribute("aria-pressed", String(Boolean(on)));
+  // `disabled`: shown but not usable (no voice for this run's language in
+  // this browser); the title says why.
+  function setVoiceState({ available = false, on = false, title = "", label = title, disabled = false } = {}) {
+    // aria-disabled, not the disabled attribute: a disabled button shows no
+    // tooltip in some browsers. The click handler ignores it (the page checks).
+    voice.hidden = !available && !disabled;
+    voice.setAttribute("aria-disabled", String(Boolean(disabled)));
+    voice.setAttribute("aria-pressed", String(Boolean(on) && !disabled));
     voice.title = title;
     voice.setAttribute("aria-label", label);
   }

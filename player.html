@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=fbb1d99ceb"></script>
+    <script src="src/demoShim.js?v=dae8a662ba"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=fbb1d99ceb" />
+    <link rel="stylesheet" href="styles.css?v=dae8a662ba" />
   </head>
   <body>
     <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
@@ -69,21 +69,21 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=fbb1d99ceb";
-      import { bootstrapPlayerPage } from "./src/main.js?v=fbb1d99ceb";
-      import { startProcessingLog } from "./src/processingLog.js?v=fbb1d99ceb";
-      import { startLibrary } from "./src/library.js?v=fbb1d99ceb";
-      import { buildShareControl, isSolo } from "./src/share.js?v=fbb1d99ceb";
-      import { renderClaimList } from "./src/claimList.js?v=fbb1d99ceb";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=fbb1d99ceb";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=fbb1d99ceb";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=fbb1d99ceb";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=fbb1d99ceb";
-      import { t } from "./src/i18n.js?v=fbb1d99ceb";
-      import { checkVoiceHealth, createNarrator, loadEnabled, saveEnabled } from "./src/voice.js?v=fbb1d99ceb";
-      import { createEngine, createSystemEngine, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=fbb1d99ceb";
-      import { createHoldIcon } from "./src/holdIcon.js?v=fbb1d99ceb";
-      import { applyTheme, followPlayback, onSettingsChange, seekTarget, setSileroAvailable, showTagFilter, voiceEngine, voiceStyle, youtubeCaptions } from "./src/settings.js?v=fbb1d99ceb";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=dae8a662ba";
+      import { bootstrapPlayerPage } from "./src/main.js?v=dae8a662ba";
+      import { startProcessingLog } from "./src/processingLog.js?v=dae8a662ba";
+      import { startLibrary } from "./src/library.js?v=dae8a662ba";
+      import { buildShareControl, isSolo } from "./src/share.js?v=dae8a662ba";
+      import { renderClaimList } from "./src/claimList.js?v=dae8a662ba";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=dae8a662ba";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=dae8a662ba";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=dae8a662ba";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=dae8a662ba";
+      import { t } from "./src/i18n.js?v=dae8a662ba";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=dae8a662ba";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=dae8a662ba";
+      import { createHoldIcon } from "./src/holdIcon.js?v=dae8a662ba";
+      import { applyTheme, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setLocalVoices, setSileroAvailable, showTagFilter, voiceEngine, voiceStyle, youtubeCaptions } from "./src/settings.js?v=dae8a662ba";
       applyTheme(document);
 
       {
@@ -170,6 +170,8 @@
             demo: document.documentElement.dataset.demo === "1",
           })
         );
+        // Shared link: the settings gear stays next to share / download.
+        if (isSolo(window.location.search)) mountPanelSettings(bar, document);
         const button = wrap.querySelector(".nobs-export-button");
         button.title = t("export.button", lang);
         button.setAttribute("aria-label", button.title);
@@ -185,6 +187,9 @@
       if (isSolo(window.location.search)) {
         document.documentElement.dataset.solo = "1";
         document.getElementById("library").hidden = true;
+        // The gear lives in the hidden analyses panel: put one into the right
+        // panel's bar, so a viewer of a shared link can change the voice too.
+        mountPanelSettings(document.querySelector(".nobs-claims-panel-bar"), document);
       } else {
         startLibrary({ root: document.getElementById("library"), fetchImpl: fetch, currentRunId: runId });
       }
@@ -323,32 +328,51 @@
 
       // ---- Flag narrator (src/voice.js): reads each shown flag aloud ----
       // Its button (next to the volume control) shows for a run in a language
-      // that has a voice (Russian for now) whenever some engine can speak here
-      // (src/voiceEngines.js): Piper in the browser (WebAssembly), the
-      // browser's own voice, or the local Silero sidecar (/voice/health ok) --
-      // in the local app and in the public demo alike.
+      // that has a voice (Russian, Hebrew) whenever some engine can speak here
+      // (src/voiceEngines.js). Russian: Piper in the browser (WebAssembly), the
+      // browser's own voice, or the local Silero sidecar (/voice/health ok).
+      // Hebrew: the browser's he-IL voice, or a local engine GET /voice/engines
+      // lists (Carmit, Pocket voices); with neither the button shows disabled
+      // with a tooltip. The choice is per language (settings voiceEngine.<lang>).
       let narrator = null;
       let voiceLang = null;
       let sileroHealthy = false;
       const piperOk = piperSupported();
       const systemOk = systemSupported();
-      const systemEngine = systemOk ? createSystemEngine() : null;
+      // One browser-voice engine per language (it picks a voice in that language).
+      const systemEngines = {};
+      const systemEngineFor = (lang) => (systemOk ? (systemEngines[lang] ??= createSystemEngine({ lang })) : null);
+      const isSystemEngine = (e) => Boolean(e) && Object.values(systemEngines).includes(e);
       let engineId = null;
       let engine = null;
       let holdIcon = null;
       // The viewer's choice (localStorage "nobs.voice"); kept here too, so a
       // blocked storage still remembers it for this page.
       let voiceWanted = loadEnabled();
+      const voiceBase = () => normalizeLang(voiceLang);
       function engineFlags() {
+        // Hebrew: the system voice only when the browser has a Hebrew voice
+        // (another voice would mangle it); Piper has no Hebrew voice.
+        if (voiceBase() === "he") return { system: systemOk && Boolean(findSystemVoice("he")), local: localVoiceIds("he") };
         return { silero: sileroHealthy, piper: piperOk, system: systemOk };
       }
+      function wantedEngineId() {
+        return resolveEngineId(voiceEngine(voiceBase()), engineFlags(), voiceBase());
+      }
       function voiceAvailable() {
-        return Boolean(narrator?.supports(voiceLang)) && resolveEngineId(voiceEngine(), engineFlags()) !== null;
+        return Boolean(narrator?.supports(voiceLang)) && wantedEngineId() !== null;
       }
       function renderVoice() {
         if (!controls || !narrator) return;
-        const on = voiceAvailable() && narrator.isEnabled();
         const lang = voiceLang ?? "en";
+        // A Hebrew run with no voice in this browser: the button shows,
+        // disabled, and says why.
+        if (narrator.supports(voiceLang) && !voiceAvailable() && voiceBase() === "he") {
+          const why = t("voice.noHebrew", lang);
+          controls.setVoiceState({ available: false, disabled: true, on: false, title: why, label: why });
+          return;
+        }
+        const on = voiceAvailable() && narrator.isEnabled();
         let title = t(on ? "voice.on" : "voice.off", lang);
         // A Piper model still downloading: show how far.
         if (on && engine?.getState?.() === "loading") {
@@ -360,16 +384,19 @@
       // engine replaces the old one at once (prepared audio is dropped).
       function applyEngine() {
         if (!narrator) return;
-        const id = resolveEngineId(voiceEngine(), engineFlags());
+        const base = voiceBase();
+        const id = wantedEngineId();
         if (!id) return;
-        if (id !== engineId) {
-          if (engine && engine !== systemEngine) engine.destroy?.();
-          engineId = id;
+        const key = `${base}|${id}`;
+        if (key !== engineId) {
+          if (engine && !isSystemEngine(engine)) engine.destroy?.();
+          engineId = key;
           engine =
             id === "system"
-              ? systemEngine
+              ? systemEngineFor(base)
               : createEngine(id, {
                   fetchImpl: fetch,
+                  lang: base,
                   onProgress: () => renderVoice(),
                   onState: (state) => {
                     if (state === "ready") narrator.engineReady();
@@ -377,7 +404,9 @@
                     renderVoice();
                   },
                 });
-          narrator.setEngine(engine, id === "system" ? null : systemEngine);
+          // The browser voice stands in while a model loads or a local
+          // engine fails -- only when it has a voice in the run's language.
+          narrator.setEngine(engine, id === "system" || !engineFlags().system ? null : systemEngineFor(base));
         }
         // The voice is on: start loading the model now (the system voice
         // speaks meanwhile).
@@ -385,6 +414,8 @@
       }
       function applyVoice() {
         if (!narrator) return;
+        // The engine first, so the new language never speaks with the old one.
+        applyEngine();
         narrator.setLanguage(voiceLang);
         narrator.setEnabled(voiceAvailable() && voiceWanted);
         applyEngine();
@@ -417,7 +448,9 @@
         });
         onSettingsChange((_settings, name) => {
           if (name === "voiceStyle") narrator.setStyle(voiceStyle());
-          if (name === "voiceEngine") {
+          // "voiceEngine.ru" / "voiceEngine.he": the current run's language
+          // decides which one applies.
+          if (String(name).startsWith("voiceEngine")) {
             applyEngine();
             renderVoice();
           }
@@ -447,6 +480,18 @@
           setSileroAvailable(ok);
           applyVoice();
         });
+        // Local engines (Carmit, Pocket voices); {} when the sidecar is down
+        // and on the public page.
+        fetchVoiceEngines(fetch).then((body) => {
+          setLocalVoices(body);
+          applyVoice();
+        });
+        // Browsers fill their voice list late: a Hebrew voice may appear now.
+        try {
+          window.speechSynthesis?.addEventListener?.("voiceschanged", () => applyVoice());
+        } catch {
+          // no Web Speech
+        }
       }
 
       let list = null;

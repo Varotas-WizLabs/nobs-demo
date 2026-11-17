@@ -18,16 +18,24 @@
 // friend's short retelling, generated per run) or "normal" (the claim's
 // summary). Applies without a reload.
 //
-// voiceEngine: which voice reads -- "piper:dmitri" (default), "piper:irina",
-// "piper:denis", "piper:ruslan" (generated in the browser), "silero" (the
-// local sidecar; offered only when it answers /voice/health) or "system" (the
-// browser's own voice). Applies without a reload.
+// voiceEngine.<lang>: which voice reads, per language of the run.
+//   "voiceEngine.ru": "piper:dmitri" (default), "piper:irina", "piper:denis",
+//     "piper:ruslan" (generated in the browser), "silero" (the local sidecar;
+//     offered only when it answers /voice/health) or "system" (the browser's
+//     own voice). A value saved under the old single key "voiceEngine" is
+//     taken over as the Russian choice.
+//   "voiceEngine.he": "system" (the browser's he-IL voice; the default on the
+//     public page) or a local engine "local:he:say" (Carmit), "local:he:pocket:<voice>"
+//     -- offered only when GET /voice/engines lists it available. Unset, the
+//     local app uses Carmit when available, else the system voice.
+// Applies without a reload.
 
-import { t } from "./i18n.js?v=fbb1d99ceb";
+import { t } from "./i18n.js?v=dae8a662ba";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=dae8a662ba";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", voiceEngine: "piper:dmitri" });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -39,6 +47,11 @@ function read() {
     stored = JSON.parse(globalThis.localStorage?.getItem(KEY) ?? "{}") ?? {};
   } catch {
     stored = {};
+  }
+  // Migration: the single pre-Hebrew "voiceEngine" key is the Russian choice.
+  if (stored && typeof stored === "object" && stored.voiceEngine !== undefined) {
+    if (stored["voiceEngine.ru"] === undefined) stored["voiceEngine.ru"] = stored.voiceEngine;
+    delete stored.voiceEngine;
   }
   cache = { ...DEFAULTS, ...stored };
   return cache;
@@ -80,9 +93,42 @@ export const VOICE_STYLES = ["casual", "normal"];
 
 export const VOICE_ENGINES = ["piper:dmitri", "piper:irina", "piper:denis", "piper:ruslan", "silero", "system"];
 
-/** The chosen voice engine ("piper:dmitri" by default). */
-export function voiceEngine() {
-  const value = read().voiceEngine;
+// Languages with a voice setting, in the dialog's default order.
+export const VOICE_LANGS = ["ru", "he"];
+
+/** The settings key of a language's voice ("voiceEngine.ru", "voiceEngine.he"). */
+export function voiceEngineKey(lang = "ru") {
+  return `voiceEngine.${baseLang(lang) === "he" ? "he" : "ru"}`;
+}
+
+// What GET /voice/engines answered (set by the player; {} when the sidecar is
+// down or on the public page): the local engines the dialog offers.
+let localVoices = {};
+export function setLocalVoices(body) {
+  localVoices = body && typeof body === "object" ? body : {};
+}
+/** Ids of the available local engines for `lang` ("local:he:say", ...). */
+export function localVoiceIds(lang) {
+  return localEngines(localVoices, lang).map((o) => o.id);
+}
+
+/** The Hebrew choices offered here: the system voice, then the available local engines. */
+export function hebrewEngineOptions() {
+  return ["system", ...localVoiceIds("he")];
+}
+
+/**
+ * The chosen voice engine for a run language ("ru" by default):
+ * Russian "piper:dmitri" unless changed; Hebrew the saved choice, else local
+ * Carmit when available, else "system".
+ */
+export function voiceEngine(lang = "ru") {
+  const base = baseLang(lang) === "he" ? "he" : "ru";
+  const value = read()[voiceEngineKey(base)];
+  if (base === "he") {
+    if (value === "system" || (typeof value === "string" && value.startsWith("local:he:"))) return value;
+    return defaultHebrewEngine(localVoiceIds("he"));
+  }
   return VOICE_ENGINES.includes(value) ? value : "piper:dmitri";
 }
 
@@ -188,6 +234,84 @@ export function gearIcon(doc) {
   hub.setAttribute("r", "3");
   svg.append(gear, hub);
   return svg;
+}
+
+/** A Hebrew engine's label: "מערכת — ...", "Carmit (local)", "Pocket: Liat (local)". */
+export function hebrewEngineLabel(id, lang = "en") {
+  if (id === "system") return t("settings.voiceEngine.he.system", lang);
+  const engine = String(id).replace(/^local:he:/, "");
+  if (engine === "say") return t("settings.voiceEngine.he.say", lang);
+  if (engine.startsWith("pocket:")) {
+    const name = engine.slice("pocket:".length);
+    return t("settings.voiceEngine.he.pocket", lang).replace("{name}", name.charAt(0).toUpperCase() + name.slice(1));
+  }
+  return engine;
+}
+
+function engineSelectField(doc, voiceLang, lang) {
+  const base = voiceLang === "he" ? "he" : "ru";
+  const key = voiceEngineKey(base);
+  const field = doc.createElement("label");
+  field.className = "nobs-settings-field";
+  field.dataset.voiceLang = base;
+  const label = doc.createElement("span");
+  label.textContent = t(`settings.voiceEngine.${base}`, lang);
+  const select = doc.createElement("select");
+  select.name = key;
+  select.className = "nobs-settings-select";
+  const ids = base === "he" ? hebrewEngineOptions() : VOICE_ENGINES.filter((v) => v !== "silero" || sileroAvailable);
+  for (const value of ids) {
+    const option = doc.createElement("option");
+    option.value = value;
+    option.textContent = base === "he" ? hebrewEngineLabel(value, lang) : t(`settings.voiceEngine.${value}`, lang);
+    select.appendChild(option);
+  }
+  const chosen = voiceEngine(base);
+  select.value = ids.includes(chosen) ? chosen : ids[0];
+  select.addEventListener("change", () => setSetting(key, select.value));
+  field.append(label, select);
+  return field;
+}
+
+/**
+ * The gear button that opens the settings dialog in the language `getLang()`
+ * returns (the loaded run's). Used in the analyses panel and, on a shared
+ * `?solo=1` page (no analyses panel), in the right panel's button bar.
+ */
+export function buildSettingsButton(doc, getLang = () => doc.body?.dataset.lang || "en") {
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.className = "nobs-side-toggle nobs-settings-button";
+  button.setAttribute("aria-haspopup", "dialog");
+  const label = () => {
+    button.title = t("settings.title", getLang());
+    button.setAttribute("aria-label", button.title);
+  };
+  label();
+  button.appendChild(gearIcon(doc));
+  button.addEventListener("click", () => {
+    label();
+    openSettingsDialog(doc, getLang());
+  });
+  return button;
+}
+
+/**
+ * A shared `?solo=1` page has no analyses panel (and so no gear there): put
+ * the gear into the right panel's button bar, after share / download when
+ * they are there, else before the panel toggle. Idempotent: call again after
+ * share / download were (re)built to keep the gear next to them.
+ */
+export function mountPanelSettings(bar, doc = bar.ownerDocument, getLang) {
+  let gear = bar.querySelector(":scope > .nobs-settings-button");
+  if (!gear) gear = buildSettingsButton(doc, getLang);
+  const anchor = bar.querySelector(":scope > .nobs-share") ?? bar.querySelector(":scope > .nobs-export");
+  if (anchor) anchor.after(gear);
+  else {
+    const toggle = [...bar.children].reverse().find((el) => el !== gear && el.classList.contains("nobs-side-toggle"));
+    bar.insertBefore(gear, toggle ?? null);
+  }
+  return gear;
 }
 
 /**
@@ -340,26 +464,11 @@ export function openSettingsDialog(doc, lang = "en") {
   voiceSelect.addEventListener("change", () => setSetting("voiceStyle", voiceSelect.value));
   voiceField.append(voiceLabel, voiceSelect);
 
-  const engineField = doc.createElement("label");
-  engineField.className = "nobs-settings-field";
-  const engineLabel = doc.createElement("span");
-  engineLabel.textContent = t("settings.voiceEngine", lang);
-  const engineSelect = doc.createElement("select");
-  engineSelect.name = "voiceEngine";
-  engineSelect.className = "nobs-settings-select";
-  for (const value of VOICE_ENGINES) {
-    if (value === "silero" && !sileroAvailable) continue;
-    const option = doc.createElement("option");
-    option.value = value;
-    option.textContent = t(`settings.voiceEngine.${value}`, lang);
-    engineSelect.appendChild(option);
-  }
-  const chosen = voiceEngine();
-  engineSelect.value = chosen === "silero" && !sileroAvailable ? "piper:dmitri" : chosen;
-  engineSelect.addEventListener("change", () => setSetting("voiceEngine", engineSelect.value));
-  engineField.append(engineLabel, engineSelect);
+  // One voice select per language; the run's language first.
+  const runVoice = baseLang(lang) === "he" ? "he" : "ru";
+  const engineFields = [runVoice, ...VOICE_LANGS.filter((l) => l !== runVoice)].map((l) => engineSelectField(doc, l, lang));
 
-  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, engineField, close);
+  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, ...engineFields, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");

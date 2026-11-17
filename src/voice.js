@@ -40,8 +40,8 @@
 // "casual" (фривольный) reads a short friend-to-friend retelling generated per
 // run by the backend (GET/POST /runs/{id}/voice-texts?style=casual, polled
 // every TEXTS_POLL_MS while it runs). Until a claim's casual text exists, a
-// colour opener ("Вот тут совсем не так.") plus the summary stands in. Casual
-// texts are Russian only.
+// colour opener ("Вот тут совсем не так.", in Hebrew "רגע, זה ממש לא ככה.")
+// plus the summary stands in. Casual texts exist for Russian and Hebrew runs.
 //
 // Red flags (option errorCue): the narration of a red flag opens with a short
 // "error" sound effect (two descending bell tones, in the spirit of a desktop
@@ -50,8 +50,9 @@
 //
 // Speech plays SPEECH_RATE times faster than generated, pitch preserved.
 //
-// Languages: only Russian has a voice for now. A new language is one entry in
-// VOICES plus its "voice.*" strings in i18n.js.
+// Languages: Russian and Hebrew (caption code "iw" is Hebrew too). A new
+// language is one entry in VOICES (plus OPENERS_BY_LANG for casual) and its
+// engines in voiceEngines.js.
 //
 // Autoplay: speech starts from a timer, never inside a user gesture, so the
 // narrator keeps ONE long-lived audio element and unlocks it in a real gesture
@@ -125,15 +126,31 @@ export const OPENERS = Object.freeze({
   white: ["А это проверить не выйдет."],
 });
 
+// Hebrew openers per flag colour.
+export const HE_OPENERS = Object.freeze({
+  red: ["רגע, זה ממש לא ככה."],
+  yellow: ["זה לא ממש מדויק."],
+  green: ["כאן הכול נכון."],
+  white: ["את זה אי אפשר לבדוק."],
+});
+
+export const OPENERS_BY_LANG = Object.freeze({ ru: OPENERS, he: HE_OPENERS });
+
 // Run caption language (base code) -> voice language sent to /voice/say.
 export const VOICES = Object.freeze({
   ru: { lang: "ru" },
+  he: { lang: "he" },
 });
+
+// Caption code -> voice base code: "iw" (YouTube's old Hebrew code) is "he".
+export function normalizeLang(captionLanguage) {
+  const base = String(captionLanguage ?? "").split(/[-_]/)[0].toLowerCase();
+  return base === "iw" ? "he" : base;
+}
 
 // The voice for a run's caption language, or null when there is none.
 export function voiceFor(captionLanguage) {
-  const base = String(captionLanguage ?? "").split("-")[0].toLowerCase();
-  return VOICES[base] ?? null;
+  return VOICES[normalizeLang(captionLanguage)] ?? null;
 }
 
 const PLAYING = 1;
@@ -188,9 +205,9 @@ function hashString(value) {
 
 // The casual stand-in for a claim without a generated text: a colour opener
 // (deterministic per claim id) and the summary.
-export function casualFallback(claim) {
+export function casualFallback(claim, lang = "ru") {
   const summary = spokenText(claim);
-  const list = OPENERS[claim?.flag];
+  const list = (OPENERS_BY_LANG[normalizeLang(lang)] ?? OPENERS)[claim?.flag];
   if (!list?.length) return summary;
   const opener = list[hashString(claim?.id ?? claim?.start_sec ?? "") % list.length];
   return summary ? `${opener} ${summary}` : opener;
@@ -198,10 +215,10 @@ export function casualFallback(claim) {
 
 // What is said for a claim in a style: "casual" uses the generated text
 // (`texts[claim.id]`) or the fallback; "normal" the summary.
-export function textForStyle(claim, style = "normal", texts = {}) {
+export function textForStyle(claim, style = "normal", texts = {}, lang = "ru") {
   if (style !== "casual") return spokenText(claim);
   const generated = String(texts?.[claim?.id] ?? "").trim();
-  return generated ? capText(generated) : capText(casualFallback(claim));
+  return generated ? capText(generated) : capText(casualFallback(claim, lang));
 }
 
 // When a flag is read: at the END of its passage (the speaker has finished
@@ -434,11 +451,11 @@ export function createNarrator({
   }
 
   function casualActive() {
-    return style === "casual" && voice?.lang === "ru";
+    return style === "casual" && Boolean(voice && OPENERS_BY_LANG[voice.lang]);
   }
 
   function currentText(claim) {
-    return casualActive() ? textForStyle(claim, "casual", texts) : spokenText(claim, voice?.lang ?? "ru");
+    return casualActive() ? textForStyle(claim, "casual", texts, voice.lang) : spokenText(claim, voice?.lang ?? "ru");
   }
 
   // ---- Casual texts (GET / POST /runs/{id}/voice-texts?style=casual) ----

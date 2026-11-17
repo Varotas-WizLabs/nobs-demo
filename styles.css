@@ -177,6 +177,10 @@ main {
 .nobs-voice-toggle[aria-pressed="false"] {
   opacity: 0.55;
 }
+.nobs-voice-toggle[aria-disabled="true"] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
 .nobs-voice-toggle[aria-pressed="true"] {
   color: var(--nobs-yellow);
   background: rgba(255, 255, 255, 0.12);

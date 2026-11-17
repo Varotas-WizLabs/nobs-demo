@@ -9,10 +9,9 @@
 // toggle). The state lives on the root's data-collapsed, so it survives the
 // periodic re-render.
 
-import { formatCost, formatDuration } from "./runStats.js?v=fbb1d99ceb";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=fbb1d99ceb";
-import { gearIcon, openSettingsDialog } from "./settings.js?v=fbb1d99ceb";
-import { t } from "./i18n.js?v=fbb1d99ceb";
+import { formatCost, formatDuration } from "./runStats.js?v=dae8a662ba";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=dae8a662ba";
+import { buildSettingsButton } from "./settings.js?v=dae8a662ba";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -118,15 +117,7 @@ export function renderLibrary(root, runs, currentRunId) {
   newLink.className = "nobs-library-new";
   newLink.textContent = "+ New";
   // Settings (gear): a dialog in the loaded run's language.
-  const settings = doc.createElement("button");
-  settings.type = "button";
-  settings.className = "nobs-side-toggle nobs-settings-button";
-  const uiLang = () => doc.body?.dataset.lang || "en";
-  settings.title = t("settings.title", uiLang());
-  settings.setAttribute("aria-label", settings.title);
-  settings.setAttribute("aria-haspopup", "dialog");
-  settings.appendChild(gearIcon(doc));
-  settings.addEventListener("click", () => openSettingsDialog(doc, uiLang()));
+  const settings = buildSettingsButton(doc, () => doc.body?.dataset.lang || "en");
   // The static public demo accepts no new videos: no "+ New" link there.
   const demo = doc.documentElement?.dataset.demo === "1";
   heading.append(...[toggle, label, demo ? null : newLink, settings].filter(Boolean));
