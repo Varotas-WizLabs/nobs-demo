@@ -1,8 +1,9 @@
 // web/src/main.js
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=3c4521b780";
-import { wireFlagIconClick } from "./popup.js?v=3c4521b780";
-import { t } from "./i18n.js?v=3c4521b780";
-import { mergeDelta } from "./progress.js?v=3c4521b780";
+import { withFrames } from "./frames.js?v=c0690600a5";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=c0690600a5";
+import { wireFlagIconClick } from "./popup.js?v=c0690600a5";
+import { t } from "./i18n.js?v=c0690600a5";
+import { mergeDelta } from "./progress.js?v=c0690600a5";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 
@@ -116,6 +117,7 @@ export function bootstrapPlayerPage({
       Promise.resolve()
         .then(() => fetchImpl(`/runs/${runId}`))
         .then((r) => (r.ok ? r.json() : null))
+        .then((run) => (run && run.status === "complete" ? withFrames(fetchImpl, run) : run))
         .then((run) => {
           if (stopped) return;
           if (!run || run.status !== "complete" || run.tags_status === "running") {
@@ -165,6 +167,8 @@ export function bootstrapPlayerPage({
         if (!r.ok) throw new Error(`GET ${url} returned ${r.status}`);
         return r.json();
       })
+      // Video frames (thumbnails, «На экране», screen marks): optional.
+      .then((run) => (run && run.status === "complete" ? withFrames(fetchImpl, run) : run))
       .then((run) => {
         if (stopped) return;
         if (run.status !== "complete" && run.status !== "failed") {

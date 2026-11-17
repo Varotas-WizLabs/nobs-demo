@@ -27,9 +27,10 @@
 //   verbatim words, in the popup, the tooltips (list chip, timeline) and the
 //   export.
 
-import { formatTimecode } from "./claimSync.js?v=3c4521b780";
-import { t } from "./i18n.js?v=3c4521b780";
-import { showPossibleTags } from "./settings.js?v=3c4521b780";
+import { frameTimelineItems } from "./frames.js?v=c0690600a5";
+import { formatTimecode } from "./claimSync.js?v=c0690600a5";
+import { t } from "./i18n.js?v=c0690600a5";
+import { showPossibleTags } from "./settings.js?v=c0690600a5";
 
 export function isPossible(tag) {
   return tag?.tier === "possible";
@@ -352,5 +353,5 @@ export function timelineItems(run) {
         (source ? `\n${source.note}${sbOnly ? `\n${t("tags.sponsorBlockHint", lang)}` : ""}` : ""),
     };
   });
-  return [...segments, ...marks, ...observationItems(run, lang)];
+  return [...segments, ...marks, ...observationItems(run, lang), ...frameTimelineItems(run)];
 }

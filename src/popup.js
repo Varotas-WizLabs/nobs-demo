@@ -1,10 +1,11 @@
 // web/src/popup.js
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=3c4521b780";
-import { isPlayerActive } from "./controlBar.js?v=3c4521b780";
-import { t } from "./i18n.js?v=3c4521b780";
-import { claimState, isUnchecked } from "./progress.js?v=3c4521b780";
-import { seekTarget } from "./settings.js?v=3c4521b780";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=3c4521b780";
+import { screenBlockHtml } from "./frames.js?v=c0690600a5";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=c0690600a5";
+import { isPlayerActive } from "./controlBar.js?v=c0690600a5";
+import { t } from "./i18n.js?v=c0690600a5";
+import { claimState, isUnchecked } from "./progress.js?v=c0690600a5";
+import { seekTarget } from "./settings.js?v=c0690600a5";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=c0690600a5";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;
@@ -252,6 +253,7 @@ export function renderClaimPopup(claim, lang = "en") {
       ${revisedHtml}
       ${quote ? quoteMark(claim, lang) : ""}
       <p class="claim-text">${escapeHtml(claim.text)}</p>
+      ${screenBlockHtml(claim, lang)}
       ${body}
       ${closeButtonMarkup(lang)}
     </div>

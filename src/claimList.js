@@ -13,11 +13,12 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=3c4521b780";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=3c4521b780";
-import { t } from "./i18n.js?v=3c4521b780";
-import { claimState, isUnchecked } from "./progress.js?v=3c4521b780";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=3c4521b780";
+import { formatTimecode } from "./claimSync.js?v=c0690600a5";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=c0690600a5";
+import { t } from "./i18n.js?v=c0690600a5";
+import { claimState, isUnchecked } from "./progress.js?v=c0690600a5";
+import { frameLabels, isScreenClaim, safeThumb, screenLine } from "./frames.js?v=c0690600a5";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=c0690600a5";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
@@ -59,6 +60,9 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   // "References to videos": only claims about a discussed video (a toggle,
   // combined with the other filters; shown only when the run has any).
   let refFilter = false;
+  // «С экрана»: only claims read on screen (origin "screen"), a toggle like the references one.
+  let screenFilter = false;
+  const FL = frameLabels(lang);
 
   const section = el(doc, "section", "nobs-claims");
   section.lang = lang;
@@ -68,6 +72,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   const chips = el(doc, "div", "nobs-claims-filters");
   let counts = {};
   let refCount = 0;
+  let screenCount = 0;
   const chipFor = (value, label, count) => {
     const chip = el(doc, "button", "nobs-claims-chip");
     // A verdict chip starts with its flag's coloured dot ("All" has none).
@@ -114,6 +119,20 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
         applyFilter();
       });
       chips.appendChild(refChip);
+    }
+    screenCount = claims.filter(isScreenClaim).length;
+    if (!screenCount) screenFilter = false;
+    if (screenCount) {
+      const screenChip = el(doc, "button", "nobs-claims-chip nobs-screen-filter", `${FL.fromScreen} ${screenCount}`);
+      screenChip.type = "button";
+      screenChip.dataset.screenFilter = "screen";
+      screenChip.setAttribute("aria-pressed", String(screenFilter));
+      screenChip.addEventListener("click", () => {
+        screenFilter = !screenFilter;
+        screenChip.setAttribute("aria-pressed", String(screenFilter));
+        applyFilter();
+      });
+      chips.appendChild(screenChip);
     }
   }
   renderChips();
@@ -203,11 +222,23 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       if (claim.revised_reason) badge.title = String(claim.revised_reason);
       body.appendChild(badge);
     }
+    // Read on screen, not said: a badge (the «С экрана» group).
+    if (isScreenClaim(claim)) {
+      item.dataset.origin = "screen";
+      body.appendChild(el(doc, "span", "nobs-claims-screen", FL.fromScreenBadge));
+    }
     // A quote row: a quote glyph and who is quoted.
     if (quote) body.appendChild(el(doc, "span", "nobs-claims-quote", `\u275D ${author || t("quote.label", lang)}`));
     body.appendChild(el(doc, "span", "nobs-claims-text", claim.text));
     const summary = String(claim.summary ?? "").trim();
     if (summary) body.appendChild(el(doc, "span", "nobs-claims-summary", summary));
+    const onScreen = screenLine(claim, lang);
+    if (onScreen) {
+      const line = el(doc, "span", "nobs-claims-onscreen", onScreen.text);
+      if (onScreen.statusNote) line.title = onScreen.statusNote;
+      if (onScreen.status) line.dataset.status = onScreen.status;
+      body.appendChild(line);
+    }
     // Solid tags first, then possible ones, then notes («Личное мнение»): the row's one chip is the surest.
     const rowTags = claimTags(claim).sort(byTier);
     if (rowTags.length) {
@@ -228,6 +259,17 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       );
     }
     button.append(dot, time, body);
+    // A small storyboard frame of the moment (local thumbnails / the demo's evidence stills).
+    const thumb = safeThumb(claim.frame_thumb);
+    if (thumb) {
+      const img = el(doc, "img", "nobs-claims-frame");
+      img.src = thumb;
+      img.alt = "";
+      img.loading = "lazy";
+      img.width = 64;
+      img.height = 36;
+      button.appendChild(img);
+    }
     const row = { claim, item, key: JSON.stringify(claim) };
     // The row's current claim (update() may swap in a newer copy).
     button.addEventListener("click", () => onSelect(row.claim));
@@ -258,7 +300,8 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       const visible =
         (flags.size === 0 || flags.has(verdictKey(claim))) &&
         (tagFilter === "all" || claimHasTag(claim, tagFilter)) &&
-        (!refFilter || isRef(claim));
+        (!refFilter || isRef(claim)) &&
+        (!screenFilter || isScreenClaim(claim));
       item.hidden = !visible;
       if (visible) shown += 1;
     }
@@ -277,6 +320,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       flags: [...flags],
       tag: tagFilter,
       ...(refCount ? { refs: refFilter } : {}),
+      ...(screenCount ? { screen: screenFilter } : {}),
     });
   }
 

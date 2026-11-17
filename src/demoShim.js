@@ -125,6 +125,8 @@
     }
     if ((m = url.match(/^\/runs\/(\d+)\/captions$/))) return dataFetch(`data/runs/${m[1]}.captions.json`);
     if ((m = url.match(/^\/runs\/(\d+)\/scoops$/))) return dataFetch(`data/runs/${m[1]}.scoops.json`);
+    // Video frames: observations and a small set of evidence thumbnails (data/frames/).
+    if ((m = url.match(/^\/runs\/(\d+)\/frames$/))) return dataFetch(`data/runs/${m[1]}.frames.json`);
     if ((m = url.match(/^\/runs\/(\d+)(?:\?.*)?$/))) return dataFetch(`data/runs/${m[1]}.json`);
     if (url.startsWith("/")) return Promise.resolve(json({ detail: "not in the demo" }, 404));
     return realFetch(input, init);
