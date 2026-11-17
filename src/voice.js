@@ -42,7 +42,6 @@
 // The module is DOM-free apart from the Audio element it creates (injectable
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
-import { t } from "./i18n.js";
 
 export const LEAD_SEC = 5;
 export const TICK_MS = 250;
@@ -100,13 +99,74 @@ function firstSentence(text) {
   return match ? match[0] : s;
 }
 
-// What is said for one claim: "Красный флажок. <summary>".
+// What is said for one claim: its plain-language summary (no colour label),
+// or the first sentence of the argument when there is no summary.
 export function spokenText(claim, lang = "ru") {
-  const colour = ["red", "yellow", "green", "white"].includes(claim?.flag) ? claim.flag : "white";
-  const label = t(`voice.flag.${colour}`, lang);
   const summary = String(claim?.summary ?? "").trim();
-  const body = capText(summary || firstSentence(claim?.argument));
-  return body ? `${label}. ${body}` : `${label}.`;
+  return capText(summary || firstSentence(claim?.argument));
+}
+
+// When a flag is read: at the END of its passage (the speaker has finished
+// the thought), falling back to its start when the end is unknown.
+export function speakAt(claim) {
+  const end = Number(claim?.end_sec);
+  return Number.isFinite(end) && end > 0 ? end : Number(claim?.start_sec);
+}
+
+// A short "space bar pressed" click, synthesized with Web Audio (no asset):
+// a filtered noise burst with a fast decay plus a low thump. Played when the
+// narrator pauses the video and again before it resumes. Returns how long to
+// wait (ms) before going on; 0 when Web Audio is unavailable (no wait).
+export const CLICK_MS = 140;
+let clickContext = null;
+// Create / resume the click's AudioContext inside a user gesture, so the
+// browser lets it sound later from a timer.
+export function primeClick() {
+  try {
+    const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (!Ctx) return;
+    clickContext ??= new Ctx();
+    if (clickContext.state === "suspended") clickContext.resume?.();
+  } catch {
+    // no Web Audio: clicks are skipped
+  }
+}
+export function playKeyClick(volume = 1) {
+  try {
+    const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (!Ctx) return 0;
+    clickContext ??= new Ctx();
+    const ctx = clickContext;
+    if (ctx.state === "suspended") ctx.resume?.();
+    const t0 = ctx.currentTime + 0.005;
+    const length = Math.floor(ctx.sampleRate * 0.06);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (length / 7));
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = 2400;
+    band.Q.value = 0.9;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.55 * volume;
+    noise.connect(band).connect(noiseGain).connect(ctx.destination);
+    const thump = ctx.createOscillator();
+    thump.type = "sine";
+    thump.frequency.setValueAtTime(180, t0);
+    thump.frequency.exponentialRampToValueAtTime(70, t0 + 0.05);
+    const thumpGain = ctx.createGain();
+    thumpGain.gain.setValueAtTime(0.35 * volume, t0);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+    thump.connect(thumpGain).connect(ctx.destination);
+    noise.start(t0);
+    thump.start(t0);
+    thump.stop(t0 + 0.07);
+    return CLICK_MS;
+  } catch {
+    return 0;
+  }
 }
 
 // True when GET /voice/health answers {"ok": true}; false on anything else.
@@ -154,6 +214,7 @@ export function createNarrator({
   createObjectURL = (blob) => URL.createObjectURL(blob),
   revokeObjectURL = (url) => URL.revokeObjectURL(url),
   now = () => Date.now(),
+  click = playKeyClick,
 }) {
   let enabled = false;
   let voice = null; // VOICES entry for the run's language
@@ -234,13 +295,13 @@ export function createNarrator({
 
   function prefetchAhead(time) {
     for (const claim of claims) {
-      const ahead = claim.start_sec - time;
+      const ahead = speakAt(claim) - time;
       if (ahead > 0 && ahead <= LEAD_SEC) fetchAudio(claim);
     }
   }
 
   function prefetchNext(time) {
-    const next = claims.find((claim) => claim.start_sec > time);
+    const next = claims.find((claim) => speakAt(claim) > time);
     if (next) fetchAudio(next);
   }
 
@@ -255,10 +316,10 @@ export function createNarrator({
   // LEAD_SEC of the new position; everything else is freed.
   function pruneCache(time) {
     const keep = new Set();
-    const next = claims.find((claim) => claim.start_sec > time);
+    const next = claims.find((claim) => speakAt(claim) > time);
     if (next) keep.add(claimKey(next));
     for (const claim of claims) {
-      const ahead = claim.start_sec - time;
+      const ahead = speakAt(claim) - time;
       if (ahead > 0 && ahead <= LEAD_SEC) keep.add(claimKey(claim));
     }
     if (session) for (const claim of session.queue) keep.add(claimKey(claim));
@@ -301,11 +362,26 @@ export function createNarrator({
     stopAudio(s);
     prevTime = currentTime();
     if (resume && s.pausedByUs) {
-      try {
-        player.playVideo();
-      } catch (err) {
-        warnOnce("could not resume the video", err);
-      }
+      const go = () => {
+        try {
+          player.playVideo();
+        } catch (err) {
+          warnOnce("could not resume the video", err);
+        }
+      };
+      // "Space bar" click before the video goes on (skipped when the browser
+      // blocks audio: nothing was heard, so no click either).
+      const wait = blocked ? 0 : clickSafely();
+      if (wait > 0) setTimeout(go, wait);
+      else go();
+    }
+  }
+
+  function clickSafely() {
+    try {
+      return Number(click(speechVolume())) || 0;
+    } catch {
+      return 0;
     }
   }
 
@@ -321,7 +397,18 @@ export function createNarrator({
       session = null;
       return;
     }
-    speakNext();
+    // "Space bar" click as the video stops, then the speech.
+    const s = session;
+    const wait = clickSafely();
+    if (wait > 0) {
+      s.waitTimer = setTimeout(() => {
+        if (session !== s) return;
+        s.waitTimer = null;
+        speakNext();
+      }, wait);
+    } else {
+      speakNext();
+    }
   }
 
   function speakNext() {
@@ -421,6 +508,7 @@ export function createNarrator({
   // Play a moment of silence inside a user gesture, so the browser lets the
   // element play later from a timer. Cheap no-op once unlocked.
   function unlock() {
+    primeClick();
     if (unlocked && !blocked) return;
     if (session?.audio) return; // speaking right now: already playing
     let audio;
@@ -485,7 +573,7 @@ export function createNarrator({
       return;
     }
     const crossed = claims.filter(
-      (claim) => claim.start_sec > prev && claim.start_sec <= time + CROSS_EPS && !fired.has(claimKey(claim))
+      (claim) => speakAt(claim) > prev && speakAt(claim) <= time + CROSS_EPS && !fired.has(claimKey(claim))
     );
     prefetchAhead(time);
     if (crossed.length) {
@@ -523,8 +611,8 @@ export function createNarrator({
     /** The claims to read: the list the timeline markers show. */
     setClaims(list) {
       claims = [...(list ?? [])]
-        .filter((claim) => claim && claim.flag && Number.isFinite(Number(claim.start_sec)))
-        .sort((a, b) => a.start_sec - b.start_sec);
+        .filter((claim) => claim && claim.flag && Number.isFinite(speakAt(claim)))
+        .sort((a, b) => speakAt(a) - speakAt(b));
       // A claim speaking right now stays queued; later ones follow the filter.
       if (session) {
         const keep = new Set(claims.map(claimKey));
