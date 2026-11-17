@@ -365,6 +365,7 @@ export function createNarrator({
   style: initialStyle = "normal",
   errorCue = false,
   errorSound = playErrorSound,
+  rewindSec = () => 0,
   engine: initialEngine = null,
   fallback: initialFallback = null,
   onHold = () => {},
@@ -656,6 +657,20 @@ export function createNarrator({
     if (resume && s.pausedByUs) {
       const go = () => {
         try {
+          // Resume a little before the pause point (setting voiceRewindSec),
+          // so the phrase is not cut. prevTime follows the jump, so it is not
+          // taken for a seek and the flag just read is not read again.
+          let back = 0;
+          try {
+            back = Math.max(0, Number(rewindSec()) || 0);
+          } catch {
+            back = 0;
+          }
+          if (back > 0) {
+            const target = Math.max(0, (Number.isFinite(s.pausedVideoAt) ? s.pausedVideoAt : currentTime()) - back);
+            player.seekTo?.(target, true);
+            prevTime = target;
+          }
           player.playVideo();
         } catch (err) {
           warnOnce("could not resume the video", err);
@@ -679,7 +694,7 @@ export function createNarrator({
 
   function startSession(queue) {
     sessionToken += 1;
-    session = { queue: [...queue], audio: null, pausedByUs: false, pausedAt: 0, waitTimer: null, token: sessionToken };
+    session = { queue: [...queue], audio: null, pausedByUs: false, pausedAt: 0, pausedVideoAt: currentTime(), waitTimer: null, token: sessionToken };
     try {
       player.pauseVideo();
       session.pausedByUs = true;

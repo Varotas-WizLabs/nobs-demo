@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=dae8a662ba"></script>
+    <script src="src/demoShim.js?v=751d7428cc"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=dae8a662ba" />
+    <link rel="stylesheet" href="styles.css?v=751d7428cc" />
   </head>
   <body>
     <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
@@ -69,21 +69,21 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=dae8a662ba";
-      import { bootstrapPlayerPage } from "./src/main.js?v=dae8a662ba";
-      import { startProcessingLog } from "./src/processingLog.js?v=dae8a662ba";
-      import { startLibrary } from "./src/library.js?v=dae8a662ba";
-      import { buildShareControl, isSolo } from "./src/share.js?v=dae8a662ba";
-      import { renderClaimList } from "./src/claimList.js?v=dae8a662ba";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=dae8a662ba";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=dae8a662ba";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=dae8a662ba";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=dae8a662ba";
-      import { t } from "./src/i18n.js?v=dae8a662ba";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=dae8a662ba";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=dae8a662ba";
-      import { createHoldIcon } from "./src/holdIcon.js?v=dae8a662ba";
-      import { applyTheme, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setLocalVoices, setSileroAvailable, showTagFilter, voiceEngine, voiceStyle, youtubeCaptions } from "./src/settings.js?v=dae8a662ba";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=751d7428cc";
+      import { bootstrapPlayerPage } from "./src/main.js?v=751d7428cc";
+      import { startProcessingLog } from "./src/processingLog.js?v=751d7428cc";
+      import { startLibrary } from "./src/library.js?v=751d7428cc";
+      import { buildShareControl, isSolo } from "./src/share.js?v=751d7428cc";
+      import { renderClaimList } from "./src/claimList.js?v=751d7428cc";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=751d7428cc";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=751d7428cc";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=751d7428cc";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=751d7428cc";
+      import { t } from "./src/i18n.js?v=751d7428cc";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=751d7428cc";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=751d7428cc";
+      import { createHoldIcon } from "./src/holdIcon.js?v=751d7428cc";
+      import { applyTheme, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setLocalVoices, setSileroAvailable, showTagFilter, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=751d7428cc";
       applyTheme(document);
 
       {
@@ -442,6 +442,7 @@
           fetchImpl: fetch,
           style: voiceStyle(),
           errorCue: true,
+          rewindSec: voiceRewindSec,
           onHold: (claim) => holdIcon.hold(claim),
           onItem: (claim) => holdIcon.item(claim),
           onRelease: (how) => holdIcon.release(how),

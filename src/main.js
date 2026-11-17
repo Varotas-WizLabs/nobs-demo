@@ -1,7 +1,7 @@
 // web/src/main.js
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=dae8a662ba";
-import { wireFlagIconClick } from "./popup.js?v=dae8a662ba";
-import { t } from "./i18n.js?v=dae8a662ba";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=751d7428cc";
+import { wireFlagIconClick } from "./popup.js?v=751d7428cc";
+import { t } from "./i18n.js?v=751d7428cc";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 

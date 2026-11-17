@@ -9,7 +9,7 @@
 // player -- so it works while the video is still loading, or if it never
 // loads. All server-provided text is inserted with textContent.
 
-import { formatUsage } from "./runStats.js?v=dae8a662ba";
+import { formatUsage } from "./runStats.js?v=751d7428cc";
 
 const STAGE_LABELS = {
   run: "starting",

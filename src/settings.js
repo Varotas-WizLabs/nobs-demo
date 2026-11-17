@@ -30,12 +30,13 @@
 //     local app uses Carmit when available, else the system voice.
 // Applies without a reload.
 
-import { t } from "./i18n.js?v=dae8a662ba";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=dae8a662ba";
+import { t } from "./i18n.js?v=751d7428cc";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=751d7428cc";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null, voiceRewindSec: 1 });
+export const VOICE_REWIND_MAX = 10;
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -201,6 +202,16 @@ export function clampLead(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return DEFAULTS.seekLeadSec;
   return Math.min(Math.max(Math.round(n), 0), SEEK_LEAD_MAX);
+}
+
+/** Seconds to step back when the video resumes after a narration (0..VOICE_REWIND_MAX, halves). */
+export function clampRewind(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return DEFAULTS.voiceRewindSec;
+  return Math.min(Math.max(Math.round(n * 2) / 2, 0), VOICE_REWIND_MAX);
+}
+export function voiceRewindSec() {
+  return clampRewind(read().voiceRewindSec);
 }
 
 /** Where playback starts for a finding at `sec`: the lead earlier, not before 0. */
@@ -464,11 +475,40 @@ export function openSettingsDialog(doc, lang = "en") {
   voiceSelect.addEventListener("change", () => setSetting("voiceStyle", voiceSelect.value));
   voiceField.append(voiceLabel, voiceSelect);
 
+  // After the narration: resume this many seconds before the pause point.
+  const rewindField = doc.createElement("label");
+  rewindField.className = "nobs-settings-field";
+  const rewindLabel = doc.createElement("span");
+  rewindLabel.textContent = t("settings.voiceRewind", lang);
+  const rewindRow = doc.createElement("span");
+  rewindRow.className = "nobs-settings-row";
+  const rewindInput = doc.createElement("input");
+  rewindInput.type = "number";
+  rewindInput.min = "0";
+  rewindInput.max = String(VOICE_REWIND_MAX);
+  rewindInput.step = "0.5";
+  rewindInput.name = "voiceRewindSec";
+  rewindInput.value = String(voiceRewindSec());
+  const rewindUnit = doc.createElement("span");
+  rewindUnit.textContent = t("settings.seconds", lang);
+  rewindRow.append(rewindInput, rewindUnit);
+  const rewindHint = doc.createElement("small");
+  rewindHint.textContent = t("settings.voiceRewindHint", lang);
+  rewindField.append(rewindLabel, rewindRow, rewindHint);
+  rewindInput.addEventListener("input", () => {
+    if (rewindInput.value !== "") setSetting("voiceRewindSec", clampRewind(rewindInput.value));
+  });
+  rewindInput.addEventListener("change", () => {
+    const value = clampRewind(rewindInput.value);
+    rewindInput.value = String(value);
+    setSetting("voiceRewindSec", value);
+  });
+
   // One voice select per language; the run's language first.
   const runVoice = baseLang(lang) === "he" ? "he" : "ru";
   const engineFields = [runVoice, ...VOICE_LANGS.filter((l) => l !== runVoice)].map((l) => engineSelectField(doc, l, lang));
 
-  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, ...engineFields, close);
+  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, rewindField, ...engineFields, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
