@@ -1,9 +1,10 @@
 // web/src/popup.js
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=8887b231d7";
-import { isPlayerActive } from "./controlBar.js?v=8887b231d7";
-import { t } from "./i18n.js?v=8887b231d7";
-import { seekTarget } from "./settings.js?v=8887b231d7";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=8887b231d7";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=c59759a0a7";
+import { isPlayerActive } from "./controlBar.js?v=c59759a0a7";
+import { t } from "./i18n.js?v=c59759a0a7";
+import { claimState, isUnchecked } from "./progress.js?v=c59759a0a7";
+import { seekTarget } from "./settings.js?v=c59759a0a7";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=c59759a0a7";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;
@@ -35,6 +36,10 @@ export function whiteWasChecked(claim) {
 }
 
 export function verdictKey(claim) {
+  // A streaming run's claim still being checked (grey «проверяется»), or
+  // whose check failed (grey «?»): no verdict yet.
+  if (isUnchecked(claim)) return "pending";
+  if (claimState(claim) === "failed") return "failed";
   const flag = FLAGS.includes(claim?.flag) ? claim.flag : "white";
   if (flag !== "white") return flag;
   return whiteWasChecked(claim) ? "insufficient" : "white";
@@ -45,6 +50,8 @@ export function verdictKey(claim) {
 // attribution is wrong is a sourced but not conclusive misattribution
 // ("Likely misattributed").
 export function claimVerdictLabel(claim, lang = "en") {
+  const key = verdictKey(claim);
+  if (key === "pending" || key === "failed") return t(`verdict.${key}`, lang);
   // A claim about a discussed video: whether it renders that video right.
   if (refVerdict(claim)) return t(`ref.verdict.${refVerdict(claim)}`, lang);
   if (!isQuote(claim)) return t(`verdict.${verdictKey(claim)}`, lang);
@@ -57,6 +64,10 @@ export function claimVerdictLabel(claim, lang = "en") {
 // (opinion, prediction, ... -- no sources, confidence 0) or was checked but
 // the evidence was too weak for a verdict.
 function confidenceLine(claim, lang) {
+  const key = verdictKey(claim);
+  if (key === "pending" || key === "failed") {
+    return `<p class="claim-confidence claim-no-check">${escapeHtml(t(`popup.${key}`, lang))}</p>`;
+  }
   if (claim.flag !== "white" && FLAGS.includes(claim.flag)) {
     return `<p class="claim-confidence">${escapeHtml(t("confidence", lang))}: ${formatConfidence(claim.confidence)}</p>`;
   }
@@ -207,6 +218,12 @@ export function renderClaimPopup(claim, lang = "en") {
   const chipsHtml = renderTagChipsHtml(claim, lang);
   const reasonsHtml = renderVerdictReasonsHtml(claim, lang, { disclaimer: !chipsHtml });
   const refHtml = refBlockHtml(claim, lang);
+  // A verdict revised after it was shown: say so, with the flag it had.
+  const revisedHtml = FLAGS.includes(claim.revised_from_flag)
+    ? `<p class="claim-revised">${escapeHtml(
+        t("popup.revised", lang).replace("{flag}", t(`flagColor.${claim.revised_from_flag}`, lang))
+      )}</p>`
+    : "";
   const body = summary
     ? `
       <p class="claim-summary">${escapeHtml(summary)}</p>
@@ -217,7 +234,7 @@ export function renderClaimPopup(claim, lang = "en") {
         ${reasonsHtml}
         ${quoteHtml}
         ${confidenceLine(claim, lang)}
-        <p class="claim-argument">${escapeHtml(claim.argument)}</p>
+        <p class="claim-argument">${escapeHtml(claim.argument ?? "")}</p>
         ${sourcesList}
       </details>`
     : `
@@ -226,12 +243,13 @@ export function renderClaimPopup(claim, lang = "en") {
       ${reasonsHtml}
       ${quoteHtml}
       ${confidenceLine(claim, lang)}
-      <p class="claim-argument">${escapeHtml(claim.argument)}</p>
+      <p class="claim-argument">${escapeHtml(claim.argument ?? "")}</p>
       ${sourcesList}`;
 
   return `
-    <div class="popup claim-popup" lang="${escapeHtml(lang)}" data-flag="${escapeHtml(claim.flag)}"${quote ? ' data-quote="true"' : ""}>
+    <div class="popup claim-popup" lang="${escapeHtml(lang)}" data-flag="${escapeHtml(claim.flag ?? "")}" data-state="${escapeHtml(claimState(claim))}"${quote ? ' data-quote="true"' : ""}>
       <p class="claim-verdict">${escapeHtml(claimVerdictLabel(claim, lang))}</p>
+      ${revisedHtml}
       ${quote ? quoteMark(claim, lang) : ""}
       <p class="claim-text">${escapeHtml(claim.text)}</p>
       ${body}

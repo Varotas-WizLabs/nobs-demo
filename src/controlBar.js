@@ -1,7 +1,9 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=8887b231d7";
+import { seekTarget } from "./settings.js?v=c59759a0a7";
+import { t } from "./i18n.js?v=c59759a0a7";
+import { claimState, isUnchecked } from "./progress.js?v=c59759a0a7";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -138,9 +140,24 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
   // to seek -- a distinct look so they never read as flags.
   const tagLayer = document.createElement("div");
   tagLayer.className = "nobs-seek-tagmarks";
-  seekWrap.append(seekBar, markerLayer, tagLayer);
+  // Under the flags, while a streaming run is analysed: how far the claims
+  // are found ("extracted", a light band), which spans are fully checked
+  // ("verified", darker bands, with a gap at a failed chunk) and the rest
+  // still ahead of the analysis (hatched). Hidden for a finished run.
+  const frontierLayer = document.createElement("div");
+  frontierLayer.className = "nobs-seek-frontier";
+  frontierLayer.setAttribute("aria-hidden", "true");
+  frontierLayer.hidden = true;
+  seekWrap.append(seekBar, frontierLayer, markerLayer, tagLayer);
+  let frontier = null;
+  let frontierLaidOut = false;
   let markerClaims = null;
   let markersLaidOut = false;
+  let markerLang = "en";
+  // One marker element per claim, kept across updates (keyed by claim id):
+  // a claim that gets its verdict is recoloured in place, never redrawn.
+  const markerEls = new Map();
+  const markerClaim = new WeakMap();
   let timelineItems = null;
   let timelineLaidOut = false;
 
@@ -180,38 +197,125 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
     layoutTimelineItems();
   }
 
+  function markerKey(claim) {
+    return claim.id != null ? `id:${claim.id}` : `at:${claim.start_sec}:${claim.end_sec}:${claim.text ?? ""}`;
+  }
+
+  // A short ring pulse on a marker whose shown verdict changed (revised).
+  function pulse(marker) {
+    marker.classList.remove("is-revised");
+    void marker.offsetWidth; // restart the animation
+    marker.classList.add("is-revised");
+  }
+
   function layoutMarkers() {
     if (!markerClaims || markersLaidOut) return;
     const duration = player.getDuration();
     if (!(duration > 0)) return;
     markersLaidOut = true;
-    markerLayer.replaceChildren();
+    const keep = new Set();
+    const ordered = [];
     for (const claim of markerClaims) {
-      const marker = document.createElement("button");
-      marker.type = "button";
-      marker.className = "nobs-seek-marker";
-      marker.dataset.flag = claim.flag;
+      const key = markerKey(claim);
+      if (keep.has(key)) continue;
+      keep.add(key);
+      const state = claimState(claim);
+      let marker = markerEls.get(key);
+      if (!marker) {
+        marker = document.createElement("button");
+        marker.type = "button";
+        marker.className = "nobs-seek-marker";
+        marker.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const target = markerClaim.get(marker);
+          if (!target) return;
+          player.seekTo(seekTarget(target.start_sec), true);
+          player.playVideo();
+          updateProgress();
+        });
+        marker.addEventListener("animationend", () => marker.classList.remove("is-revised"));
+        markerEls.set(key, marker);
+      } else {
+        const before = markerClaim.get(marker);
+        const wasDone = before && claimState(before) === "done";
+        if (wasDone && state === "done" && (before.flag ?? "") !== (claim.flag ?? "")) pulse(marker);
+      }
+      markerClaim.set(marker, claim);
+      // pending: hollow grey with a pulse; checking: grey with an arc;
+      // done: its flag colour (fades over); failed: grey «?».
+      marker.dataset.flag = claim.flag ?? "";
+      marker.dataset.state = state;
+      if (claim.revised_from_flag) marker.dataset.revised = claim.revised_from_flag;
+      else delete marker.dataset.revised;
       const start = Math.min(Math.max(claim.start_sec / duration, 0), 1);
       const end = Math.min(Math.max(claim.end_sec / duration, start), 1);
       marker.style.left = `${(start * 100).toFixed(3)}%`;
       marker.style.width = `${((end - start) * 100).toFixed(3)}%`;
-      const label = `${formatClock(claim.start_sec)} ${claim.text ?? ""}`;
+      let label = `${formatClock(claim.start_sec)} ${claim.text ?? ""}`;
+      if (isUnchecked(claim)) label = `${formatClock(claim.start_sec)} ${t("verdict.pending", markerLang)}: ${claim.text ?? ""}`;
+      else if (state === "failed") label = `${formatClock(claim.start_sec)} ${t("verdict.failed", markerLang)}: ${claim.text ?? ""}`;
       marker.title = label;
       marker.setAttribute("aria-label", label);
-      marker.addEventListener("click", (event) => {
-        event.stopPropagation();
-        player.seekTo(seekTarget(claim.start_sec), true);
-        player.playVideo();
-        updateProgress();
-      });
-      markerLayer.appendChild(marker);
+      ordered.push(marker);
     }
+    for (const [key, marker] of markerEls) {
+      if (!keep.has(key)) {
+        marker.remove();
+        markerEls.delete(key);
+      }
+    }
+    const children = [...markerLayer.children];
+    if (children.length !== ordered.length || ordered.some((m, i) => children[i] !== m)) markerLayer.append(...ordered);
   }
 
-  function setMarkers(claims) {
+  // `options.lang`: the run's language, for the labels of claims still
+  // being checked. Markers are updated in place (see layoutMarkers).
+  function setMarkers(claims, { lang } = {}) {
+    if (lang) markerLang = lang;
     markerClaims = [...(claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
     markersLaidOut = false;
     layoutMarkers();
+  }
+
+  function band(className, from, to, duration) {
+    const node = document.createElement("div");
+    node.className = className;
+    const start = Math.min(Math.max(from / duration, 0), 1);
+    const end = Math.min(Math.max(to / duration, start), 1);
+    node.style.left = `${(start * 100).toFixed(3)}%`;
+    node.style.width = `${((end - start) * 100).toFixed(3)}%`;
+    return node;
+  }
+
+  function layoutFrontier() {
+    if (frontierLaidOut) return;
+    if (!frontier) {
+      frontierLaidOut = true;
+      frontierLayer.hidden = true;
+      frontierLayer.replaceChildren();
+      return;
+    }
+    const duration = player.getDuration() > 0 ? player.getDuration() : Number(frontier.durationSec);
+    if (!(duration > 0)) return;
+    frontierLaidOut = true;
+    const until = Math.min(Math.max(Number(frontier.processedUntil) || 0, 0), duration);
+    const nodes = [band("nobs-frontier-extracted", 0, until, duration)];
+    for (const [from, to] of frontier.readyRanges ?? []) {
+      if (Number.isFinite(from) && Number.isFinite(to) && to > from) nodes.push(band("nobs-frontier-verified", from, to, duration));
+    }
+    if (until < duration) nodes.push(band("nobs-frontier-ahead", until, duration, duration));
+    frontierLayer.replaceChildren(...nodes);
+    frontierLayer.hidden = false;
+  }
+
+  // The analysis frontier of a streaming run: `processedUntil` (seconds the
+  // claims are found up to), `readyRanges` ([[from, to], ...] fully checked)
+  // and `durationSec` (used until the player knows the duration). null
+  // removes the bands (the run is finished).
+  function setFrontier(next) {
+    frontier = next ? { ...next } : null;
+    frontierLaidOut = false;
+    layoutFrontier();
   }
 
   function updateProgress() {
@@ -220,6 +324,7 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
     if (!(duration > 0)) return;
     layoutMarkers();
     layoutTimelineItems();
+    layoutFrontier();
     const fraction = Math.min(Math.max(player.getCurrentTime() / duration, 0), 1);
     seekBar.value = String(Math.round(fraction * SEEK_STEPS));
     renderTime(player.getCurrentTime(), duration);
@@ -327,7 +432,8 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
   container.appendChild(bar);
 
   return {
-    playPause, seekBar, time, mute, volume, volumePop, voice, fullscreen, setPlayerState, updateProgress, setMarkers, setTimelineItems, setVoiceState, stop,
+    playPause, seekBar, time, mute, volume, volumePop, voice, fullscreen, setPlayerState, updateProgress, setMarkers,
+    upsertMarkers: setMarkers, setFrontier, setTimelineItems, setVoiceState, stop,
   };
 }
 

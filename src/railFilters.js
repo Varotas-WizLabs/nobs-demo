@@ -6,9 +6,9 @@
 // circle is filled with its colour; an unselected one shows only a coloured
 // outline over a muted fill. No selection means "all flags".
 
-import { t } from "./i18n.js?v=8887b231d7";
+import { t } from "./i18n.js?v=c59759a0a7";
 
-export const RAIL_ORDER = ["green", "yellow", "red", "insufficient", "white"];
+export const RAIL_ORDER = ["green", "yellow", "red", "insufficient", "white", "pending", "failed"];
 
 /**
  * Build the rail filters. `counts` maps verdict -> number of claims;

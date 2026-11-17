@@ -1,7 +1,8 @@
 // web/src/main.js
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=8887b231d7";
-import { wireFlagIconClick } from "./popup.js?v=8887b231d7";
-import { t } from "./i18n.js?v=8887b231d7";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=c59759a0a7";
+import { wireFlagIconClick } from "./popup.js?v=c59759a0a7";
+import { t } from "./i18n.js?v=c59759a0a7";
+import { mergeDelta } from "./progress.js?v=c59759a0a7";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 
@@ -29,6 +30,19 @@ const FLAG_LOOP_INTERVAL_MS = 500;
 // computed (`tags_status: "running"`): the run is then re-fetched every
 // `tagsPollIntervalMs` until the tags are done, and `onRunUpdated(run)` is
 // called once with the tagged run (the overlay's popups use it too).
+//
+// Progressive delivery (spec §4.5): while a *streaming* run is pending or
+// running, every /status body goes to `onProgress(body)` (frontier, counters)
+// and the claims found so far are shown at once: the first time with
+// GET /runs/{id}?provisional=1, then -- only when the status `rev` grew --
+// with GET /runs/{id}/delta?since_rev=K, merged by id into a copy of the run
+// (a new claims array, so the overlay's schedule cache is rebuilt). Each
+// time `onRunProgress(run, changes)` is called ({first, added, changed,
+// revised, removed}); the flag overlay starts with the first claim. At
+// complete/failed the full run is fetched once and `onRunLoaded(run)` is
+// called as before (the page updates what it already shows).
+// `onStatus(body)` gets every /status body until then, whatever the run (the
+// playback gate decides from it whether to show «Готовим агента…»).
 export function bootstrapPlayerPage({
   player,
   fetchImpl,
@@ -37,6 +51,9 @@ export function bootstrapPlayerPage({
   domRefs,
   onRunLoaded,
   onRunUpdated,
+  onRunProgress,
+  onProgress,
+  onStatus,
   tagsPollIntervalMs = 5000,
 }) {
   let flagLoopIntervalId = null;
@@ -45,6 +62,8 @@ export function bootstrapPlayerPage({
   let finished = false; // a terminal status was seen and the full run is being/has been fetched
   let stopped = false;
   let tagsTimer = null;
+  let flagLoopStarted = false;
+  let syncing = false; // a provisional / delta request is in flight
 
   function currentOverlayState() {
     return {
@@ -61,18 +80,26 @@ export function bootstrapPlayerPage({
     domRefs.chainIcon.style.display = state.showChain ? "block" : "none";
   }
 
+  // The overlay loop and the icon clicks: wired once, on the first chunk of
+  // a streaming run or when a finished run loads.
+  function ensureFlagLoop() {
+    // Claim text, arguments and explanations are in the caption track's language.
+    if (latestRun.caption_language) {
+      domRefs.popupContainer.lang = latestRun.caption_language;
+    }
+    applyOverlayState();
+    if (flagLoopStarted) return;
+    flagLoopStarted = true;
+    flagLoopIntervalId = setInterval(applyOverlayState, FLAG_LOOP_INTERVAL_MS);
+    wireFlagIconClick(domRefs.flagIcon, domRefs.chainIcon, player, domRefs.popupContainer, currentOverlayState);
+  }
+
   function startFlagLoop(run) {
     latestRun = run;
-    // Claim text, arguments and explanations are in the caption track's language.
-    if (run.caption_language) {
-      domRefs.popupContainer.lang = run.caption_language;
-    }
     if (run.status === "failed" && run.error && domRefs.failedIndicator) {
       domRefs.failedIndicator.textContent = `${t("analysisFailed", run.caption_language)}: ${run.error}`;
     }
-    applyOverlayState();
-    flagLoopIntervalId = setInterval(applyOverlayState, FLAG_LOOP_INTERVAL_MS);
-    wireFlagIconClick(domRefs.flagIcon, domRefs.chainIcon, player, domRefs.popupContainer, currentOverlayState);
+    ensureFlagLoop();
     if (onRunLoaded) {
       try {
         onRunLoaded(run);
@@ -124,11 +151,18 @@ export function bootstrapPlayerPage({
   // Fetch the full run once. If the fetch fails (transient server error,
   // network), go back to polling so a later tick retries instead of leaving
   // the page stuck.
-  function fetchFullRun() {
+  //
+  // A streaming run shown live that then failed: ask for its provisional
+  // view -- the plain one has no claims for a failed run -- so the claims
+  // already on screen settle (unfinished checks come back as failed, grey
+  // «?») instead of staying «проверяется» forever.
+  function fetchFullRun(status) {
+    const shownLive = latestRun !== null && latestRun.rev !== undefined;
+    const url = status === "failed" && shownLive ? `/runs/${runId}?provisional=1` : `/runs/${runId}`;
     Promise.resolve()
-      .then(() => fetchImpl(`/runs/${runId}`))
+      .then(() => fetchImpl(url))
       .then((r) => {
-        if (!r.ok) throw new Error(`GET /runs/${runId} returned ${r.status}`);
+        if (!r.ok) throw new Error(`GET ${url} returned ${r.status}`);
         return r.json();
       })
       .then((run) => {
@@ -147,10 +181,68 @@ export function bootstrapPlayerPage({
       });
   }
 
-  function handleStatus(status) {
+  function notify(callback, ...args) {
+    if (!callback) return;
+    try {
+      callback(...args);
+    } catch (err) {
+      console.error("player callback failed", err);
+    }
+  }
+
+  // A streaming run in progress: load its claims so far once, then only
+  // what changed whenever the status rev grows. One request at a time.
+  function syncLive(body) {
+    if (syncing) return;
+    // The provisional view of a new video's run can come before its captions
+    // (caption_language null): take the language from the status once it is
+    // known, so the list, the narrator and the progress line speak it.
+    const language = body?.caption_language ?? null;
+    if (latestRun && language && latestRun.caption_language !== language) {
+      latestRun = { ...latestRun, caption_language: language };
+      notify(onRunProgress, latestRun, { first: false, added: [], changed: [], revised: [], removed: [] });
+    }
+    const heldRev = latestRun ? Number(latestRun.rev) || 0 : null;
+    if (heldRev !== null && !(Number(body.rev) > heldRev)) return;
+    syncing = true;
+    const url = heldRev === null ? `/runs/${runId}?provisional=1` : `/runs/${runId}/delta?since_rev=${heldRev}`;
+    Promise.resolve()
+      .then(() => fetchImpl(url))
+      .then((r) => {
+        if (!r || !r.ok) throw new Error(`GET ${url} returned ${r ? r.status : "nothing"}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (stopped || finished) return;
+        let changes;
+        if (heldRev === null) {
+          const claims = [...(data.claims ?? [])].filter((c) => c.verify_state !== "superseded");
+          latestRun = { ...data, claims, rev: Number(data.rev) || 0 };
+          changes = { first: true, added: claims, changed: [], revised: [], removed: [] };
+        } else {
+          const merged = mergeDelta(latestRun, data);
+          latestRun = merged.run;
+          changes = { first: false, added: merged.added, changed: merged.changed, revised: merged.revised, removed: merged.removed };
+        }
+        if (latestRun.claims.length) ensureFlagLoop();
+        notify(onRunProgress, latestRun, changes);
+      })
+      .catch((err) => console.warn("Live claims update failed; retrying", err))
+      .finally(() => {
+        syncing = false;
+      });
+  }
+
+  function handleStatus(status, body) {
     if (finished || stopped) return;
+    // Every status body (the start gate and the auto-pause read it, spec §4.5).
+    notify(onStatus, body);
     if (status === "pending" || status === "running") {
-      domRefs.overlayContainer.dataset.mode = "processing";
+      if (body?.streaming) {
+        notify(onProgress, body);
+        syncLive(body);
+      }
+      if (!flagLoopStarted) domRefs.overlayContainer.dataset.mode = "processing";
       return;
     }
     if (status !== "complete" && status !== "failed") {
@@ -158,7 +250,7 @@ export function bootstrapPlayerPage({
     }
     finished = true;
     haltPolling();
-    fetchFullRun();
+    fetchFullRun(status);
   }
 
   startPolling();

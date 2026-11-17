@@ -983,10 +983,15 @@ export function createNarrator({
   }
 
   return {
-    /** The claims to read: the list the timeline markers show. */
+    /** The claims to read: the list the timeline markers show. A streaming
+     * run's claim still being checked (or whose check failed) has no verdict
+     * to read and is skipped until it gets one. */
     setClaims(list) {
       claims = [...(list ?? [])]
-        .filter((claim) => claim && claim.flag && Number.isFinite(speakAt(claim)))
+        .filter(
+          (claim) =>
+            claim && claim.flag && (claim.verify_state ?? "done") === "done" && Number.isFinite(speakAt(claim))
+        )
         .sort((a, b) => speakAt(a) - speakAt(b));
       // A claim speaking right now stays queued; later ones follow the filter.
       if (session) {
@@ -1010,6 +1015,14 @@ export function createNarrator({
       if (next === runId) return;
       resetTexts();
       runId = next;
+      ensureTexts();
+    },
+    /** Ask for the current run's casual texts again (a streaming run just
+     * completed: its texts can be generated only now; setRun ignores the
+     * same id). */
+    reloadTexts() {
+      if (runId === null) return;
+      resetTexts();
       ensureTexts();
     },
     /** "casual" or "normal"; upcoming flags are re-texted (refetched). */

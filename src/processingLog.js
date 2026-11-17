@@ -9,7 +9,8 @@
 // player -- so it works while the video is still loading, or if it never
 // loads. All server-provided text is inserted with textContent.
 
-import { formatUsage } from "./runStats.js?v=8887b231d7";
+import { progressLine } from "./progress.js?v=c59759a0a7";
+import { formatUsage } from "./runStats.js?v=c59759a0a7";
 
 const STAGE_LABELS = {
   run: "starting",
@@ -60,7 +61,11 @@ function getJson(fetchImpl, url) {
 // Builds the panel inside `root` and starts polling. Returns { stop }.
 // `stallAfterMs`: with no new event for this long while the run is active,
 // the status line says so (a stuck run is visible, not silent).
-export function startProcessingLog({ runId, fetchImpl, pollIntervalMs, root, stallAfterMs = 60000 }) {
+// A streaming run in progress shows how far the analysis got instead of the
+// stage: «Проанализировано 7:40 / 41:20 · 23 утверждения · 5 проверяются»,
+// in `lang` (a string, or a function asked on every render: the run's
+// language becomes known only once its claims load).
+export function startProcessingLog({ runId, fetchImpl, pollIntervalMs, root, stallAfterMs = 60000, lang = "en" }) {
   const panel = el("details", "nobs-log");
   panel.open = true;
   panel.dataset.state = "pending";
@@ -136,6 +141,8 @@ export function startProcessingLog({ runId, fetchImpl, pollIntervalMs, root, sta
     if (lastStage) label = STAGE_LABELS[lastStage] || lastStage;
     else label = state === "running" ? "starting" : "queued";
     let text = `Processing — ${label}`;
+    const live = progressLine(status, (typeof lang === "function" ? lang() : lang) || "en");
+    if (live) text = live;
     const idle = Date.now() - lastEventAt;
     if (idle >= stallAfterMs) text += ` (no new activity for ${formatAge(idle)})`;
     statusLine.textContent = text;

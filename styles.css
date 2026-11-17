@@ -47,6 +47,7 @@
   --nobs-green: #2ecc71;
   --nobs-yellow: #f1c40f;
   --nobs-red: #e74c3c;
+  --nobs-pending: #8b8e98; /* found, being checked: no verdict yet (same in both themes) */
   --nobs-overlay-z: 2147483000; /* stays above the fullscreen element's own chrome */
 }
 
@@ -2292,4 +2293,349 @@ button.nobs-scoop-verdict:hover {
 .nobs-logo:focus-visible .nobs-logo-word {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* ---- Progressive delivery (spec 2026-11-17 §4.5): claims of a run still
+   being analysed. Grey means only "found, being checked" -- never a verdict. */
+
+/* Timeline markers: pending = hollow grey with a pulse; checking = grey
+   with a sweeping arc; done = its flag colour (fades over 300 ms); failed =
+   grey «?»; a revised verdict = a short ring pulse. */
+.nobs-seek-marker {
+  transition: background-color 300ms ease, opacity 300ms ease, box-shadow 300ms ease;
+}
+.nobs-seek-marker[data-state="pending"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--nobs-pending), 0 0 0 1px rgba(0, 0, 0, 0.55);
+  animation: nobs-marker-pending 1.6s ease-in-out infinite;
+}
+.nobs-seek-marker[data-state="checking"] {
+  background: linear-gradient(90deg, var(--nobs-pending) 0%, #c9cbd2 50%, var(--nobs-pending) 100%);
+  background-size: 200% 100%;
+  animation: nobs-marker-checking 1.2s linear infinite;
+}
+.nobs-seek-marker[data-state="failed"] {
+  background: var(--nobs-pending);
+  opacity: 0.7;
+}
+.nobs-seek-marker[data-state="failed"]::after {
+  content: "?";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  color: var(--nobs-pending);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+.nobs-seek-marker.is-revised {
+  animation: nobs-marker-revised 900ms ease-out 2;
+}
+@keyframes nobs-marker-pending {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes nobs-marker-checking {
+  from { background-position: 200% 0; }
+  to { background-position: 0 0; }
+}
+@keyframes nobs-marker-revised {
+  0% { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(255, 255, 255, 0.9); }
+  100% { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(255, 255, 255, 0); }
+}
+
+/* Frontier bands on the seek track, under the flags: light = claims found
+   so far, darker = fully checked spans, hatched = not analysed yet. */
+.nobs-seek-frontier {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  pointer-events: none;
+}
+.nobs-seek-frontier > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+}
+.nobs-frontier-extracted { background: rgba(255, 255, 255, 0.22); }
+.nobs-frontier-verified { background: rgba(255, 255, 255, 0.5); }
+.nobs-frontier-ahead {
+  background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.14) 0 3px, transparent 3px 6px);
+}
+
+/* The flag icon over the video for a claim being checked / a failed check. */
+.nobs-overlay[data-flag="pending"] .nobs-flag-icon {
+  background: var(--nobs-pending);
+  animation: nobs-marker-pending 1.6s ease-in-out infinite;
+}
+.nobs-overlay[data-flag="failed"] .nobs-flag-icon {
+  background: var(--nobs-pending);
+  opacity: 0.7;
+}
+.popup[data-state="pending"],
+.popup[data-state="checking"],
+.popup[data-state="failed"] {
+  border-color: var(--nobs-pending);
+}
+.popup[data-state="pending"] .claim-verdict,
+.popup[data-state="checking"] .claim-verdict,
+.popup[data-state="failed"] .claim-verdict {
+  color: var(--nobs-pending);
+}
+.claim-revised {
+  margin: 2px 0 6px;
+  font-size: 12px;
+  color: var(--nobs-muted);
+  font-style: italic;
+}
+
+/* Claim list: grey dot, «Проверяется» / «уточнено (было: …)» badges. */
+.nobs-claims-dot[data-state="pending"],
+.nobs-claims-dot[data-state="checking"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--nobs-pending);
+  animation: nobs-marker-pending 1.6s ease-in-out infinite;
+}
+.nobs-claims-dot[data-state="failed"] { background: var(--nobs-pending); opacity: 0.7; }
+.nobs-claims-dot { transition: background-color 300ms ease; }
+.nobs-claims-item[data-state="pending"] .nobs-claims-text,
+.nobs-claims-item[data-state="checking"] .nobs-claims-text {
+  color: var(--nobs-muted);
+}
+.nobs-claims-state,
+.nobs-claims-revised {
+  display: inline-block;
+  width: fit-content;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--nobs-muted);
+  border: 1px solid var(--nobs-border-strong);
+}
+.nobs-claims-state { border-color: var(--nobs-pending); }
+.nobs-claims-revised { font-style: italic; }
+.nobs-chip-dot[data-verdict="pending"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--nobs-pending);
+}
+.nobs-chip-dot[data-verdict="failed"] { background: var(--nobs-pending); }
+.nobs-rail-flag[data-verdict="pending"] { --rail-c: var(--nobs-pending); border-style: dotted; }
+.nobs-rail-flag[data-verdict="failed"] { --rail-c: var(--nobs-pending); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nobs-seek-marker[data-state="pending"],
+  .nobs-seek-marker[data-state="checking"],
+  .nobs-seek-marker.is-revised,
+  .nobs-overlay[data-flag="pending"] .nobs-flag-icon,
+  .nobs-claims-dot[data-state="pending"],
+  .nobs-claims-dot[data-state="checking"] {
+    animation: none;
+  }
+}
+
+
+/* ---- Playback gate (src/playbackGate.js, progressive delivery step 5) ----
+   «Готовим агента…»: a layer over the whole player (control bar included)
+   while a new streaming run prepares its first chunk; inside
+   #player-container, so it shows in fullscreen too. */
+.nobs-gate {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--nobs-overlay-z) + 2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 8, 12, 0.88);
+  color: #f2f2f5;
+}
+.nobs-gate[hidden] {
+  display: none;
+}
+.nobs-gate-card {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.nobs-gate-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.nobs-gate[data-ready="0"] .nobs-gate-title::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 10px;
+  border-radius: 50%;
+  background: var(--nobs-pending);
+  vertical-align: middle;
+  animation: nobs-gate-pulse 1.2s ease-in-out infinite;
+}
+@keyframes nobs-gate-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.nobs-gate-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.95rem;
+  color: #b9b9c3;
+}
+.nobs-gate-checklist li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.nobs-gate-checklist li.is-done {
+  color: #f2f2f5;
+}
+.nobs-gate-check {
+  width: 1em;
+  flex: none;
+  text-align: center;
+  color: var(--nobs-pending);
+}
+.nobs-gate-checklist li.is-done .nobs-gate-check {
+  color: var(--nobs-green);
+}
+.nobs-gate-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.nobs-gate-bar-fill {
+  height: 100%;
+  width: 3%;
+  background: var(--nobs-pending);
+  transition: width 0.5s linear;
+}
+.nobs-gate[data-ready="1"] .nobs-gate-bar-fill {
+  background: var(--nobs-green);
+}
+.nobs-gate-meta {
+  font-size: 0.85rem;
+  color: #9a9aa5;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-gate-limit {
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--nobs-banner-bg);
+  color: var(--nobs-banner-text);
+}
+.nobs-gate-limit[hidden] {
+  display: none;
+}
+.nobs-gate-primary {
+  align-self: flex-start;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f2f2f5;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nobs-gate-primary:hover,
+.nobs-gate-primary:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+}
+.nobs-gate-primary[aria-pressed="true"] {
+  border-color: var(--nobs-pending);
+  color: #c9cad2;
+}
+.nobs-gate[data-ready="1"] .nobs-gate-primary {
+  background: #f2f2f5;
+  color: #0b0b0f;
+  border-color: #f2f2f5;
+}
+.nobs-gate-skip {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #8ab4ff;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.nobs-gate-skip[hidden] {
+  display: none;
+}
+
+/* Auto-pause at the frontier: «Агент догоняет…» over the top of the video. */
+.nobs-gate-toast {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  z-index: calc(var(--nobs-overlay-z) + 1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: rgba(16, 16, 22, 0.92);
+  color: #f2f2f5;
+  font-size: 0.92rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+.nobs-gate-toast[hidden] {
+  display: none;
+}
+.nobs-gate-toast::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nobs-pending);
+  animation: nobs-gate-pulse 1.2s ease-in-out infinite;
+}
+.nobs-gate-toast[data-kind="throttled"]::before {
+  background: var(--nobs-yellow);
+}
+/* A failed chunk played through: a note, nothing pending. */
+.nobs-gate-toast[data-kind="failed"]::before {
+  background: rgba(255, 255, 255, 0.45);
+  animation: none;
+}
+.nobs-gate-toast-button {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: none;
+  color: #f2f2f5;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.nobs-gate-toast-button:hover,
+.nobs-gate-toast-button:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nobs-gate-title::after,
+  .nobs-gate-toast::before {
+    animation: none;
+  }
 }

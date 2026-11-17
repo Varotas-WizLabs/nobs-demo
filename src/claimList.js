@@ -13,14 +13,17 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=8887b231d7";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=8887b231d7";
-import { t } from "./i18n.js?v=8887b231d7";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=8887b231d7";
+import { formatTimecode } from "./claimSync.js?v=c59759a0a7";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=c59759a0a7";
+import { t } from "./i18n.js?v=c59759a0a7";
+import { claimState, isUnchecked } from "./progress.js?v=c59759a0a7";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=c59759a0a7";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
-export const FLAG_ORDER = ["green", "yellow", "red", "insufficient", "white"];
+// While a streaming run is analysed: "pending" (found, being checked) and
+// "failed" (the check did not finish) -- shown only when there are any.
+export const FLAG_ORDER = ["green", "yellow", "red", "insufficient", "white", "pending", "failed"];
 
 function el(doc, tag, className, text) {
   const node = doc.createElement(tag);
@@ -30,8 +33,12 @@ function el(doc, tag, className, text) {
 }
 
 /**
- * Render the list into `root`. Returns { highlight(timeSec) } to mark the
- * claim(s) playing at that time.
+ * Render the list into `root`. Returns { highlight(timeSec), update(run), ... }:
+ * `highlight` marks the claim(s) playing at that time; `update(run)` takes
+ * the same run with more claims or new verdicts (a streaming run in
+ * progress, then complete) and changes only the rows that changed --
+ * filters, scroll position and the "now" line stay -- then re-applies the
+ * filters (so `onFilterChange` hands the timeline and the narrator the new set).
  *
  * @param {HTMLElement} root
  * @param {object} run  a complete run from GET /runs/{id}
@@ -43,7 +50,9 @@ function el(doc, tag, className, text) {
 export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting, showTagFilter = () => true, initialFlags = [] }) {
   const doc = root.ownerDocument;
   const lang = run.caption_language ?? "en";
-  const claims = [...(run.claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
+  const byStart = (a, b) => a.start_sec - b.start_sec || a.end_sec - b.end_sec || (a.id ?? 0) - (b.id ?? 0);
+  let claims = [...(run.claims ?? [])].sort(byStart);
+  let currentRun = run;
   // Verdict filter: several flags at once; empty = all.
   const flags = new Set(initialFlags);
   let tagFilter = "all";
@@ -57,7 +66,8 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   header.appendChild(el(doc, "h2", "nobs-claims-title", t("list.title", lang)));
 
   const chips = el(doc, "div", "nobs-claims-filters");
-  const counts = Object.fromEntries(FLAG_ORDER.map((f) => [f, claims.filter((c) => verdictKey(c) === f).length]));
+  let counts = {};
+  let refCount = 0;
   const chipFor = (value, label, count) => {
     const chip = el(doc, "button", "nobs-claims-chip");
     // A verdict chip starts with its flag's coloured dot ("All" has none).
@@ -80,66 +90,89 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     });
     return chip;
   };
-  chips.appendChild(chipFor("all", t("list.all", lang), claims.length));
-  for (const flag of FLAG_ORDER) {
-    if (counts[flag]) chips.appendChild(chipFor(flag, t(`verdict.${flag}`, lang), counts[flag]));
-  }
-  const refCount = claims.filter(isRef).length;
-  if (refCount) {
-    const refChip = el(doc, "button", "nobs-claims-chip nobs-ref-filter", `${t("ref.filter", lang)} ${refCount}`);
-    refChip.type = "button";
-    refChip.dataset.refFilter = "refs";
-    refChip.setAttribute("aria-pressed", "false");
-    refChip.addEventListener("click", () => {
-      refFilter = !refFilter;
+  // The verdict chips (and the "references" toggle) with their counts;
+  // rebuilt by update() as claims arrive and get their verdicts.
+  function renderChips() {
+    counts = Object.fromEntries(FLAG_ORDER.map((f) => [f, claims.filter((c) => verdictKey(c) === f).length]));
+    // A selected verdict nobody has any more (the last pending claim was
+    // checked) is dropped, or the list would go empty.
+    for (const f of [...flags]) if (!counts[f]) flags.delete(f);
+    chips.replaceChildren(chipFor("all", t("list.all", lang), claims.length));
+    for (const flag of FLAG_ORDER) {
+      if (counts[flag]) chips.appendChild(chipFor(flag, t(`verdict.${flag}`, lang), counts[flag]));
+    }
+    refCount = claims.filter(isRef).length;
+    if (!refCount) refFilter = false;
+    if (refCount) {
+      const refChip = el(doc, "button", "nobs-claims-chip nobs-ref-filter", `${t("ref.filter", lang)} ${refCount}`);
+      refChip.type = "button";
+      refChip.dataset.refFilter = "refs";
       refChip.setAttribute("aria-pressed", String(refFilter));
-      applyFilter();
-    });
-    chips.appendChild(refChip);
+      refChip.addEventListener("click", () => {
+        refFilter = !refFilter;
+        refChip.setAttribute("aria-pressed", String(refFilter));
+        applyFilter();
+      });
+      chips.appendChild(refChip);
+    }
   }
+  renderChips();
   header.appendChild(chips);
 
   // Tag filter row: only tags present in this video; with a disclaimer.
-  const tagOptions = tagFilterOptions(run);
   const tagChips = el(doc, "div", "nobs-claims-filters nobs-tag-filters");
-  // The "Подача" (tag) filter row is optional (setting "showTagFilter").
-  if (tagOptions.length && showTagFilter()) {
-    tagChips.setAttribute("aria-label", t("tags.filter", lang));
-    const tagChipFor = (value, label, count, title) => {
-      const chip = el(doc, "button", "nobs-claims-chip nobs-tag-filter", `${label} ${count}`);
-      chip.type = "button";
-      chip.dataset.tagFilter = value;
-      if (title) chip.title = title;
-      chip.setAttribute("aria-pressed", String(value === tagFilter));
-      chip.addEventListener("click", () => {
-        tagFilter = value === tagFilter && value !== "all" ? "all" : value;
-        for (const c of tagChips.children) c.setAttribute("aria-pressed", String(c.dataset.tagFilter === tagFilter));
-        applyFilter();
-      });
-      return chip;
-    };
-    // The disclaimer lives in the label's tooltip (and on every chip and
-    // popup), not as a paragraph in the pinned header.
-    const tagLabel = el(doc, "span", "nobs-tag-filter-label", `${t("tags.filter", lang)}:`);
-    tagLabel.title = t("tags.disclaimer", lang);
-    tagChips.appendChild(tagLabel);
-    tagChips.appendChild(tagChipFor("all", t("list.all", lang), claims.length));
-    for (const option of tagOptions) {
-      const title = option.possible ? `${option.possible} ${t("tags.possibleCount", lang)}` : "";
-      const chip = tagChipFor(option.tag_id, option.name, option.count, title);
-      if (option.possible === option.count) chip.dataset.tier = "possible";
-      tagChips.appendChild(chip);
+  const tagsRunning = el(doc, "p", "nobs-tags-running", t("tags.running", lang));
+  function renderTagRow() {
+    const tagOptions = tagFilterOptions(currentRun);
+    // The "Подача" (tag) filter row is optional (setting "showTagFilter").
+    if (!(tagOptions.length && showTagFilter())) {
+      tagChips.remove();
+      tagFilter = "all";
+    } else {
+      if (tagFilter !== "all" && !tagOptions.some((o) => o.tag_id === tagFilter)) tagFilter = "all";
+      tagChips.replaceChildren();
+      tagChips.setAttribute("aria-label", t("tags.filter", lang));
+      const tagChipFor = (value, label, count, title) => {
+        const chip = el(doc, "button", "nobs-claims-chip nobs-tag-filter", `${label} ${count}`);
+        chip.type = "button";
+        chip.dataset.tagFilter = value;
+        if (title) chip.title = title;
+        chip.setAttribute("aria-pressed", String(value === tagFilter));
+        chip.addEventListener("click", () => {
+          tagFilter = value === tagFilter && value !== "all" ? "all" : value;
+          for (const c of tagChips.children) c.setAttribute("aria-pressed", String(c.dataset.tagFilter === tagFilter));
+          applyFilter();
+        });
+        return chip;
+      };
+      // The disclaimer lives in the label's tooltip (and on every chip and
+      // popup), not as a paragraph in the pinned header.
+      const tagLabel = el(doc, "span", "nobs-tag-filter-label", `${t("tags.filter", lang)}:`);
+      tagLabel.title = t("tags.disclaimer", lang);
+      tagChips.appendChild(tagLabel);
+      tagChips.appendChild(tagChipFor("all", t("list.all", lang), claims.length));
+      for (const option of tagOptions) {
+        const title = option.possible ? `${option.possible} ${t("tags.possibleCount", lang)}` : "";
+        const chip = tagChipFor(option.tag_id, option.name, option.count, title);
+        if (option.possible === option.count) chip.dataset.tier = "possible";
+        tagChips.appendChild(chip);
+      }
+      if (!tagChips.isConnected || tagChips.parentNode !== header) chips.after(tagChips);
     }
-    header.appendChild(tagChips);
+    if (currentRun.tags_status === "running") {
+      if (tagsRunning.parentNode !== header) header.appendChild(tagsRunning);
+    } else {
+      tagsRunning.remove();
+    }
   }
-  if (run.tags_status === "running") {
-    header.appendChild(el(doc, "p", "nobs-tags-running", t("tags.running", lang)));
-  }
+  renderTagRow();
 
   const list = el(doc, "ol", "nobs-claims-list");
-  const rows = claims.map((claim) => {
+  function buildRow(claim) {
+    const state = claimState(claim);
     const item = el(doc, "li", "nobs-claims-item");
-    item.dataset.flag = claim.flag;
+    item.dataset.flag = claim.flag ?? "";
+    item.dataset.state = state;
     item.dataset.claimId = String(claim.id);
     const button = el(doc, "button", "nobs-claims-row");
     button.type = "button";
@@ -152,9 +185,24 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     );
     if (quote) item.dataset.quote = "true";
     const dot = el(doc, "span", "nobs-claims-dot");
-    dot.dataset.flag = claim.flag;
+    dot.dataset.flag = claim.flag ?? "";
+    dot.dataset.state = state;
     const time = el(doc, "span", "nobs-claims-time", formatTimecode(claim.start_sec));
     const body = el(doc, "span", "nobs-claims-body");
+    // Still being checked / the check failed: say so (grey «проверяется»).
+    if (isUnchecked(claim) || state === "failed") {
+      const key = state === "failed" ? "failed" : "pending";
+      const badge = el(doc, "span", "nobs-claims-state", t(`verdict.${key}`, lang));
+      badge.dataset.state = key;
+      body.appendChild(badge);
+    }
+    // A verdict revised after it was shown: «уточнено (было: красный)».
+    if (claim.revised_from_flag && state === "done") {
+      const was = t(`flagColor.${claim.revised_from_flag}`, lang);
+      const badge = el(doc, "span", "nobs-claims-revised", t("list.revised", lang).replace("{flag}", was));
+      if (claim.revised_reason) badge.title = String(claim.revised_reason);
+      body.appendChild(badge);
+    }
     // A quote row: a quote glyph and who is quoted.
     if (quote) body.appendChild(el(doc, "span", "nobs-claims-quote", `\u275D ${author || t("quote.label", lang)}`));
     body.appendChild(el(doc, "span", "nobs-claims-text", claim.text));
@@ -180,10 +228,16 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       );
     }
     button.append(dot, time, body);
-    button.addEventListener("click", () => onSelect(claim));
+    const row = { claim, item, key: JSON.stringify(claim) };
+    // The row's current claim (update() may swap in a newer copy).
+    button.addEventListener("click", () => onSelect(row.claim));
     item.appendChild(button);
-    list.appendChild(item);
-    return { claim, item };
+    return row;
+  }
+  let rows = claims.map((claim) => {
+    const row = buildRow(claim);
+    list.appendChild(row.item);
+    return row;
   });
 
   const empty = el(doc, "p", "nobs-claims-empty", t("list.empty", lang));
@@ -364,6 +418,39 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   section.append(header, list, empty, toTop);
   root.replaceChildren(section);
 
+  // A newer copy of the run: keep unchanged rows, rebuild changed ones in
+  // place, add new ones in playback order, drop the ones gone (superseded).
+  function update(nextRun) {
+    currentRun = nextRun;
+    const nextClaims = [...(nextRun.claims ?? [])].sort(byStart);
+    const old = new Map(rows.map((row) => [row.claim.id, row]));
+    const nextRows = nextClaims.map((claim) => {
+      const row = old.get(claim.id);
+      old.delete(claim.id);
+      if (row && row.key === JSON.stringify(claim)) {
+        row.claim = claim;
+        return row;
+      }
+      const fresh = buildRow(claim);
+      if (row) {
+        row.item.replaceWith(fresh.item);
+        if (row.item.getAttribute("aria-current") === "true") fresh.item.setAttribute("aria-current", "true");
+      }
+      return fresh;
+    });
+    for (const row of old.values()) row.item.remove();
+    // Playback order, the "now" line kept last (it is positioned absolutely).
+    const present = [...list.children].filter((node) => node !== nowLine);
+    if (present.length !== nextRows.length || nextRows.some((row, i) => present[i] !== row.item)) {
+      for (const row of nextRows) list.insertBefore(row.item, nowLine);
+    }
+    rows = nextRows;
+    claims = nextClaims;
+    renderChips();
+    renderTagRow();
+    applyFilter();
+  }
+
   // A selection carried over from before a redraw applies at once.
   if (flags.size) applyFilter();
 
@@ -371,6 +458,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     /** The verdicts the filter keeps (empty = all) and their counts. */
     getFlags: () => [...flags],
     flagCounts: () => ({ ...counts }),
+    update,
     /** Select these verdicts (empty = all), as if their chips were pressed. */
     setFlags(list) {
       flags.clear();

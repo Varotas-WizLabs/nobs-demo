@@ -10,6 +10,24 @@
   const json = (body, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
+  // The /status fields of a complete run with nothing left to deliver.
+  const completeProgress = (d) => ({
+    streaming: false,
+    phase: null,
+    duration_sec: d?.duration_sec ?? null,
+    processed_until_sec: d?.duration_sec ?? null,
+    verified_until_sec: d?.duration_sec ?? null,
+    ready_ranges: d?.duration_sec != null ? [[0, d.duration_sec]] : [],
+    rev: 0,
+    claims_so_far: d?.claim_count ?? 0,
+    pending_count: 0,
+    chunks_total: 0,
+    chunks_done: 0,
+    eta_first_chunk_sec: null,
+    resume_at: null,
+    refine_status: null,
+  });
+
   window.fetch = function demoFetch(input, init) {
     const requestMethod = typeof input === "object" && input !== null ? input.method : undefined;
     const method = String(init?.method ?? requestMethod ?? "GET").toUpperCase();
@@ -32,7 +50,38 @@
     // No local engines either (Carmit, Pocket): Hebrew uses the browser's voice.
     if (url === "/voice/engines") return Promise.resolve(json({}));
     if (url === "/runs") return realFetch("data/runs.json");
-    if ((m = url.match(/^\/runs\/(\d+)\/status$/))) return realFetch(`data/runs/${m[1]}.status.json`);
+    // Every demo run is complete: its status carries the progressive-delivery
+    // fields as a finished run has them (files exported before they existed
+    // lack them), and its delta never has anything new.
+    if ((m = url.match(/^\/runs\/(\d+)\/status$/))) {
+      return realFetch(`data/runs/${m[1]}.status.json`).then((r) =>
+        r.ok ? r.json().then((d) => json({ ...completeProgress(d), ...d })) : r,
+      );
+    }
+    if ((m = url.match(/^\/runs\/(\d+)\/delta(?:\?(.*))?$/))) {
+      const runId = Number(m[1]);
+      const since = Number(new URLSearchParams(m[2] ?? "").get("since_rev") ?? 0) || 0;
+      return realFetch(`data/runs/${runId}.status.json`)
+        .then((r) => (r.ok ? r.json() : {}))
+        .catch(() => ({}))
+        .then((d) => {
+          const progress = { ...completeProgress(d), ...d };
+          return json({
+            run_id: runId,
+            rev: Math.max(Number(progress.rev) || 0, since),
+            since_rev: since,
+            streaming: Boolean(progress.streaming),
+            status: progress.status ?? "complete",
+            phase: null,
+            processed_until_sec: progress.processed_until_sec,
+            verified_until_sec: progress.verified_until_sec,
+            ready_ranges: progress.ready_ranges,
+            claims: [],
+            relations: [],
+            chunks: [],
+          });
+        });
+    }
     if ((m = url.match(/^\/runs\/(\d+)\/events(?:\?after=(\d+))?$/))) {
       const after = Number(m[2] ?? 0);
       return realFetch(`data/runs/${m[1]}.events.json`)
