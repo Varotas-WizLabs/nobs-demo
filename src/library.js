@@ -9,9 +9,9 @@
 // toggle). The state lives on the root's data-collapsed, so it survives the
 // periodic re-render.
 
-import { formatCost, formatDuration } from "./runStats.js?v=202611af38";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=202611af38";
-import { buildSettingsButton } from "./settings.js?v=202611af38";
+import { formatCost, formatDuration } from "./runStats.js?v=3881c32856";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=3881c32856";
+import { buildSettingsButton } from "./settings.js?v=3881c32856";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -118,9 +118,18 @@ export function renderLibrary(root, runs, currentRunId) {
   newLink.textContent = "+ New";
   // Settings (gear): a dialog in the loaded run's language.
   const settings = buildSettingsButton(doc, () => doc.body?.dataset.lang || "en");
-  // The static public demo accepts no new videos: no "+ New" link there.
+  // The public demo has no local submit page; its index is the invite-only
+  // request page (request.html, src/publicRequest.js) instead.
   const demo = doc.documentElement?.dataset.demo === "1";
-  heading.append(...[toggle, label, demo ? null : newLink, settings].filter(Boolean));
+  let requestLink = null;
+  if (demo) {
+    requestLink = doc.createElement("a");
+    requestLink.href = "index.html";
+    requestLink.className = "nobs-library-request";
+    requestLink.textContent = "+ Разобрать видео";
+    requestLink.title = "Разобрать новое видео (по коду приглашения)";
+  }
+  heading.append(...[toggle, label, demo ? requestLink : newLink, settings].filter(Boolean));
 
   const list = doc.createElement("nav");
   list.className = "nobs-library-list";

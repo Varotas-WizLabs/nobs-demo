@@ -1,1 +1,91 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=player.html?run_id=67"><title>NOBS — демо</title></head><body><a href="player.html?run_id=67">NOBS — демо</a></body></html>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script src="src/demoShim.js?v=3881c32856"></script>
+
+    <!-- Theme before first paint (settings: dark / light / system). -->
+    <script>
+      try {
+        var nobsTheme = (JSON.parse(localStorage.getItem("nobs.settings") || "{}").theme) || "dark";
+        if (nobsTheme === "system") nobsTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = nobsTheme === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>душнила AI — разобрать видео</title>
+    <link rel="stylesheet" href="styles.css?v=3881c32856" />
+  </head>
+  <body>
+    <header class="nobs-topbar">
+      <a class="nobs-logo" href="index.html" aria-label="душнила AI">
+        <span class="nobs-logo-word">душнила</span><span class="nobs-logo-ai">AI</span>
+      </a>
+    </header>
+    <main class="nobs-home nobs-request">
+      <h1 data-i18n="request.title">Разобрать новое видео</h1>
+      <p class="nobs-tagline" data-i18n="request.tagline"></p>
+
+      <form id="request-form" class="nobs-request-form" novalidate>
+        <label class="nobs-request-field">
+          <span data-i18n="request.url"></span>
+          <input type="url" id="request-url" name="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" required />
+        </label>
+        <label class="nobs-request-field">
+          <span data-i18n="request.code"></span>
+          <input type="text" id="request-code" name="code" placeholder="NOBS-…" autocomplete="off" spellcheck="false" maxlength="40" />
+          <small data-i18n="request.codeHint"></small>
+        </label>
+        <button type="submit" id="request-button" data-i18n="request.button">Разобрать</button>
+      </form>
+
+      <p id="request-error" class="nobs-request-error" role="alert" hidden></p>
+
+      <section id="request-waiting" class="nobs-request-waiting" hidden aria-live="polite">
+        <h2 data-i18n="request.waitingTitle"></h2>
+        <p id="request-video" class="nobs-request-video"></p>
+        <p id="request-status" class="nobs-request-status"></p>
+        <p id="request-elapsed" class="nobs-request-elapsed"></p>
+        <p class="nobs-request-hint" data-i18n="request.waitHint"></p>
+        <button type="button" id="request-again" class="nobs-secondary" data-i18n="request.again" hidden></button>
+        <button type="button" id="request-cancel" class="nobs-secondary" data-i18n="request.cancel"></button>
+      </section>
+
+      <section class="nobs-request-recent-wrap">
+        <h2><span data-i18n="request.recent"></span> <a id="request-library" class="nobs-request-library" href="player.html" data-i18n="request.library"></a></h2>
+        <nav id="request-recent" class="nobs-request-recent" hidden></nav>
+      </section>
+    </main>
+
+    <script type="module">
+      import { t } from "./src/i18n.js?v=3881c32856";
+      import { mountRequestPage, pickLang, renderRecent } from "./src/publicRequest.js?v=3881c32856";
+
+      const lang = pickLang(location, navigator);
+      document.documentElement.lang = lang;
+      for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n, lang);
+
+      const $ = (id) => document.getElementById(id);
+      const page = mountRequestPage({
+        els: {
+          form: $("request-form"), url: $("request-url"), code: $("request-code"), button: $("request-button"),
+          error: $("request-error"), waiting: $("request-waiting"), status: $("request-status"),
+          elapsed: $("request-elapsed"), video: $("request-video"), cancel: $("request-cancel"), again: $("request-again"),
+        },
+        lang,
+      });
+      page.resume();
+
+      fetch("/runs")
+        .then((r) => (r.ok ? r.json() : { runs: [] }))
+        .then((body) => {
+          const runs = body.runs ?? [];
+          renderRecent($("request-recent"), runs, lang);
+          if (runs[0]) $("request-library").href = `player.html?run_id=${Number(runs[0].run_id)}`;
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

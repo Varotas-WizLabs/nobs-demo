@@ -36,9 +36,9 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=202611af38";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=202611af38";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=202611af38";
+import { t } from "./i18n.js?v=3881c32856";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=3881c32856";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=3881c32856";
 
 const KEY = "nobs.settings";
 
@@ -593,7 +593,99 @@ export function openSettingsDialog(doc, lang = "en") {
 
   dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, personaField, voiceField, rewindField, ...engineFields, close);
   doc.body.appendChild(dialog);
+  // The public queue's server settings: only with the local backend.
+  mountQueueSettings(dialog, close, lang);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
   return dialog;
+}
+
+export const CODES_PAGE = "codes.html";
+
+/**
+ * The local server's public request queue settings (GET/PUT /queue/config):
+ * «Интервал синхронизации очереди, сек» (10..600), on/off, and a link to
+ * the invite codes page. Added only when the backend answers -- never in
+ * the public demo (no backend; its shim refuses the path).
+ */
+export async function mountQueueSettings(dialog, before, lang = "en", fetchImpl = globalThis.fetch) {
+  const doc = dialog.ownerDocument;
+  if (doc.documentElement?.dataset.demo === "1" || typeof fetchImpl !== "function") return null;
+  let config;
+  try {
+    const r = await fetchImpl("/queue/config");
+    if (!r.ok) return null;
+    config = await r.json();
+  } catch {
+    return null;
+  }
+  if (!config || typeof config.interval_sec !== "number") return null;
+  const box = doc.createElement("div");
+  box.className = "nobs-settings-field nobs-settings-queue";
+  const head = doc.createElement("span");
+  head.textContent = t("settings.queue", lang);
+  box.appendChild(head);
+
+  const intervalRow = doc.createElement("label");
+  intervalRow.className = "nobs-settings-field";
+  const intervalLabel = doc.createElement("span");
+  intervalLabel.textContent = t("settings.queueInterval", lang);
+  const input = doc.createElement("input");
+  input.type = "number";
+  input.min = "10";
+  input.max = "600";
+  input.step = "5";
+  input.name = "queueIntervalSec";
+  input.value = String(config.interval_sec);
+  const hint = doc.createElement("small");
+  hint.textContent = config.configured === false ? t("settings.queueOff", lang) : t("settings.queueHint", lang);
+  intervalRow.append(intervalLabel, input, hint);
+
+  const enabledRow = doc.createElement("label");
+  enabledRow.className = "nobs-settings-field nobs-settings-check";
+  const enabledLine = doc.createElement("span");
+  enabledLine.className = "nobs-settings-row";
+  const enabledBox = doc.createElement("input");
+  enabledBox.type = "checkbox";
+  enabledBox.name = "queueEnabled";
+  enabledBox.checked = config.enabled !== false;
+  const enabledLabel = doc.createElement("span");
+  enabledLabel.textContent = t("settings.queueEnabled", lang);
+  enabledLine.append(enabledBox, enabledLabel);
+  enabledRow.append(enabledLine);
+
+  const put = async (body) => {
+    try {
+      const r = await fetchImpl("/queue/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (r.ok) {
+        const next = await r.json();
+        input.value = String(next.interval_sec);
+        enabledBox.checked = next.enabled !== false;
+      }
+    } catch {
+      // keep the field as typed; the next open shows the server's value
+    }
+  };
+  input.addEventListener("change", () => {
+    const value = Math.min(600, Math.max(10, Math.round(Number(input.value) || 30)));
+    input.value = String(value);
+    put({ interval_sec: value });
+  });
+  enabledBox.addEventListener("change", () => put({ enabled: enabledBox.checked }));
+
+  const link = doc.createElement("a");
+  link.className = "nobs-settings-link";
+  link.href = CODES_PAGE;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = t("settings.manageCodes", lang);
+
+  box.append(intervalRow, enabledRow, link);
+  if (before?.parentNode === dialog) dialog.insertBefore(box, before);
+  else dialog.appendChild(box);
+  return box;
 }

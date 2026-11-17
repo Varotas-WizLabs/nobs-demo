@@ -32,6 +32,9 @@
     const requestMethod = typeof input === "object" && input !== null ? input.method : undefined;
     const method = String(init?.method ?? requestMethod ?? "GET").toUpperCase();
     const url = typeof input === "string" ? input : String(input?.url ?? "");
+    // Absolute URLs (the public request queue Worker, the published data
+    // the request page waits for, YouTube) are real requests.
+    if (!url.startsWith("/")) return realFetch(input, init);
     let m;
     // The flag narrator's texts (exported by build_demo.py), per commentator:
     // «душнила» (style casual or dushnila) from voice-casual.json, another
