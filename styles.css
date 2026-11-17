@@ -2257,3 +2257,39 @@ button.nobs-scoop-verdict:hover {
 .nobs-rail-flag[data-verdict="insufficient"] {
   border-style: dashed;
 }
+
+/* Brand bar with the «душнила AI» logo, top left of the player page. */
+.nobs-topbar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  background: var(--nobs-bg);
+  border-bottom: 1px solid var(--nobs-border);
+}
+.nobs-logo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--nobs-text);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.nobs-logo-ai {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--nobs-red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transform: translateY(-2px);
+}
+.nobs-logo:hover .nobs-logo-word,
+.nobs-logo:focus-visible .nobs-logo-word {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

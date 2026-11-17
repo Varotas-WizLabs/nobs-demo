@@ -30,8 +30,8 @@
 //     local app uses Carmit when available, else the system voice.
 // Applies without a reload.
 
-import { t } from "./i18n.js?v=cf26d98259";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=cf26d98259";
+import { t } from "./i18n.js?v=8887b231d7";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=8887b231d7";
 
 const KEY = "nobs.settings";
 
