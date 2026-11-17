@@ -1,5 +1,5 @@
 // web/src/overlay.js
-import { findActiveClaim, findRelationsInvolvingClaim } from "./claimSync.js?v=751d7428cc";
+import { findActiveClaim, findRelationsInvolvingClaim } from "./claimSync.js?v=4dd68439c6";
 
 export function computeOverlayState(run, currentTimeSec) {
   if (run.status !== "complete") {

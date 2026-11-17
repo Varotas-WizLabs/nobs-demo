@@ -2206,3 +2206,46 @@ button.nobs-scoop-verdict:hover {
 :root[data-solo="1"] .nobs-library {
   display: none;
 }
+
+/* Flag filters on the collapsed right panel: a column of coloured circles.
+   Selected = filled with the flag's colour; not selected = coloured outline
+   over a muted fill. Shown only while the panel is collapsed. */
+.nobs-rail-filters {
+  display: none;
+}
+.nobs-claims-panel[data-collapsed="true"] .nobs-rail-filters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.nobs-rail-flag {
+  --rail-c: var(--nobs-muted);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--rail-c);
+  background: color-mix(in srgb, var(--rail-c) 22%, transparent);
+  opacity: 0.75;
+  cursor: pointer;
+  transition: background 120ms ease, opacity 120ms ease, transform 120ms ease;
+}
+.nobs-rail-flag:hover,
+.nobs-rail-flag:focus-visible {
+  opacity: 1;
+  transform: scale(1.12);
+}
+.nobs-rail-flag[aria-pressed="true"] {
+  background: var(--rail-c);
+  opacity: 1;
+}
+.nobs-rail-flag[data-verdict="green"] { --rail-c: var(--nobs-green); }
+.nobs-rail-flag[data-verdict="yellow"] { --rail-c: var(--nobs-yellow); }
+.nobs-rail-flag[data-verdict="red"] { --rail-c: var(--nobs-red); }
+.nobs-rail-flag[data-verdict="white"],
+.nobs-rail-flag[data-verdict="insufficient"] { --rail-c: var(--nobs-white); }
+.nobs-rail-flag[data-verdict="insufficient"] {
+  border-style: dashed;
+}

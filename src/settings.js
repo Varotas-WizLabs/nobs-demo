@@ -30,12 +30,12 @@
 //     local app uses Carmit when available, else the system voice.
 // Applies without a reload.
 
-import { t } from "./i18n.js?v=751d7428cc";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=751d7428cc";
+import { t } from "./i18n.js?v=4dd68439c6";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=4dd68439c6";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null, voiceRewindSec: 1 });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null, voiceRewindSec: 1, showTimelineFlags: true });
 export const VOICE_REWIND_MAX = 10;
 export const SEEK_LEAD_MAX = 30;
 
@@ -202,6 +202,11 @@ export function clampLead(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return DEFAULTS.seekLeadSec;
   return Math.min(Math.max(Math.round(n), 0), SEEK_LEAD_MAX);
+}
+
+/** Whether the flag markers are drawn on the video's timeline (setting "showTimelineFlags"). */
+export function showTimelineFlags() {
+  return read().showTimelineFlags !== false;
 }
 
 /** Seconds to step back when the video resumes after a narration (0..VOICE_REWIND_MAX, halves). */
@@ -378,6 +383,21 @@ export function openSettingsDialog(doc, lang = "en") {
     if (event.target === dialog) dialog.close();
   });
 
+  // Flag markers on the timeline: shown or hidden.
+  const flagsOnLine = doc.createElement("label");
+  flagsOnLine.className = "nobs-settings-field nobs-settings-check";
+  const flagsRow = doc.createElement("span");
+  flagsRow.className = "nobs-settings-row";
+  const flagsBox = doc.createElement("input");
+  flagsBox.type = "checkbox";
+  flagsBox.name = "showTimelineFlags";
+  flagsBox.checked = showTimelineFlags();
+  flagsBox.addEventListener("change", () => setSetting("showTimelineFlags", flagsBox.checked));
+  const flagsLabel = doc.createElement("span");
+  flagsLabel.textContent = t("settings.showTimelineFlags", lang);
+  flagsRow.append(flagsBox, flagsLabel);
+  flagsOnLine.append(flagsRow);
+
   const possible = doc.createElement("label");
   possible.className = "nobs-settings-field nobs-settings-check";
   const box = doc.createElement("input");
@@ -508,7 +528,7 @@ export function openSettingsDialog(doc, lang = "en") {
   const runVoice = baseLang(lang) === "he" ? "he" : "ru";
   const engineFields = [runVoice, ...VOICE_LANGS.filter((l) => l !== runVoice)].map((l) => engineSelectField(doc, l, lang));
 
-  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, rewindField, ...engineFields, close);
+  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, voiceField, rewindField, ...engineFields, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=751d7428cc"></script>
+    <script src="src/demoShim.js?v=4dd68439c6"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=751d7428cc" />
+    <link rel="stylesheet" href="styles.css?v=4dd68439c6" />
   </head>
   <body>
     <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
@@ -69,21 +69,22 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=751d7428cc";
-      import { bootstrapPlayerPage } from "./src/main.js?v=751d7428cc";
-      import { startProcessingLog } from "./src/processingLog.js?v=751d7428cc";
-      import { startLibrary } from "./src/library.js?v=751d7428cc";
-      import { buildShareControl, isSolo } from "./src/share.js?v=751d7428cc";
-      import { renderClaimList } from "./src/claimList.js?v=751d7428cc";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=751d7428cc";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=751d7428cc";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=751d7428cc";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=751d7428cc";
-      import { t } from "./src/i18n.js?v=751d7428cc";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=751d7428cc";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=751d7428cc";
-      import { createHoldIcon } from "./src/holdIcon.js?v=751d7428cc";
-      import { applyTheme, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setLocalVoices, setSileroAvailable, showTagFilter, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=751d7428cc";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=4dd68439c6";
+      import { bootstrapPlayerPage } from "./src/main.js?v=4dd68439c6";
+      import { startProcessingLog } from "./src/processingLog.js?v=4dd68439c6";
+      import { startLibrary } from "./src/library.js?v=4dd68439c6";
+      import { buildShareControl, isSolo } from "./src/share.js?v=4dd68439c6";
+      import { renderClaimList } from "./src/claimList.js?v=4dd68439c6";
+      import { buildRailFilters } from "./src/railFilters.js?v=4dd68439c6";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=4dd68439c6";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=4dd68439c6";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=4dd68439c6";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=4dd68439c6";
+      import { t } from "./src/i18n.js?v=4dd68439c6";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=4dd68439c6";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=4dd68439c6";
+      import { createHoldIcon } from "./src/holdIcon.js?v=4dd68439c6";
+      import { applyTheme, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setLocalVoices, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=4dd68439c6";
       applyTheme(document);
 
       {
@@ -503,14 +504,25 @@
       // export read the setting when they open).
       onSettingsChange((_settings, name) => {
         if ((name === "showPossibleTags" || name === "showTagFilter") && shownRun) showRun(shownRun);
+        if (name === "showTimelineFlags" && shownRun) drawMarkers(filteredClaims ?? shownRun.claims ?? []);
       });
+      // The verdict filter (several at once), shared by the list chips and
+      // the circles on the collapsed panel; kept across redraws.
+      let selectedFlags = [];
+      let filteredClaims = null;
+      let rail = null;
+      // Flag markers on the timeline, unless the setting hides them.
+      function drawMarkers(claims) {
+        if (controls) controls.setMarkers(showTimelineFlags() ? claims : []);
+      }
       // Claim list, flag markers, and the tag marks / ad segments on the
       // timeline (rebuilt when the tags arrive after the run).
       function showRun(run) {
         if (run.status !== "complete" || !currentPlayer) return;
         shownRun = run;
+        filteredClaims = null;
         if (controls) {
-          controls.setMarkers(run.claims ?? []);
+          drawMarkers(run.claims ?? []);
           controls.setTimelineItems(timelineItems(run));
         }
         // The narrator reads the same flags the timeline shows.
@@ -526,11 +538,15 @@
         list = renderClaimList(document.getElementById("claim-list"), run, {
           followPlayback,
           showTagFilter,
+          initialFlags: selectedFlags,
           // The list's flag and tag filters apply to the timeline too.
-          onFilterChange: ({ claims, flag, tag }) => {
+          onFilterChange: ({ claims, flag, flags, tag }) => {
+            selectedFlags = flags ?? [];
+            filteredClaims = claims;
+            rail?.update(selectedFlags);
             narrator?.setClaims(claims);
             if (!controls) return;
-            controls.setMarkers(claims);
+            drawMarkers(claims);
             controls.setTimelineItems(filterTimelineItems(allItems, { flag, tag }));
           },
           onSelect: (claim) => {
@@ -538,6 +554,15 @@
             currentPlayer.playVideo();
           },
         });
+        // Flag circles on the collapsed panel (CSS shows them only there).
+        document.querySelector("#claims-panel .nobs-rail-filters")?.remove();
+        rail = buildRailFilters(document, {
+          counts: list.flagCounts(),
+          selected: selectedFlags,
+          lang: run.caption_language ?? "en",
+          onChange: (flags) => list.setFlags(flags),
+        });
+        document.querySelector("#claims-panel .nobs-claims-panel-bar").after(rail.root);
         setupScoops(run);
         if (highlightTimer === null) {
           highlightTimer = setInterval(() => {

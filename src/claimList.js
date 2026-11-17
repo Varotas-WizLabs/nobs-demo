@@ -13,14 +13,14 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=751d7428cc";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=751d7428cc";
-import { t } from "./i18n.js?v=751d7428cc";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=751d7428cc";
+import { formatTimecode } from "./claimSync.js?v=4dd68439c6";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=4dd68439c6";
+import { t } from "./i18n.js?v=4dd68439c6";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=4dd68439c6";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
-const FLAG_ORDER = ["green", "yellow", "red", "insufficient", "white"];
+export const FLAG_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 
 function el(doc, tag, className, text) {
   const node = doc.createElement(tag);
@@ -40,11 +40,12 @@ function el(doc, tag, className, text) {
  *   onFilterChange gets the claims the filters leave visible (so the
  *   timeline can show only their markers) after every filter change.
  */
-export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting, showTagFilter = () => true }) {
+export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting, showTagFilter = () => true, initialFlags = [] }) {
   const doc = root.ownerDocument;
   const lang = run.caption_language ?? "en";
   const claims = [...(run.claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
-  let filter = "all";
+  // Verdict filter: several flags at once; empty = all.
+  const flags = new Set(initialFlags);
   let tagFilter = "all";
   // "References to videos": only claims about a discussed video (a toggle,
   // combined with the other filters; shown only when the run has any).
@@ -69,13 +70,12 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     chip.appendChild(doc.createTextNode(`${label} ${count}`));
     chip.type = "button";
     chip.dataset.filter = value;
-    chip.setAttribute("aria-pressed", String(value === filter));
+    chip.setAttribute("aria-pressed", String(value === "all" ? flags.size === 0 : flags.has(value)));
     chip.addEventListener("click", () => {
-      // Clicking the selected chip again clears the filter.
-      filter = value === filter && value !== "all" ? "all" : value;
-      for (const c of chips.children) {
-        if (c.dataset.filter !== undefined) c.setAttribute("aria-pressed", String(c.dataset.filter === filter));
-      }
+      // "All" clears the selection; a verdict chip toggles (several at once).
+      if (value === "all") flags.clear();
+      else if (flags.has(value)) flags.delete(value);
+      else flags.add(value);
       applyFilter();
     });
     return chip;
@@ -189,11 +189,20 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   const empty = el(doc, "p", "nobs-claims-empty", t("list.empty", lang));
   empty.hidden = true;
 
+  function syncChips() {
+    for (const c of chips.children) {
+      if (c.dataset.filter === undefined) continue;
+      const on = c.dataset.filter === "all" ? flags.size === 0 : flags.has(c.dataset.filter);
+      c.setAttribute("aria-pressed", String(on));
+    }
+  }
+
   function applyFilter() {
+    syncChips();
     let shown = 0;
     for (const { claim, item } of rows) {
       const visible =
-        (filter === "all" || verdictKey(claim) === filter) &&
+        (flags.size === 0 || flags.has(verdictKey(claim))) &&
         (tagFilter === "all" || claimHasTag(claim, tagFilter)) &&
         (!refFilter || isRef(claim));
       item.hidden = !visible;
@@ -209,7 +218,9 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     }
     onFilterChange?.({
       claims: rows.filter(({ item }) => !item.hidden).map(({ claim }) => claim),
-      flag: filter,
+      // `flag`: "all", the one selected verdict, or "multi"; `flags`: the set.
+      flag: flags.size === 0 ? "all" : flags.size === 1 ? [...flags][0] : "multi",
+      flags: [...flags],
       tag: tagFilter,
       ...(refCount ? { refs: refFilter } : {}),
     });
@@ -353,7 +364,19 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   section.append(header, list, empty, toTop);
   root.replaceChildren(section);
 
+  // A selection carried over from before a redraw applies at once.
+  if (flags.size) applyFilter();
+
   return {
+    /** The verdicts the filter keeps (empty = all) and their counts. */
+    getFlags: () => [...flags],
+    flagCounts: () => ({ ...counts }),
+    /** Select these verdicts (empty = all), as if their chips were pressed. */
+    setFlags(list) {
+      flags.clear();
+      for (const f of list ?? []) if (FLAG_ORDER.includes(f)) flags.add(f);
+      applyFilter();
+    },
     highlight(timeSec) {
       lastTime = timeSec;
       let first = null;
