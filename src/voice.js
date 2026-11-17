@@ -26,6 +26,20 @@
 // - Errors never show a dialog: they are logged once (console.warn) and the
 //   narrator steps out of the way.
 //
+// Styles (settings "voiceStyle"): "normal" reads the claim's summary;
+// "casual" (фривольный) reads a short friend-to-friend retelling generated per
+// run by the backend (GET/POST /runs/{id}/voice-texts?style=casual, polled
+// every TEXTS_POLL_MS while it runs). Until a claim's casual text exists, a
+// colour opener ("Вот тут совсем не так.") plus the summary stands in. Casual
+// texts are Russian only.
+//
+// Red flags (option errorCue): the narration of a red flag opens with a short
+// "error" sound effect (two descending bell tones, in the spirit of a desktop
+// error alert; synthesized with Web Audio, no recording) instead of the key
+// click. The click stands in when Web Audio is unavailable.
+//
+// Speech plays SPEECH_RATE times faster than generated, pitch preserved.
+//
 // Languages: only Russian has a voice for now. A new language is one entry in
 // VOICES plus its "voice.*" strings in i18n.js.
 //
@@ -50,6 +64,56 @@ export const MAX_STEP_SEC = 2;
 export const MIN_VOLUME = 30;
 export const MAX_TEXT_CHARS = 300;
 export const STORAGE_KEY = "nobs.voice";
+export const SPEECH_RATE = 1.1;
+export const TEXTS_POLL_MS = 5000;
+// How long the error sound plays before the speech starts (ms).
+export const ERROR_SOUND_MS = 480;
+
+// The "error" alert: two short descending tones (G5 then C5), each a sine
+// with a soft octave partial and a fast bell-like decay. Original sound, not a
+// copy of any system sound. Returns the wait before going on (ms); 0 when Web
+// Audio is unavailable.
+export function playErrorSound(volume = 1) {
+  try {
+    const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (!Ctx) return 0;
+    primeClick();
+    const ctx = clickContextNow();
+    if (!ctx) return 0;
+    const t0 = ctx.currentTime + 0.01;
+    const note = (freq, start, length) => {
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.45 * volume, start + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+      gain.connect(ctx.destination);
+      for (const [mult, level] of [[1, 1], [2, 0.25], [3, 0.08]]) {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = freq * mult;
+        const partial = ctx.createGain();
+        partial.gain.value = level;
+        osc.connect(partial).connect(gain);
+        osc.start(start);
+        osc.stop(start + length + 0.02);
+      }
+    };
+    note(784, t0, 0.32);
+    note(523.25, t0 + 0.13, 0.42);
+    return ERROR_SOUND_MS;
+  } catch {
+    return 0;
+  }
+}
+export const VOICE_STYLES = Object.freeze(["casual", "normal"]);
+
+// Casual openers per flag colour; one is picked per claim (by its id).
+export const OPENERS = Object.freeze({
+  red: ["Вот тут совсем не так.", "Э… как бы, нет."],
+  yellow: ["Вот тут не точно.", "Ну, не совсем."],
+  green: ["А вот тут всё чётко."],
+  white: ["А это проверить не выйдет."],
+});
 
 // Run caption language (base code) -> voice language sent to /voice/say.
 export const VOICES = Object.freeze({
@@ -106,6 +170,30 @@ export function spokenText(claim, lang = "ru") {
   return capText(summary || firstSentence(claim?.argument));
 }
 
+function hashString(value) {
+  let h = 0;
+  for (const ch of String(value)) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return h;
+}
+
+// The casual stand-in for a claim without a generated text: a colour opener
+// (deterministic per claim id) and the summary.
+export function casualFallback(claim) {
+  const summary = spokenText(claim);
+  const list = OPENERS[claim?.flag];
+  if (!list?.length) return summary;
+  const opener = list[hashString(claim?.id ?? claim?.start_sec ?? "") % list.length];
+  return summary ? `${opener} ${summary}` : opener;
+}
+
+// What is said for a claim in a style: "casual" uses the generated text
+// (`texts[claim.id]`) or the fallback; "normal" the summary.
+export function textForStyle(claim, style = "normal", texts = {}) {
+  if (style !== "casual") return spokenText(claim);
+  const generated = String(texts?.[claim?.id] ?? "").trim();
+  return generated ? capText(generated) : capText(casualFallback(claim));
+}
+
 // When a flag is read: at the END of its passage (the speaker has finished
 // the thought), falling back to its start when the end is unknown.
 export function speakAt(claim) {
@@ -139,6 +227,9 @@ function loadClick(ctx) {
 }
 // Create / resume the click's AudioContext inside a user gesture, so the
 // browser lets it sound later from a timer; also starts loading the sample.
+function clickContextNow() {
+  return clickContext;
+}
 export function primeClick() {
   try {
     const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
@@ -244,8 +335,20 @@ export function createNarrator({
   revokeObjectURL = (url) => URL.revokeObjectURL(url),
   now = () => Date.now(),
   click = playKeyClick,
+  style: initialStyle = "normal",
+  errorCue = false,
+  errorSound = playErrorSound,
 }) {
   let enabled = false;
+  let style = VOICE_STYLES.includes(initialStyle) ? initialStyle : "normal";
+  // Casual texts of the current run: {runId, status, texts, loading, posted, pollTimer, gen}
+  let runId = null;
+  let texts = {};
+  let textsStatus = null;
+  let textsLoading = false;
+  let textsPosted = false;
+  let pollTimer = null;
+  let textsGen = 0;
   let voice = null; // VOICES entry for the run's language
   let claims = [];
   let timer = null;
@@ -293,10 +396,110 @@ export function createNarrator({
     return String(claim.id ?? `${claim.start_sec}:${claim.text ?? ""}`);
   }
 
+  function casualActive() {
+    return style === "casual" && voice?.lang === "ru";
+  }
+
+  function currentText(claim) {
+    return casualActive() ? textForStyle(claim, "casual", texts) : spokenText(claim, voice?.lang ?? "ru");
+  }
+
+  // ---- Casual texts (GET / POST /runs/{id}/voice-texts?style=casual) ----
+  function stopPoll() {
+    if (pollTimer !== null) {
+      clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  function wantTexts() {
+    return enabled && casualActive() && runId !== null;
+  }
+
+  // The first answer about the casual texts has not come yet: hold the
+  // prefetch rather than synthesize a fallback that is replaced a moment later.
+  function textsPending() {
+    return casualActive() && textsLoading && textsStatus === null;
+  }
+
+  function refetchUpcoming() {
+    if (enabled && voice && prevTime !== null && !session) prefetchAhead(prevTime);
+  }
+
+  function applyTexts(body) {
+    const first = textsStatus === null;
+    const before = JSON.stringify(texts);
+    texts = body?.texts && typeof body.texts === "object" ? body.texts : {};
+    textsStatus = body?.status ?? "failed";
+    // New texts (or the first answer): get the upcoming flags' audio with them.
+    if (first || JSON.stringify(texts) !== before) refetchUpcoming();
+  }
+
+  async function requestTexts(method) {
+    const response = await fetchImpl(
+      `/runs/${encodeURIComponent(runId)}/voice-texts?style=casual`,
+      method === "POST" ? { method: "POST" } : undefined
+    );
+    if (!response.ok) throw new Error(`voice-texts HTTP ${response.status}`);
+    return response.json();
+  }
+
+  async function loadTexts() {
+    const gen = textsGen;
+    textsLoading = true;
+    try {
+      let body = await requestTexts("GET");
+      if (gen !== textsGen) return;
+      applyTexts(body);
+      if ((textsStatus === "none" || textsStatus === "failed") && !textsPosted) {
+        textsPosted = true;
+        body = await requestTexts("POST");
+        if (gen !== textsGen) return;
+        applyTexts(body);
+      }
+    } catch (err) {
+      if (gen !== textsGen) return;
+      warnOnce("casual voice texts failed", err);
+      const first = textsStatus === null;
+      textsStatus = "failed";
+      if (first) refetchUpcoming();
+    } finally {
+      if (gen === textsGen) textsLoading = false;
+    }
+    if (gen !== textsGen) return;
+    if (textsStatus === "running" && wantTexts()) {
+      pollTimer = setTimeout(() => {
+        pollTimer = null;
+        if (gen === textsGen && wantTexts()) loadTexts();
+      }, TEXTS_POLL_MS);
+    }
+  }
+
+  function ensureTexts() {
+    if (!wantTexts()) {
+      stopPoll();
+      return;
+    }
+    if (textsLoading || pollTimer !== null) return;
+    if (textsStatus === "complete") return;
+    if (textsStatus === "failed" && textsPosted) return;
+    if (textsStatus === "none" && textsPosted) return;
+    loadTexts();
+  }
+
+  function resetTexts() {
+    textsGen += 1;
+    stopPoll();
+    texts = {};
+    textsStatus = null;
+    textsLoading = false;
+    textsPosted = false;
+  }
+
   // ---- Audio fetching (cached per claim) ----
   function fetchAudio(claim) {
     const key = claimKey(claim);
-    const text = spokenText(claim, voice?.lang ?? "ru");
+    const text = currentText(claim);
     const known = cache.get(key);
     if (known && known.text === text) return known;
     if (known?.url) revokeObjectURL(known.url);
@@ -323,6 +526,7 @@ export function createNarrator({
   }
 
   function prefetchAhead(time) {
+    if (textsPending()) return;
     for (const claim of claims) {
       const ahead = speakAt(claim) - time;
       if (ahead > 0 && ahead <= LEAD_SEC) fetchAudio(claim);
@@ -330,6 +534,7 @@ export function createNarrator({
   }
 
   function prefetchNext(time) {
+    if (textsPending()) return;
     const next = claims.find((claim) => speakAt(claim) > time);
     if (next) fetchAudio(next);
   }
@@ -426,9 +631,18 @@ export function createNarrator({
       session = null;
       return;
     }
-    // "Space bar" click as the video stops, then the speech.
     const s = session;
-    const wait = clickSafely();
+    // A red flag opens with the "error" sound, other flags with the
+    // "space bar" click; then the speech.
+    let wait = 0;
+    if (errorCue && s.queue[0]?.flag === "red" && !blocked) {
+      try {
+        wait = Number(errorSound(speechVolume())) || 0;
+      } catch {
+        wait = 0;
+      }
+    }
+    if (wait <= 0) wait = clickSafely();
     if (wait > 0) {
       s.waitTimer = setTimeout(() => {
         if (session !== s) return;
@@ -450,8 +664,13 @@ export function createNarrator({
     }
     const key = claimKey(claim);
     const entry = fetchAudio(claim);
+    const spoken = () => {
+      // Spoken (or unplayable): free its WAV. A seek back fetches it again.
+      dropEntry(key);
+      speakNext();
+    };
     if (entry.url) {
-      play(s, entry.url, key);
+      play(s, entry.url, spoken);
       return;
     }
     if (entry.failed) {
@@ -471,18 +690,25 @@ export function createNarrator({
       settled = true;
       clearTimeout(s.waitTimer);
       s.waitTimer = null;
-      if (url) play(s, url, key);
+      if (url) play(s, url, spoken);
       else speakNext();
     });
   }
 
-  function play(s, url, key) {
+  // Play `url` on the shared element for session `s`; `onDone` runs once it
+  // ended, failed or was refused.
+  function play(s, url, onDone) {
     let audio;
     try {
       audio = audioElement();
       srcGeneration += 1;
       audio.src = url;
       audio.volume = speechVolume();
+      // Setting src resets playbackRate to defaultPlaybackRate: set both.
+      audio.preservesPitch = true;
+      audio.webkitPreservesPitch = true;
+      audio.defaultPlaybackRate = SPEECH_RATE;
+      audio.playbackRate = SPEECH_RATE;
     } catch (err) {
       warnOnce("audio playback failed", err);
       speakNext();
@@ -495,9 +721,7 @@ export function createNarrator({
       done = true;
       listener = null;
       s.audio = null;
-      // Spoken (or unplayable): free its WAV. A seek back fetches it again.
-      dropEntry(key);
-      speakNext();
+      onDone();
     };
     const refused = (err) => {
       if (isRefusal(err)) {
@@ -628,9 +852,11 @@ export function createNarrator({
   function refreshRunning() {
     if (enabled && voice) {
       prevTime = null;
+      ensureTexts();
       startTimer();
       tick();
     } else {
+      stopPoll();
       stopTimer();
       finish(true);
     }
@@ -657,6 +883,26 @@ export function createNarrator({
         cache.clear();
       }
       refreshRunning();
+    },
+    /** The run whose casual texts are read (its run_id). */
+    setRun(id) {
+      const next = id ?? null;
+      if (next === runId) return;
+      resetTexts();
+      runId = next;
+      ensureTexts();
+    },
+    /** "casual" or "normal"; upcoming flags are re-texted (refetched). */
+    setStyle(next) {
+      const value = VOICE_STYLES.includes(next) ? next : "normal";
+      if (value === style) return;
+      style = value;
+      ensureTexts();
+      if (!wantTexts()) stopPoll();
+      if (enabled && voice && prevTime !== null) prefetchAhead(prevTime);
+    },
+    getStyle() {
+      return style;
     },
     supports(captionLanguage) {
       return voiceFor(captionLanguage) !== null;
@@ -690,6 +936,7 @@ export function createNarrator({
     tick,
     destroy() {
       stopTimer();
+      resetTexts();
       finish(false);
       for (const entry of cache.values()) if (entry.url) revokeObjectURL(entry.url);
       cache.clear();

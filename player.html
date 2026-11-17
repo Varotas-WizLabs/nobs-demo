@@ -81,7 +81,7 @@
       import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
       import { checkVoiceHealth, createNarrator, loadEnabled, saveEnabled } from "./src/voice.js";
-      import { applyTheme, followPlayback, onSettingsChange, seekTarget, showTagFilter, youtubeCaptions } from "./src/settings.js";
+      import { applyTheme, followPlayback, onSettingsChange, seekTarget, showTagFilter, voiceStyle, youtubeCaptions } from "./src/settings.js";
       applyTheme(document);
 
       {
@@ -361,7 +361,12 @@
         renderVoice();
       }
       function setupVoice(player) {
-        narrator = createNarrator({ player, fetchImpl: fetch });
+        // Style from the settings ("casual" by default); red flags open with
+        // a spoken "Эррор!".
+        narrator = createNarrator({ player, fetchImpl: fetch, style: voiceStyle(), errorCue: true });
+        onSettingsChange((_settings, name) => {
+          if (name === "voiceStyle") narrator.setStyle(voiceStyle());
+        });
         // The viewer taking over the playback cancels a narration in progress
         // (and its auto-resume): play/pause, the flag and chain icons (their
         // popups), a drag on the seek bar. Capture phase: before the popup
@@ -410,6 +415,7 @@
         // The narrator reads the same flags the timeline shows.
         if (narrator) {
           narrator.setClaims(run.claims ?? []);
+          narrator.setRun(run.run_id);
           voiceLang = run.caption_language ?? "en";
           applyVoice();
         }

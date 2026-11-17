@@ -13,12 +13,16 @@
 // chips and marks. Off hides them everywhere -- popup chips, the claim list
 // and its filters, the timeline and the export -- without a reload
 // (`onSettingsChange` tells the page to redraw).
+//
+// voiceStyle: what the flag narrator reads aloud -- "casual" (default; a
+// friend's short retelling, generated per run) or "normal" (the claim's
+// summary). Applies without a reload.
 
 import { t } from "./i18n.js";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark" });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual" });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -66,6 +70,14 @@ export function setSetting(name, value) {
 }
 
 export const THEMES = ["dark", "light", "system"];
+
+export const VOICE_STYLES = ["casual", "normal"];
+
+/** What the narrator reads: "casual" (default) or "normal". */
+export function voiceStyle() {
+  const value = read().voiceStyle;
+  return VOICE_STYLES.includes(value) ? value : "casual";
+}
 
 /** The page theme setting: "dark" (default), "light" or "system". */
 export function themeSetting() {
@@ -291,7 +303,24 @@ export function openSettingsDialog(doc, lang = "en") {
   });
   themeField.append(themeLabel, themeSelect);
 
-  dialog.append(title, themeField, field, possible, follow, tagRow, cc, close);
+  const voiceField = doc.createElement("label");
+  voiceField.className = "nobs-settings-field";
+  const voiceLabel = doc.createElement("span");
+  voiceLabel.textContent = t("settings.voiceStyle", lang);
+  const voiceSelect = doc.createElement("select");
+  voiceSelect.name = "voiceStyle";
+  voiceSelect.className = "nobs-settings-select";
+  for (const value of ["normal", "casual"]) {
+    const option = doc.createElement("option");
+    option.value = value;
+    option.textContent = t(`settings.voiceStyle.${value}`, lang);
+    voiceSelect.appendChild(option);
+  }
+  voiceSelect.value = voiceStyle();
+  voiceSelect.addEventListener("change", () => setSetting("voiceStyle", voiceSelect.value));
+  voiceField.append(voiceLabel, voiceSelect);
+
+  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
