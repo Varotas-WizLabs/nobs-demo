@@ -2521,6 +2521,33 @@ button.nobs-scoop-verdict:hover {
   color: var(--nobs-muted);
   font-style: italic;
 }
+/* The specialist's second opinion (shadow; never changes the flag). */
+.claim-specialist {
+  margin: 8px 0 4px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--nobs-border-strong, var(--nobs-muted));
+  font-size: 12px;
+}
+.claim-specialist[data-agrees="false"] {
+  border-left-color: var(--nobs-yellow);
+}
+.claim-specialist summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.claim-specialist-note,
+.claim-specialist-meta {
+  color: var(--nobs-muted);
+  margin: 4px 0;
+}
+.claim-specialist-disagreement {
+  margin: 4px 0;
+  font-style: italic;
+}
+.claim-specialist-sources {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
 
 /* Claim list: grey dot, «Проверяется» / «уточнено (было: …)» badges. */
 .nobs-claims-dot[data-state="pending"],

@@ -7,6 +7,26 @@
 //
 // The score is shown for reading only: it never decides a verdict.
 
+import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=99de0217ce";
+
+// The weight of a corroboration / contradiction by the evidence behind it
+// (claims about research only; backend nobs.sources.evidence).
+export const EVIDENCE_WEIGHTS = {
+  systematic_review: 1.5,
+  guideline: 1.3,
+  rct: 1.3,
+  cohort_observational: 1.0,
+  official_data: 1.0,
+  primary_document: 1.0,
+  case_report: 0.7,
+  animal_in_vitro: 0.6,
+  reference: 0.6,
+  expert_opinion: 0.5,
+  news_retelling: 0.5,
+  preprint: 0.4,
+  other: 0.8,
+};
+
 export const KIND_LABELS = {
   primary_document: "первоисточник",
   official_data: "офиц. данные",
@@ -25,6 +45,34 @@ export const CONFIDENCE_LABELS = {
 };
 
 export const ROLE_LABELS = { supports: "подтверждает", refutes: "опровергает", context: "контекст" };
+
+export const STANCE_LABELS = { ...ROLE_LABELS, speaker_source: "источник спикера" };
+
+function levelsText(counts) {
+  const entries = Object.entries(counts ?? {});
+  if (!entries.length) return "—";
+  return entries.map(([k, n]) => `${EVIDENCE_LABELS[k] ?? k} ${n}`).join(", ");
+}
+
+/** The evidence breakdown of a card (nobs.sources.scorecard). */
+export function renderEvidence(doc, card) {
+  const bd = card?.evidence_breakdown;
+  if (!bd || typeof bd !== "object") return null;
+  const box = el(doc, "div", { class: "nobs-src-evidence" });
+  box.append(el(doc, "h3", { text: "Уровень доказательств" }));
+  const dl = el(doc, "dl", { class: "nobs-src-counts" });
+  const pairs = [
+    ["Сам источник (по использованиям)", levelsText(bd.own)],
+    ["Чем подтверждался", levelsText(bd.corroborated_by)],
+    ["Чем опровергался / искажения", levelsText(bd.contradicted_by)],
+    ["Вес подтверждений / опровержений", `${bd.weight_corroborated ?? 0} / ${bd.weight_contradicted ?? 0}`],
+    ["Живые записи / восстановленные", `${bd.live_uses ?? 0} / ${bd.reconstructed_uses ?? 0}`],
+    ["Использований в научных утверждениях", bd.research_uses ?? 0],
+  ];
+  for (const [k, v] of pairs) dl.append(el(doc, "dt", { text: k }), el(doc, "dd", { text: String(v) }));
+  box.append(dl);
+  return box;
+}
 
 export const OUTCOME_LABELS = {
   corroborated: "подтвердилось",
@@ -183,7 +231,11 @@ export function renderDetail(doc, detail) {
         .join(" · "),
     }),
   );
-  if (detail.overall) box.append(counts(doc, detail.overall));
+  if (detail.overall) {
+    box.append(counts(doc, detail.overall));
+    const ev = renderEvidence(doc, detail.overall);
+    if (ev) box.append(ev);
+  }
   if (detail.topics?.length) {
     box.append(el(doc, "h3", { text: "По темам" }));
     const t = el(doc, "table", { class: "nobs-src-table nobs-src-topic-table" });
@@ -240,7 +292,16 @@ export function renderDetail(doc, detail) {
       claim,
       el(doc, "div", {
         class: "nobs-src-use-meta",
-        text: `${ROLE_LABELS[u.role] ?? u.role}${u.role_from === "verdict" ? " (по вердикту)" : ""} · ${OUTCOME_LABELS[u.outcome] ?? u.outcome}${u.topic ? ` · ${u.topic}` : ""} · прогон ${u.run_id}`,
+        text: [
+          `${STANCE_LABELS[u.stance] ?? ROLE_LABELS[u.role] ?? u.role}${u.role_from === "verdict" ? " (по вердикту)" : ""}`,
+          `${OUTCOME_LABELS[u.outcome] ?? u.outcome}${u.support_level ? ` (${EVIDENCE_LABELS[u.support_level] ?? u.support_level})` : ""}`,
+          u.evidence_level ? EVIDENCE_LABELS[u.evidence_level] ?? u.evidence_level : null,
+          u.topic || null,
+          u.reconstructed === 0 ? (u.via === "specialist" ? "запись специалиста" : "живая запись") : null,
+          `прогон ${u.run_id}`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
       }),
     );
     const src = el(doc, "a", { class: "nobs-src-url", href: u.url, target: "_blank", rel: "noopener noreferrer", text: u.url });
@@ -253,10 +314,12 @@ export function renderDetail(doc, detail) {
 
 const NOTE =
   "Оценка — апостериорное Beta-распределение с исходной оценкой по уровню источника (1: 90, 2: 75, 3: 50, 4: 33). " +
-  "Исходы прошлых проверок восстановлены эвристикой: источник «подтвердился», если с итоговым вердиктом согласился ещё хотя бы " +
-  "один независимый источник другого владельца; «опровергнут», если против него источник того же или лучшего уровня. " +
-  "Почти все сохранённые источники — на стороне итогового вердикта, поэтому опровержений мало и оценки завышены. " +
-  "Оценка никогда не решает вердикт.";
+  "Новые проверки записывают все открытые источники с позицией (подтверждает / опровергает / контекст / источник спикера): " +
+  "источник «подтвердился», если то же говорит независимый источник другого владельца; «опровергнут», если более сильный " +
+  "или равный независимый источник говорит обратное; «искажённый оригинал» — если он неверно пересказывает исследование, на которое ссылается. " +
+  "Исходы старых проверок восстановлены эвристикой по итоговому вердикту, поэтому их оценки завышены. " +
+  "В научных утверждениях подтверждение весит по уровню доказательств: обзор/метаанализ 1.5, РКИ 1.3, когортное 1.0, " +
+  "описание случая 0.7, пересказ в СМИ или мнение 0.5, препринт 0.4. Оценка никогда не решает вердикт.";
 
 /**
  * Mount the page. `fetchImpl` answers /sources, /sources/{id} and
@@ -276,6 +339,7 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
       const p = path.split("?")[0];
       if (p === "/sources") return snapshot;
       if (p === "/sources/routes") return snapshot.routes ?? null;
+      if (p === "/sources/specialist") return snapshot.specialist ?? null;
       const m = p.match(/^\/sources\/(\d+)$/);
       if (m) return snapshot.details?.[m[1]] ?? null;
       return null;
@@ -305,7 +369,7 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   root.append(
     el(doc, "p", {
       class: "nobs-src-summary",
-      text: `Источников: ${summary.sources ?? data.sources.length}; использований: ${summary.uses ?? "—"}; с оценкой (достаточно данных): ${summary.scored ?? "—"}${isDemo ? " · снимок для демо" : ""}`,
+      text: `Источников: ${summary.sources ?? data.sources.length}; использований: ${summary.uses ?? "—"}; с оценкой (достаточно данных): ${summary.scored ?? "—"}${summary.live_uses ? `; живых записей: ${summary.live_uses} (подтвердилось ${summary.live_outcomes?.corroborated ?? 0}, опровергнуто ${summary.live_outcomes?.contradicted ?? 0}, искажений ${summary.live_outcomes?.distorted_original ?? 0})` : ""}${isDemo ? " · снимок для демо" : ""}`,
     }),
     el(doc, "p", { class: "nobs-src-note", text: NOTE }),
   );
@@ -398,6 +462,13 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
     }
   } catch {
     // routes are optional
+  }
+  // The specialist's second opinions (shadow mode), disagreements first.
+  try {
+    const sp = await getJson("/sources/specialist");
+    if (sp && Array.isArray(sp.opinions)) root.append(renderSpecialistSection(doc, sp));
+  } catch {
+    // optional
   }
   return { state, pick, draw };
 }
