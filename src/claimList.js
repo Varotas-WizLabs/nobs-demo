@@ -13,11 +13,11 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=fd4b41a77f";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=fd4b41a77f";
-import { t } from "./i18n.js?v=fd4b41a77f";
-import { claimState, isUnchecked } from "./progress.js?v=fd4b41a77f";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=fd4b41a77f";
+import { formatTimecode } from "./claimSync.js?v=202611af38";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=202611af38";
+import { t } from "./i18n.js?v=202611af38";
+import { claimState, isUnchecked } from "./progress.js?v=202611af38";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=202611af38";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).

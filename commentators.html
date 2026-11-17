@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=fd4b41a77f"></script>
+    <script src="src/demoShim.js?v=202611af38"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -16,7 +16,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо: комментаторы</title>
-    <link rel="stylesheet" href="styles.css?v=fd4b41a77f" />
+    <link rel="stylesheet" href="styles.css?v=202611af38" />
   </head>
   <body class="nobs-cm-page">
     <header class="nobs-cm-header">
@@ -29,8 +29,8 @@
     </header>
     <main id="commentators"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=fd4b41a77f";
-      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=fd4b41a77f";
+      import { applyTheme } from "./src/settings.js?v=202611af38";
+      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=202611af38";
       applyTheme(document);
       mountCommentatorsPage(document.getElementById("commentators"), { fetchImpl: fetch });
     </script>

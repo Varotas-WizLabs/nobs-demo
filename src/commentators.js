@@ -33,6 +33,7 @@ export const PARODY_MANNERS = Object.freeze(["zoomer_blogger", "sarcastic", "sta
 
 export const LIMITS = Object.freeze({
   speech_rate: [1, 5],
+  speech_speed: [0.7, 1.6],
   complexity: [1, 5],
   intensity: [0, 5],
   crude: [0, 2], // hard cap (G4): household humour about the situation, never about people
@@ -70,6 +71,7 @@ const DUSHNILA = Object.freeze({
   customized: false,
   languages: ["ru", "he"],
   speech_rate: 3,
+  speech_speed: 1.1,
   complexity: 3,
   manner: "friendly",
   intensity: { exaggeration: 0, humor: 1, slang: 0, drama: 0, crude: 0 },
@@ -109,6 +111,7 @@ const YABLOGGER = Object.freeze({
   customized: false,
   languages: ["ru", "he"],
   speech_rate: 4,
+  speech_speed: 1.25,
   complexity: 1,
   manner: "zoomer_blogger",
   intensity: { exaggeration: 4, humor: 4, slang: 5, drama: 5, crude: 1 },
@@ -154,8 +157,29 @@ export function isParody(profile) {
   return ["exaggeration", "drama", "crude"].some((k) => Number(knobs[k]) >= 3);
 }
 
-/** Speech rate (playbackRate) for a profile; 1.1 for none. */
+export const SPEED_STEP = 0.05;
+
+/** A speed snapped to the 5% grid and the allowed range. */
+export function snapSpeed(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const [lo, hi] = LIMITS.speech_speed;
+  return Math.round(Math.min(hi, Math.max(lo, Math.round(n / SPEED_STEP) * SPEED_STEP)) * 100) / 100;
+}
+
+/** The nearest old 1..5 level for a speed (kept in step for old readers). */
+export function levelForSpeed(speed) {
+  let best = 3;
+  for (const [level, rate] of Object.entries(RATE_BY_LEVEL)) {
+    if (Math.abs(rate - speed) < Math.abs(RATE_BY_LEVEL[best] - speed)) best = Number(level);
+  }
+  return best;
+}
+
+/** Speech rate (playbackRate) for a profile: speech_speed (5% steps), else the old 1..5 level; 1.1 for none. */
 export function rateFor(profile) {
+  const speed = snapSpeed(profile?.speech_speed);
+  if (speed != null && profile?.speech_speed != null) return speed;
   return RATE_BY_LEVEL[Number(profile?.speech_rate)] ?? RATE_BY_LEVEL[3];
 }
 
@@ -198,6 +222,7 @@ export function emptyProfile() {
     parody: false,
     languages: ["ru"],
     speech_rate: 3,
+  speech_speed: 1.1,
     complexity: 3,
     manner: "neutral",
     intensity: { exaggeration: 0, humor: 0, slang: 0, drama: 0, crude: 0 },
@@ -286,6 +311,8 @@ export function validateProfile(profile, { isNew = false, takenIds = [] } = {}) 
   const langs = Array.isArray(p.languages) ? p.languages : [];
   if (!langs.length || langs.some((l) => !LANGS.includes(l))) errors.languages = "Выберите хотя бы один язык: ru или he.";
   if (!inRange(p.speech_rate, LIMITS.speech_rate)) errors.speech_rate = "От 1 до 5.";
+  const speed = Number(p.speech_speed);
+  if (p.speech_speed != null && !(Number.isFinite(speed) && speed >= LIMITS.speech_speed[0] && speed <= LIMITS.speech_speed[1])) errors.speech_speed = "От ×0,70 до ×1,60.";
   if (!inRange(p.complexity, LIMITS.complexity)) errors.complexity = "От 1 до 5.";
   for (const knob of INTENSITY_KNOBS) {
     const range = knob === "crude" ? LIMITS.crude : LIMITS.intensity;
@@ -334,6 +361,9 @@ export function profilePayload(profile) {
   }
   for (const knob of INTENSITY_KNOBS) p.intensity[knob] = Number(p.intensity[knob]);
   for (const key of ["speech_rate", "complexity", "max_words"]) p[key] = Number(p[key]);
+  // The speed itself (5% steps); the old level follows it.
+  p.speech_speed = snapSpeed(p.speech_speed ?? RATE_BY_LEVEL[p.speech_rate]);
+  p.speech_rate = levelForSpeed(p.speech_speed);
   p.triggers.top_n = Number(p.triggers.top_n);
   p.triggers.min_gap_sec = Number(p.triggers.min_gap_sec);
   p.name = String(p.name).trim();

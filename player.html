@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=fd4b41a77f"></script>
+    <script src="src/demoShim.js?v=202611af38"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=fd4b41a77f" />
+    <link rel="stylesheet" href="styles.css?v=202611af38" />
   </head>
   <body>
     <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
@@ -75,27 +75,27 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=fd4b41a77f";
-      import { bootstrapPlayerPage } from "./src/main.js?v=fd4b41a77f";
-      import { startProcessingLog } from "./src/processingLog.js?v=fd4b41a77f";
-      import { startLibrary } from "./src/library.js?v=fd4b41a77f";
-      import { buildShareControl, isSolo } from "./src/share.js?v=fd4b41a77f";
-      import { renderClaimList } from "./src/claimList.js?v=fd4b41a77f";
-      import { buildRailFilters } from "./src/railFilters.js?v=fd4b41a77f";
-      import { verdictKey } from "./src/popup.js?v=fd4b41a77f";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=fd4b41a77f";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=fd4b41a77f";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=fd4b41a77f";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=fd4b41a77f";
-      import { t } from "./src/i18n.js?v=fd4b41a77f";
-      import { showRunAction } from "./src/progress.js?v=fd4b41a77f";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=fd4b41a77f";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=fd4b41a77f";
-      import { createHoldIcon } from "./src/holdIcon.js?v=fd4b41a77f";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=fd4b41a77f";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=fd4b41a77f";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=fd4b41a77f";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=fd4b41a77f";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=202611af38";
+      import { bootstrapPlayerPage } from "./src/main.js?v=202611af38";
+      import { startProcessingLog } from "./src/processingLog.js?v=202611af38";
+      import { startLibrary } from "./src/library.js?v=202611af38";
+      import { buildShareControl, isSolo } from "./src/share.js?v=202611af38";
+      import { renderClaimList } from "./src/claimList.js?v=202611af38";
+      import { buildRailFilters } from "./src/railFilters.js?v=202611af38";
+      import { verdictKey } from "./src/popup.js?v=202611af38";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=202611af38";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=202611af38";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=202611af38";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=202611af38";
+      import { t } from "./src/i18n.js?v=202611af38";
+      import { showRunAction } from "./src/progress.js?v=202611af38";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=202611af38";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=202611af38";
+      import { createHoldIcon } from "./src/holdIcon.js?v=202611af38";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=202611af38";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=202611af38";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=202611af38";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=202611af38";
       applyTheme(document);
 
       {

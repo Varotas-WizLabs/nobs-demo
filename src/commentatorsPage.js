@@ -33,9 +33,13 @@ import {
   normalizeProfile,
   profilePayload,
   validateProfile,
-} from "./commentators.js?v=fd4b41a77f";
-import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=fd4b41a77f";
-import { t } from "./i18n.js?v=fd4b41a77f";
+  snapSpeed,
+  levelForSpeed,
+  rateFor,
+  SPEED_STEP,
+} from "./commentators.js?v=202611af38";
+import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=202611af38";
+import { t } from "./i18n.js?v=202611af38";
 
 const FLAG_LABEL = { red: "🔴 красный (неверно)", yellow: "🟡 жёлтый (неточно)", green: "🟢 зелёный (верно)", white: "⚪ белый (не проверить)", scoop: "🕵️ скуп" };
 const KNOB_LABEL = {
@@ -47,6 +51,12 @@ const KNOB_LABEL = {
 };
 const COMPLEXITY_HINT = { 1: "совсем просто", 2: "просто", 3: "обычная речь", 4: "с терминами", 5: "академично" };
 const RATE_HINT = { 1: "медленно", 2: "спокойно", 3: "обычно", 4: "быстро", 5: "очень быстро" };
+/** "×1,25 · +25% · быстро" for a speed slider value. */
+function speedLabel(v) {
+  const pct = Math.round((v - 1) * 100);
+  const word = RATE_HINT[levelForSpeed(v)];
+  return `×${v.toFixed(2).replace(".", ",")} · ${pct > 0 ? "+" : ""}${pct}% · ${word}`;
+}
 const ENTRY_LABEL = { click: "клик пробела", error_on_red: "звук ошибки на красном, иначе клик", error: "звук ошибки всегда", none: "без звука" };
 const EXIT_LABEL = { click: "клик пробела", none: "без звука" };
 const EMOJI_CHOICES = ["🤓", "📱", "🎙️", "🧐", "😎", "🤡", "📰", "🎓", "🔥", "🦉"];
@@ -102,7 +112,8 @@ export function readForm(form, base = emptyProfile()) {
   p.color = value("color");
   p.description = value("description");
   p.languages = LANGS.filter((lang) => checked(`lang.${lang}`));
-  p.speech_rate = Number(value("speech_rate"));
+  p.speech_speed = snapSpeed(value("speech_speed"));
+  p.speech_rate = levelForSpeed(p.speech_speed);
   p.complexity = Number(value("complexity"));
   const manner = form.querySelector('input[name="manner"]:checked');
   if (manner) p.manner = manner.value;
@@ -261,8 +272,8 @@ export function mountCommentatorsPage(root, {
     return wrap;
   }
 
-  function range(name, min, max, value, describe) {
-    const input = el(doc, "input", { type: "range", name, min: String(min), max: String(max), step: "1", value: String(value) });
+  function range(name, min, max, value, describe, step = 1) {
+    const input = el(doc, "input", { type: "range", name, min: String(min), max: String(max), step: String(step), value: String(value) });
     const out = el(doc, "output", { class: "nobs-cm-out", for: name });
     const show = () => {
       out.textContent = describe ? describe(Number(input.value)) : input.value;
@@ -335,7 +346,7 @@ export function mountCommentatorsPage(root, {
     });
     const speech = fieldset(
       "Как говорит",
-      question("Как быстро говорит? (1 — медленно … 5 — очень быстро)", range("speech_rate", 1, 5, p.speech_rate, (v) => `${v} · ×${RATE_BY_LEVEL[v]} · ${RATE_HINT[v]}`), "", "speech_rate"),
+      question("Как быстро говорит? (шаг 5%: ×0,70 — медленно … ×1,60 — очень быстро)", range("speech_speed", LIMITS.speech_speed[0], LIMITS.speech_speed[1], rateFor(p), speedLabel, SPEED_STEP), "", "speech_speed"),
       question("Насколько сложно говорит? (1 — совсем просто … 5 — академично)", range("complexity", 1, 5, p.complexity, (v) => `${v} · ${COMPLEXITY_HINT[v]}`), "", "complexity"),
       el(doc, "div", { class: "nobs-cm-q" }, el(doc, "span", { class: "nobs-cm-q-label", text: "Какая у него манера речи?" }), mannerCards, el(doc, "small", { class: "nobs-cm-error", dataset: { error: "manner" } })),
       el(doc, "p", { class: "nobs-cm-sub", text: "Насколько он преувеличивает / шутит / сыплет сленгом / драматизирует (0 — нет, 5 — максимум)?" }),
@@ -568,9 +579,9 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=fd4b41a77f");
-    const engines = await import("./voiceEngines.js?v=fd4b41a77f");
-    const settings = await import("./settings.js?v=fd4b41a77f");
+    const voice = await import("./voice.js?v=202611af38");
+    const engines = await import("./voiceEngines.js?v=202611af38");
+    const settings = await import("./settings.js?v=202611af38");
     const text = String(result?.text ?? "");
     if (!text) return;
     const flags = lang === "he"
@@ -583,7 +594,7 @@ export function mountCommentatorsPage(root, {
       say("Нет голоса для этого языка в браузере.", "error");
       return;
     }
-    const rate = RATE_BY_LEVEL[draft.speech_rate] ?? 1.1;
+    const rate = rateFor(draft);
     voice.primeClick();
     const entry = draft.sounds?.entry ?? "click";
     let wait = 0;
