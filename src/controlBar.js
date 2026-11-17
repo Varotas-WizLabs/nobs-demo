@@ -1,9 +1,10 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=5843a416a1";
-import { t } from "./i18n.js?v=5843a416a1";
-import { claimState, isUnchecked } from "./progress.js?v=5843a416a1";
+import { seekTarget } from "./settings.js?v=3c4521b780";
+import { t } from "./i18n.js?v=3c4521b780";
+import { claimState, isUnchecked } from "./progress.js?v=3c4521b780";
+import { canFullscreen } from "./mobile.js?v=3c4521b780";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -513,13 +514,31 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
   const fullscreen = makeButton("nobs-fullscreen");
   fullscreen.innerHTML = ICONS.fullscreen;
   fullscreen.setAttribute("aria-label", "Fullscreen");
+  // No Fullscreen API for a div (iPhone Safari): the container fills the
+  // window instead ("nobs-pseudo-fs", styles.css); the same button or
+  // Escape leaves it.
+  function setPseudoFullscreen(on) {
+    container.classList.toggle("nobs-pseudo-fs", on);
+    document.documentElement.classList.toggle("nobs-pseudo-fs-open", on);
+    fullscreen.setAttribute("aria-pressed", String(on));
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && container.classList.contains("nobs-pseudo-fs")) setPseudoFullscreen(false);
+  });
   fullscreen.addEventListener("click", () => {
-    if (document.fullscreenElement === container && document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (container.requestFullscreen) {
+    const current = document.fullscreenElement ?? document.webkitFullscreenElement ?? null;
+    const exit = document.exitFullscreen ?? document.webkitExitFullscreen;
+    if (current === container && exit) {
+      exit.call(document);
+    } else if (container.classList.contains("nobs-pseudo-fs")) {
+      setPseudoFullscreen(false);
+    } else if (canFullscreen(container)) {
       // The browser may refuse (no user activation, iframe policy); that is
       // not an error worth surfacing as an unhandled rejection.
-      Promise.resolve(container.requestFullscreen()).catch(() => {});
+      const request = container.requestFullscreen ?? container.webkitRequestFullscreen;
+      Promise.resolve(request.call(container)).catch(() => {});
+    } else {
+      setPseudoFullscreen(true);
     }
   });
 

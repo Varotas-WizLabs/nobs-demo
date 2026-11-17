@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=5843a416a1"></script>
+    <script src="src/demoShim.js?v=3c4521b780"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,17 +17,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=5843a416a1" />
+    <link rel="stylesheet" href="styles.css?v=3c4521b780" />
   </head>
   <body>
-    <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Новые видео разбираются только по коду приглашения.</p>
-
     <!-- Brand bar: the «душнила AI» logo, top left. -->
     <header class="nobs-topbar">
       <a class="nobs-logo" href="index.html" aria-label="душнила AI">
         <span class="nobs-logo-word">душнила</span><span class="nobs-logo-ai">AI</span>
       </a>
     </header>
+    <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Новые видео разбираются только по коду приглашения.</p>
     <div class="nobs-layout">
     <!-- Library (src/library.js): every completed analysis; click to switch. -->
     <aside id="library" class="nobs-library" aria-label="Analyses"></aside>
@@ -75,28 +74,34 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=5843a416a1";
-      import { bootstrapPlayerPage } from "./src/main.js?v=5843a416a1";
-      import { startProcessingLog } from "./src/processingLog.js?v=5843a416a1";
-      import { startLibrary } from "./src/library.js?v=5843a416a1";
-      import { buildShareControl, isSolo } from "./src/share.js?v=5843a416a1";
-      import { renderClaimList } from "./src/claimList.js?v=5843a416a1";
-      import { buildRailFilters } from "./src/railFilters.js?v=5843a416a1";
-      import { verdictKey } from "./src/popup.js?v=5843a416a1";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=5843a416a1";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=5843a416a1";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=5843a416a1";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=5843a416a1";
-      import { t } from "./src/i18n.js?v=5843a416a1";
-      import { showRunAction } from "./src/progress.js?v=5843a416a1";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=5843a416a1";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=5843a416a1";
-      import { createHoldIcon } from "./src/holdIcon.js?v=5843a416a1";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=5843a416a1";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=5843a416a1";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=5843a416a1";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=5843a416a1";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=3c4521b780";
+      import { bootstrapPlayerPage } from "./src/main.js?v=3c4521b780";
+      import { startProcessingLog } from "./src/processingLog.js?v=3c4521b780";
+      import { startLibrary } from "./src/library.js?v=3c4521b780";
+      import { buildShareControl, isSolo } from "./src/share.js?v=3c4521b780";
+      import { renderClaimList } from "./src/claimList.js?v=3c4521b780";
+      import { buildRailFilters } from "./src/railFilters.js?v=3c4521b780";
+      import { verdictKey } from "./src/popup.js?v=3c4521b780";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=3c4521b780";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=3c4521b780";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=3c4521b780";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=3c4521b780";
+      import { t } from "./src/i18n.js?v=3c4521b780";
+      import { showRunAction } from "./src/progress.js?v=3c4521b780";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=3c4521b780";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=3c4521b780";
+      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=3c4521b780";
+      import { createHoldIcon } from "./src/holdIcon.js?v=3c4521b780";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=3c4521b780";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=3c4521b780";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=3c4521b780";
+      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=3c4521b780";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=3c4521b780";
       applyTheme(document);
+      // A phone or tablet (src/mobile.js): the system voice by default, a
+      // longer Piper lead, touch hints; CSS keys the layout on the screen size.
+      const mobile = isMobileDevice(window);
+      if (mobile) document.documentElement.dataset.mobile = "1";
 
       {
         const panel = document.getElementById("claims-panel");
@@ -403,10 +408,68 @@
       // menu over the narrator button and the persona speaking now.
       let commentatorList = builtinProfiles();
       let commentatorMenu = null;
-      const persona = () => resolvePersona(commentatorList, commentator(), voiceLang ?? null);
+      // The public demo has a parody persona's lines only for runs the owner
+      // approved: per run, how many lines each such persona has (0 = none;
+      // it then gives way to «Душнила», src/voiceStatus.js).
+      const isDemo = () => document.documentElement.dataset.demo === "1";
+      let linesRun = null;
+      let personaLines = {};
+      const noLinesShown = new Set();
+      function probeLines(run) {
+        if (!isDemo() || !run?.run_id || linesRun === run.run_id) return;
+        linesRun = run.run_id;
+        personaLines = {};
+        const want = commentatorList.filter(needsLines);
+        Promise.all(
+          want.map((p) =>
+            fetch(`/runs/${run.run_id}/voice-texts?style=${encodeURIComponent(p.id)}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+              .then((body) => {
+                if (linesRun === run.run_id) personaLines[p.id] = countLines(body);
+              })
+          )
+        ).then(() => {
+          if (linesRun !== run.run_id) return;
+          console.info(`[NOBS voice] lines for run ${run.run_id}: ${JSON.stringify(personaLines)}`);
+          applyPersona();
+        });
+      }
+      function persona() {
+        const { persona: who, chosen, fallback } = effectivePersona(commentatorList, commentator(), voiceLang ?? null, personaLines);
+        if (fallback) {
+          // Once per run and persona, when the viewer would hear it.
+          const key = `${linesRun}|${chosen.id}`;
+          if (narrator?.isEnabled() && !noLinesShown.has(key)) {
+            noLinesShown.add(key);
+            console.info(`[NOBS voice] ${chosen.id} has no lines for run ${linesRun}: dushnila speaks`);
+            showVoiceToast(t("commentator.noLines", voiceLang ?? "ru").replace("{name}", chosen.name || chosen.id));
+          }
+        }
+        return who;
+      }
+      // A short notice over the video (in fullscreen too), gone after a while.
+      let voiceToastTimer = null;
+      function showVoiceToast(text) {
+        const host = document.getElementById("player-container");
+        let el = host.querySelector(".nobs-voice-toast");
+        if (!el) {
+          el = document.createElement("div");
+          el.className = "nobs-voice-toast";
+          el.setAttribute("role", "status");
+          host.appendChild(el);
+        }
+        el.textContent = text;
+        el.hidden = false;
+        clearTimeout(voiceToastTimer);
+        voiceToastTimer = setTimeout(() => (el.hidden = true), 8000);
+      }
       fetchCommentators(fetch).then(({ list }) => {
         commentatorList = list;
         setCommentators(list);
+        // The parody personas may differ from the built-ins: ask again.
+        linesRun = null;
+        if (shownRun) probeLines(shownRun);
         applyPersona();
       });
       // The viewer's choice (localStorage "nobs.voice"); kept here too, so a
@@ -422,8 +485,10 @@
       function wantedEngineId() {
         // The persona's own voice for this language, else the setting.
         // (A persona voice this browser cannot use gives way to the setting.)
+        // On a phone a persona's Piper voice waits until the viewer picks
+        // Piper in the settings (src/mobile.js personaVoiceAllowed).
         const own = persona()?.voices?.[voiceBase()];
-        if (own && resolveEngineId(own, engineFlags(), voiceBase()) === own) return own;
+        if (personaVoiceAllowed(own, voiceEngine(voiceBase()), mobile) && resolveEngineId(own, engineFlags(), voiceBase()) === own) return own;
         return resolveEngineId(voiceEngine(voiceBase()), engineFlags(), voiceBase());
       }
       function voiceAvailable() {
@@ -448,7 +513,7 @@
         // «Комментатор: 📱 Яблогер (пародия). Клик — вкл/выкл, двойной клик — выбрать»
         const who = persona();
         const mark = who && (who.parody || isParody(who)) ? ` (${parodyWord(lang)})` : "";
-        title = `${title} · ${t("commentator.menu", lang)}: ${personaLabel(who)}${mark}. ${t("commentator.buttonHint", lang)}`;
+        title = `${title} · ${t("commentator.menu", lang)}: ${personaLabel(who)}${mark}. ${t(mobile ? "commentator.buttonHintTouch" : "commentator.buttonHint", lang)}`;
         controls.setVoiceState({ available: voiceAvailable(), on, title, label: title });
       }
       // The persona (setting "commentator", the run's language) to the
@@ -465,7 +530,13 @@
           commentatorMenu.close();
           return;
         }
-        commentatorMenu.open({ items: commentatorList, current: persona()?.id, lang: voiceLang ?? document.body.dataset.lang ?? "ru" });
+        const lang = voiceLang ?? document.body.dataset.lang ?? "ru";
+        commentatorMenu.open({
+          items: commentatorList,
+          current: persona()?.id,
+          lang,
+          unavailable: unavailablePersonas(commentatorList, personaLines, t("commentator.noLinesShort", lang)),
+        });
       }
       // Choosing a commentator means "I want to hear it": the narrator goes
       // on (this pick is a user gesture: unlock the audio here).
@@ -490,6 +561,7 @@
         if (!id) return;
         const key = `${base}|${id}`;
         if (key !== engineId) {
+          console.info(`[NOBS voice] ${base || "?"}: using ${id} (setting ${voiceEngine(base)}, commentator ${persona()?.id ?? "dushnila"} voice ${persona()?.voices?.[base] ?? "none"}${mobile ? ", phone" : ""}; browser voices ${base || "?"}: ${systemVoiceNames(base || "ru").length})`);
           if (engine && !isSystemEngine(engine)) engine.destroy?.();
           engineId = key;
           engine =
@@ -534,6 +606,28 @@
         applyEngine();
         renderVoice();
       }
+      const noVoiceShown = new Set();
+      // «Проверить голос» in the settings: speaks a test phrase inside the
+      // click and shows what is used and why (src/voiceStatus.js).
+      setVoiceTester(() => {
+        const lang = voiceLang ?? document.body.dataset.lang ?? "ru";
+        const base = voiceBase() || "ru";
+        const info = () => ({
+          chosen: wantedEngineId(),
+          setting: voiceEngine(base),
+          diag: narrator?.diagnostics() ?? {},
+          voices: { ru: systemVoiceNames("ru"), he: systemVoiceNames("he") },
+          activation: navigator.userActivation ? navigator.userActivation.hasBeenActive : null,
+          chosenPersona: resolvePersona(commentatorList, commentator(), voiceLang ?? null),
+          lines: personaLines[commentator()] ?? (isDemo() ? null : undefined),
+        });
+        if (!narrator) return { lines: [t("voice.notReady", lang)] };
+        // The chosen engine starts loading now (a Piper model: its progress shows).
+        engine?.prepare?.().catch?.(() => {});
+        const phrase = base === "he" ? "בדיקת קול. הכול עובד." : "Проверка голоса. Душнила на связи.";
+        const done = narrator.testSpeak(phrase).then((result) => voiceStatusLines({ ...info(), result }, lang));
+        return { lines: voiceStatusLines({ ...info(), result: null }, lang), done };
+      });
       function setupVoice(player) {
         // The big flag-coloured "pause" sign while the narrator holds the video.
         holdIcon = createHoldIcon(document.getElementById("player-container"));
@@ -548,9 +642,18 @@
           persona: persona(),
           errorCue: true,
           rewindSec: voiceRewindSec,
+          // Piper on a phone synthesizes slowly: ask for each flag earlier.
+          leadSec: () => narratorLeadSec(String(engineId ?? "").split("|")[1], { mobile }),
           onHold: (stop) => holdIcon.hold(stop, { caption: caption(stop) }),
           onItem: (stop) => holdIcon.item(stop, { caption: caption(stop) }),
           onRelease: (how) => holdIcon.release(how),
+          // Nothing can speak at a flag: the video went on; say why, once.
+          onNoVoice: ({ lang }) => {
+            const key = `${shownRun?.run_id}|${lang}|${engineId}`;
+            if (noVoiceShown.has(key)) return;
+            noVoiceShown.add(key);
+            showVoiceToast(t(lang === "he" ? "voice.noVoiceToastHe" : "voice.noVoiceToast", voiceLang ?? "ru"));
+          },
         });
         commentatorMenu = createCommentatorMenu({
           container: document.getElementById("player-container"),
@@ -583,6 +686,10 @@
         };
         controls.playPause.addEventListener("click", unlock, true);
         document.addEventListener("pointerdown", unlock, true);
+        // A touch counts as a gesture only on its end (pointerup /
+        // touchend), not on pointerdown: phones (iOS above all) need these.
+        document.addEventListener("pointerup", unlock, true);
+        document.addEventListener("touchend", unlock, true);
         document.addEventListener("keydown", unlock, true);
         controls.seekBar.addEventListener("input", interrupt, true);
         document.getElementById("flag-icon")?.addEventListener("click", interrupt, true);
@@ -721,6 +828,8 @@
           controls.setTimelineItems(isLive(run) ? [] : timelineItems(run));
           if (!isLive(run)) controls.setFrontier(null);
         }
+        // A parody persona's lines for this run (the public demo).
+        probeLines(run);
         // The narrator reads the same flags the timeline shows.
         if (narrator) {
           narrator.setClaims(run.claims ?? []);
@@ -807,7 +916,9 @@
           videoId,
           // cc_load_policy 0: YouTube captions are not forced on; the
           // "youtubeCaptions" setting turns them on (applyCaptions).
-          playerVars: { controls: 0, cc_load_policy: 0 },
+          // playsinline 1: an iPhone plays in the page, not in its own
+          // fullscreen player (src/mobile.js playerVars).
+          playerVars: playerVars(),
           events: {
             // Keeps the play/pause glyph in step with the real player, whatever
             // changed its state (video-surface click, popup, end, buffering).

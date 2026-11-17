@@ -187,6 +187,18 @@ export function findSystemVoice(lang, synth = globalThis.speechSynthesis) {
   }
 }
 
+/** Names of the browser voices for `lang` ("ru", "he"), for diagnostics. */
+export function systemVoiceNames(lang, synth = globalThis.speechSynthesis) {
+  try {
+    const want = baseLang(lang);
+    return (synth?.getVoices?.() ?? [])
+      .filter((v) => baseLang(String(v?.lang ?? "").toLowerCase().replace("_", "-")) === want)
+      .map((v) => `${v.name}${v.localService === false ? " (online)" : ""}`);
+  } catch {
+    return [];
+  }
+}
+
 /** The local engine id for a /voice/engines option ("say" -> "local:he:say"). */
 export function localEngineId(lang, option) {
   return `local:${baseLang(lang)}:${option}`;
@@ -307,11 +319,37 @@ export function createSystemEngine({ synth = globalThis.speechSynthesis, Utteran
   } catch {
     // ignore
   }
+  let primed = false;
   return {
     id: "system",
     kind: "speech",
     lang: base,
     isReady: () => true,
+    /**
+     * False when the browser lists its voices and none is in this language
+     * (it would read Russian with an English voice, i.e. not at all); true
+     * when there is one, or while the list is still empty (not loaded yet).
+     */
+    hasVoice() {
+      try {
+        const all = synth?.getVoices?.() ?? [];
+        return all.length === 0 || Boolean(pickVoice());
+      } catch {
+        return true;
+      }
+    },
+    voiceName: () => pickVoice()?.name ?? null,
+    // Called inside a user gesture: an empty, silent utterance, so iOS
+    // Safari lets later speech start from a timer. Once per engine.
+    prime() {
+      if (primed || !synth || typeof Utterance !== "function") return;
+      primed = true;
+      if (synth.speaking) return; // already speaking: unlocked
+      const utterance = new Utterance("");
+      utterance.lang = tag;
+      utterance.volume = 0;
+      synth.speak(utterance);
+    },
     speak(text, { volume = 1, rate = 1, onEnd = () => {}, onError = () => {} } = {}) {
       let done = false;
       const settle = (fn, arg) => {
@@ -325,12 +363,44 @@ export function createSystemEngine({ synth = globalThis.speechSynthesis, Utteran
       if (voice) utterance.voice = voice;
       utterance.rate = rate;
       utterance.volume = volume;
-      utterance.onend = () => settle(onEnd);
-      utterance.onerror = (event) => settle(onError, event);
+      // Chrome sometimes never starts an utterance or never says it ended
+      // (a stuck queue, an online voice that lost the network): a watchdog
+      // ends it, so the narrator never holds the video for silence.
+      const words = String(utterance.text ?? "").length;
+      const expectMs = Math.min(60000, 4000 + (words / 12 / Math.max(0.5, rate)) * 1000 * 1.8);
+      let watchdog = null;
+      const arm = (ms, why) => {
+        clearTimeout(watchdog);
+        watchdog = setTimeout(() => {
+          try {
+            synth.cancel();
+          } catch {
+            // ignore
+          }
+          settle(onError, { error: why });
+        }, ms);
+      };
+      utterance.onstart = () => arm(expectMs, "timeout");
+      utterance.onend = () => {
+        clearTimeout(watchdog);
+        settle(onEnd);
+      };
+      utterance.onerror = (event) => {
+        clearTimeout(watchdog);
+        settle(onError, event);
+      };
       // A previous utterance still queued would delay this one.
       synth.cancel();
+      // A queue left paused (Chrome) would never start this one.
+      try {
+        synth.resume?.();
+      } catch {
+        // ignore
+      }
       synth.speak(utterance);
+      arm(6000 + expectMs, "no-start");
       return () => {
+        clearTimeout(watchdog);
         done = true;
         try {
           synth.cancel();
@@ -366,7 +436,7 @@ function mainThreadPort() {
       handle.then(run);
       return;
     }
-    handle = import("./piperWorker.js?v=5843a416a1").then(({ createPiperHandler }) => createPiperHandler(post));
+    handle = import("./piperWorker.js?v=3c4521b780").then(({ createPiperHandler }) => createPiperHandler(post));
     handle.then(run, (err) => port.onerror?.(err));
   };
   port.terminate = () => {
@@ -401,7 +471,9 @@ export function createPiperEngine({ voice = "dmitri", workerFactory = defaultWor
     }
   }
 
+  let error = null;
   function fail(message) {
+    error = String(message ?? "failed");
     setState("failed");
     readyReject?.(new Error(message));
     for (const { reject } of pending.values()) reject(new Error(message));
@@ -472,6 +544,7 @@ export function createPiperEngine({ voice = "dmitri", workerFactory = defaultWor
     isReady: () => state === "ready",
     getState: () => state,
     getProgress: () => progress,
+    getError: () => error,
     /** Serialized; a request whose `isWanted()` turned false before its turn is dropped. */
     synthesize(text, { isWanted = () => true } = {}) {
       const job = chain.then(async () => {

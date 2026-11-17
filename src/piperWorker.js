@@ -19,12 +19,30 @@ export const PIPER_LIB_URL = "https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-
 // The onnxruntime-web version the library bundles: its WASM must match.
 export const ONNX_WASM_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
 
+/**
+ * The library sets onnxruntime's env.wasm.numThreads to
+ * navigator.hardwareConcurrency; without cross-origin isolation (GitHub Pages
+ * cannot send COOP/COEP) WASM threads are unavailable and onnxruntime warns
+ * and falls back to one thread anyway. Report one core then, so it asks for
+ * one thread and stays quiet.
+ */
+export function singleThreadUnlessIsolated(g = globalThis) {
+  try {
+    if (g.crossOriginIsolated || !g.navigator) return false;
+    Object.defineProperty(g.navigator, "hardwareConcurrency", { configurable: true, get: () => 1 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** A message handler `(data) => void` that answers through `post(message)`. */
 export function createPiperHandler(post, importLib = () => import(PIPER_LIB_URL)) {
   let session = null;
   let chain = Promise.resolve();
 
   async function init(voiceId) {
+    singleThreadUnlessIsolated();
     const tts = await importLib();
     // The library keeps one session per page/worker; reset it to switch voices.
     tts.TtsSession._instance = null;

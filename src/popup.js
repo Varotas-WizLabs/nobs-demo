@@ -1,10 +1,10 @@
 // web/src/popup.js
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=5843a416a1";
-import { isPlayerActive } from "./controlBar.js?v=5843a416a1";
-import { t } from "./i18n.js?v=5843a416a1";
-import { claimState, isUnchecked } from "./progress.js?v=5843a416a1";
-import { seekTarget } from "./settings.js?v=5843a416a1";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=5843a416a1";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=3c4521b780";
+import { isPlayerActive } from "./controlBar.js?v=3c4521b780";
+import { t } from "./i18n.js?v=3c4521b780";
+import { claimState, isUnchecked } from "./progress.js?v=3c4521b780";
+import { seekTarget } from "./settings.js?v=3c4521b780";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=3c4521b780";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;
@@ -339,6 +339,13 @@ export function wireFlagIconClick(flagIcon, chainIcon, player, popupContainer, g
     onSeek: (seconds) => {
       player.seekTo?.(seekTarget(seconds), true);
     },
+  });
+
+  // On a phone the container is a backdrop over the page (styles.css): a
+  // tap on it, outside the popup, closes the popup. (On a computer the
+  // container lets the pointer through, so this never fires there.)
+  popupContainer.addEventListener("click", (event) => {
+    if (event.target === popupContainer) closePopup();
   });
 
   // Escape closes the open popup, like any dialog.

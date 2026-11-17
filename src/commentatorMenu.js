@@ -11,8 +11,8 @@
 // menuitemradio entries; arrow keys move, Enter / Space pick, Escape or a
 // click outside closes and gives the focus back to the button.
 
-import { isParody, parodyWord, supportsLang } from "./commentators.js?v=5843a416a1";
-import { t } from "./i18n.js?v=5843a416a1";
+import { isParody, parodyWord, supportsLang } from "./commentators.js?v=3c4521b780";
+import { t } from "./i18n.js?v=3c4521b780";
 
 export const MANAGE_HREF = "commentators.html";
 
@@ -27,6 +27,15 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
   menu.hidden = true;
   container.appendChild(menu);
   let open = false;
+  // A long press opens the menu while the finger is still down; on a phone
+  // the menu (a bottom sheet) may appear under that finger, and lifting it
+  // would "click" an entry. A pointer click counts only when it was pressed
+  // after the menu opened (keyboard clicks, detail 0, always count).
+  let pressedSinceOpen = false;
+  menu.addEventListener("pointerdown", () => {
+    pressedSinceOpen = true;
+  }, true);
+  const strayClick = (event) => event.detail > 0 && !pressedSinceOpen;
 
   function entries() {
     return [...menu.querySelectorAll('[role^="menuitem"]:not([aria-disabled="true"])')];
@@ -52,7 +61,9 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
     }
   }
 
-  function build({ items = [], current = null, lang = "ru" } = {}) {
+  // `unavailable`: {personaId: reason} -- shown disabled with the reason
+  // (the public demo: a persona with no lines for this run).
+  function build({ items = [], current = null, lang = "ru", unavailable = {} } = {}) {
     menu.replaceChildren();
     menu.setAttribute("aria-label", t("commentator.menu", lang));
     const heading = doc.createElement("p");
@@ -90,9 +101,10 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
         item.appendChild(badge);
       }
       const speaks = !["ru", "he"].includes(runLang) || supportsLang(profile, runLang);
-      if (!speaks) {
+      const missing = unavailable?.[profile.id];
+      if (!speaks || missing) {
         item.setAttribute("aria-disabled", "true");
-        const why = t(`commentator.noLang.${runLang}`, lang);
+        const why = speaks ? String(missing) : t(`commentator.noLang.${runLang}`, lang);
         item.title = why;
         const note = doc.createElement("small");
         note.className = "nobs-commentator-note";
@@ -101,6 +113,7 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
       }
       item.addEventListener("click", (event) => {
         event.stopPropagation();
+        if (strayClick(event)) return;
         if (item.getAttribute("aria-disabled") === "true") return;
         close();
         onSelect(profile.id);
@@ -120,6 +133,10 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
     manage.textContent = t("commentator.manage", lang);
     manage.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (strayClick(event)) {
+        event.preventDefault();
+        return;
+      }
       close({ restoreFocus: false });
     });
     menu.append(separator, manage);
@@ -174,6 +191,7 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
       build(state);
       menu.hidden = false;
       open = true;
+      pressedSinceOpen = false;
       position();
       onToggle(true);
       const list = entries();

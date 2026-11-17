@@ -3427,3 +3427,396 @@ button.nobs-scoop-verdict:hover {
     padding: 2px 0;
   }
 }
+
+/* ==== Phones and tablets (src/mobile.js; emulation checks in
+   data/deep-backup/mobile/check.mjs) ====
+   Touch: 44 px targets, no double-tap zoom on the controls, bigger hit
+   areas for the timeline markers and the flag circles. Phone layout: the
+   video full width on top, the processing log, the claims panel as a
+   full-width section (collapsed: the flag circles in a row with the toggle),
+   the library behind a button in the top bar (a full-screen drawer when
+   open), popups and the commentator menu as bottom sheets. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.nobs-control-bar button,
+.nobs-seek-bar,
+.nobs-icon,
+.nobs-rail-flag,
+.nobs-side-toggle,
+.nobs-claims-chip,
+.nobs-panel-tab,
+.nobs-commentator-item,
+.popup button {
+  touch-action: manipulation;
+}
+/* A long press on the narrator button opens the commentator menu: no text
+   selection or iOS callout on it. */
+.nobs-voice-toggle {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* iPhone (no Fullscreen API for a div): the container fills the window. */
+#player-container.nobs-pseudo-fs {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--nobs-overlay-z) - 10);
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  margin: 0;
+  aspect-ratio: auto;
+  background: #000;
+}
+html.nobs-pseudo-fs-open,
+html.nobs-pseudo-fs-open body {
+  overflow: hidden;
+}
+
+@media (pointer: coarse) {
+  .nobs-play-pause,
+  .nobs-mute,
+  .nobs-voice-toggle,
+  .nobs-fullscreen {
+    width: 44px;
+    height: 44px;
+  }
+  .nobs-seek-bar {
+    height: 32px;
+    margin: 0;
+  }
+  /* A finger is wider than a 4 px marker: the hit area reaches 14 px above
+     and below it (and 3 px to the sides). */
+  .nobs-seek-marker::before,
+  .nobs-seek-tagmark::before {
+    content: "";
+    position: absolute;
+    left: -3px;
+    right: -3px;
+    top: -14px;
+    bottom: -14px;
+  }
+  .nobs-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .nobs-side-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  .nobs-claims-chip {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .nobs-panel-tab {
+    height: 44px;
+  }
+  .nobs-commentator-item {
+    min-height: 44px;
+  }
+  .nobs-export-menu button {
+    min-height: 44px;
+  }
+  .popup [data-action="close"] {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+  .nobs-request-form button,
+  .nobs-request-waiting button {
+    min-height: 48px;
+  }
+  /* Flag circles: 30 px, the count inside (no hover title on a phone), a
+     44 px hit area. */
+  .nobs-rail-flag {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    color: var(--nobs-text);
+    font: 700 11px/1 system-ui, -apple-system, sans-serif;
+  }
+  .nobs-rail-flag::before {
+    content: "";
+    position: absolute;
+    inset: -9px;
+  }
+  .nobs-rail-flag::after {
+    content: attr(data-count);
+  }
+  .nobs-rail-flag:hover,
+  .nobs-rail-flag:focus-visible {
+    transform: none;
+  }
+}
+
+/* ---- Phone layout: portrait up to 760 px, or a phone held sideways ---- */
+@media (max-width: 760px), (pointer: coarse) and (max-height: 520px) {
+  .nobs-topbar {
+    position: relative;
+    height: 48px;
+    padding: 0 12px;
+  }
+  .nobs-layout,
+  .nobs-layout:has(> .nobs-library[data-collapsed="true"]),
+  .nobs-layout:has(> .nobs-claims-panel[data-collapsed="true"]) {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+  }
+  /* main's children (the player, the log) become items of the column. */
+  .nobs-layout > main {
+    display: contents;
+  }
+  .nobs-layout #player-container:not(:fullscreen):not(.nobs-pseudo-fs) {
+    order: 0;
+    width: 100%;
+    max-width: calc((100vh - 48px) * 16 / 9);
+    max-width: calc((100svh - 48px) * 16 / 9);
+    margin: 0 auto;
+  }
+  #processing-log {
+    order: 1;
+    margin: 8px 12px 0;
+  }
+  .nobs-claims-panel,
+  .nobs-claims-panel[data-collapsed="true"] {
+    order: 2;
+    position: static;
+    max-height: none;
+    padding: 0 12px 16px;
+    overflow: visible;
+  }
+  .nobs-claims-panel-bar {
+    padding: 8px 0;
+    flex-wrap: wrap;
+  }
+  /* Collapsed: the flag circles in a row, the list toggle at the right. */
+  .nobs-claims-panel[data-collapsed="true"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nobs-claims-panel[data-collapsed="true"] .nobs-claims-panel-bar {
+    order: 1;
+    margin-left: auto;
+    background: transparent;
+  }
+  .nobs-claims-panel[data-collapsed="true"] .nobs-rail-filters {
+    order: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 8px 8px;
+  }
+  /* The library: its button (and the gear) in the top bar; open, a
+     full-screen drawer over the page. */
+  .nobs-library,
+  .nobs-library[data-collapsed="true"] {
+    order: 3;
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    z-index: 50;
+  }
+  .nobs-library[data-collapsed="true"] .nobs-library-heading {
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+  }
+  .nobs-library[data-collapsed="false"] {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--nobs-overlay-z) + 4);
+    padding: 12px 16px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--nobs-bg);
+  }
+  /* Popups: a bottom sheet over a dimmed page; a tap on the dim closes it
+     (src/popup.js). */
+  .nobs-popup-container {
+    position: fixed;
+    inset: 0;
+    align-items: flex-end;
+    background: rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+  }
+  .popup {
+    width: 100%;
+    max-width: 100vw;
+    max-height: 75vh;
+    max-height: 75svh;
+    border-radius: 14px 14px 0 0;
+    padding: 18px 16px 22px;
+    overscroll-behavior: contain;
+  }
+  /* The commentator menu: a bottom sheet too (it does not fit above the
+     button of a small video). */
+  .nobs-commentator-menu {
+    position: fixed;
+    left: 0;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: calc(var(--nobs-overlay-z) + 3);
+    min-width: 0;
+    max-width: none;
+    max-height: 70vh;
+    max-height: 70svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 14px 14px 0 0;
+    padding: 6px 6px 14px;
+  }
+  /* «Готовим агента…» fits the small player (scrolls inside if needed). */
+  .nobs-gate {
+    padding: 10px;
+    overflow-y: auto;
+  }
+  .nobs-gate-card {
+    gap: 8px;
+    margin: auto;
+  }
+  .nobs-gate-title {
+    font-size: 1.1rem;
+  }
+  .nobs-gate-toast {
+    top: 8px;
+    font-size: 0.85rem;
+  }
+  .nobs-control-bar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .nobs-time {
+    min-width: 0;
+    font-size: 12px;
+  }
+}
+
+/* Portrait phone: the control bar under the video (the video stays
+   uncovered), the timeline on its own row above the buttons. */
+@media (max-width: 760px) and (orientation: portrait) {
+  .nobs-layout #player-container:not(:fullscreen):not(.nobs-pseudo-fs) {
+    aspect-ratio: auto;
+    max-width: none;
+  }
+  #player-container:not(:fullscreen):not(.nobs-pseudo-fs) > #player {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+  #player-container:not(:fullscreen):not(.nobs-pseudo-fs) .nobs-control-bar {
+    position: relative;
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding: 2px 8px 4px;
+    background: #000;
+  }
+  #player-container:not(:fullscreen):not(.nobs-pseudo-fs) .nobs-seek-wrap {
+    order: -1;
+    flex: 1 1 100%;
+  }
+  #player-container:not(:fullscreen):not(.nobs-pseudo-fs) .nobs-time {
+    margin-right: auto;
+    padding-left: 4px;
+    font-size: 13px;
+  }
+  /* The flag / chain icons and the narrator's sign stay on the video. */
+  #player-container:not(:fullscreen):not(.nobs-pseudo-fs) .nobs-overlay {
+    top: calc(100vw * 9 / 16 - 54px);
+    bottom: auto;
+    right: 10px;
+  }
+  #player-container:not(:fullscreen):not(.nobs-pseudo-fs) .nobs-voice-hold {
+    top: calc(100vw * 9 / 32);
+  }
+}
+@media (pointer: coarse) {
+  .nobs-commentator-manage {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .nobs-rail-flag::before {
+    inset: -10px;
+  }
+}
+
+/* The public demo's note under the top bar: compact on a phone; held
+   sideways, the video leaves room for it. */
+@media (max-width: 760px), (pointer: coarse) and (max-height: 520px) {
+  .nobs-demo-banner {
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+}
+@media (pointer: coarse) and (max-height: 520px) {
+  :root[data-demo="1"] .nobs-layout #player-container:not(:fullscreen):not(.nobs-pseudo-fs) {
+    max-width: calc((100vh - 48px - 48px) * 16 / 9);
+    max-width: calc((100svh - 48px - 48px) * 16 / 9);
+  }
+}
+
+/* A one-time voice notice over the video (no voice for the language, a
+   commentator without lines for this run). */
+.nobs-voice-toast {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  z-index: calc(var(--nobs-overlay-z) + 1);
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: rgba(16, 16, 22, 0.94);
+  color: #f2f2f5;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.nobs-voice-toast[hidden] {
+  display: none;
+}
+
+/* Settings: «Проверить голос» and its status. */
+.nobs-voice-test-button {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 8px;
+  background: var(--nobs-input-bg);
+  color: var(--nobs-text);
+  font: inherit;
+  cursor: pointer;
+}
+.nobs-voice-test-status {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--nobs-input-bg);
+  color: var(--nobs-text);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.nobs-voice-test-status[hidden] {
+  display: none;
+}
+@media (pointer: coarse) {
+  .nobs-voice-test-button {
+    min-height: 44px;
+  }
+}

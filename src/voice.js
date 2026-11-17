@@ -68,7 +68,9 @@
 // Autoplay: speech starts from a timer, never inside a user gesture, so the
 // narrator keeps ONE long-lived audio element and unlocks it in a real gesture
 // (narrator.unlock(): the toggle click, the play button, any click or key on
-// the page). When the browser still refuses playback (NotAllowedError) the
+// the page; touch: pointerup / touchend, the events that count as a gesture
+// on a phone). The speech engines are primed in the same gesture (an empty
+// utterance; iOS needs it). When the browser still refuses playback (NotAllowedError) the
 // narrator marks itself blocked and stops pausing the video at flags until a
 // gesture unlocks the element again -- no stutter at every flag.
 //
@@ -79,7 +81,7 @@
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
 
-import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=5843a416a1";
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=3c4521b780";
 
 export { RATE_BY_LEVEL, selectStops };
 
@@ -181,10 +183,27 @@ export const SILENT_WAV =
   "data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
 
 let warned = false;
+// The last voice problem (any, not only the first one warned about): shown
+// by the settings dialog's «Проверить голос» (narrator.diagnostics()).
+let lastError = null;
+function describe(err) {
+  if (err == null) return "";
+  if (typeof err === "string") return err;
+  return String(err.error ?? err.message ?? err.name ?? err);
+}
 function warnOnce(...args) {
+  lastError = args.map(describe).filter(Boolean).join(": ");
   if (warned) return;
   warned = true;
   console.warn("[voice]", ...args);
+}
+
+// One concise console line per engine decision, so a viewer's console
+// screenshot explains why the narrator spoke with what (or did not speak).
+// Repeats of the same line are not printed again.
+export const LOG_PREFIX = "[NOBS voice]";
+function engineName(e) {
+  return e ? String(e.id ?? e.kind ?? "engine") : "none";
 }
 
 // Shorten to at most `max` characters: at the last sentence end when that
@@ -382,12 +401,29 @@ export function createNarrator({
   errorCue = false,
   errorSound = playErrorSound,
   rewindSec = () => 0,
+  // Seconds ahead a blob engine's audio is requested (a number or a
+  // function, read at each tick): LEAD_SEC; more for Piper on a phone.
+  leadSec = LEAD_SEC,
   engine: initialEngine = null,
   fallback: initialFallback = null,
   onHold = () => {},
   onItem = () => {},
   onRelease = () => {},
+  // No engine can speak at a flag (no ready model, no browser voice for the
+  // language): the video goes on, and the page may say why (once per cause).
+  onNoVoice = () => {},
+  logInfo = (line) => console.info(line),
 }) {
+  let lastLog = null;
+  function log(line) {
+    if (line === lastLog) return;
+    lastLog = line;
+    try {
+      logInfo(`${LOG_PREFIX} ${line}`);
+    } catch {
+      // logging must never break the narration
+    }
+  }
   // Default engine: the local sidecar through the backend proxy.
   const sileroDefault = () => ({
     id: "silero",
@@ -446,7 +482,8 @@ export function createNarrator({
   let listener = null; // {onEnded, onError} of the speech playing now
   let srcGeneration = 0; // bumped on every src change, guards async unlock
   let unlocked = false;
-  let blocked = false; // the browser refused playback: no pausing at flags
+  let blocked = false;
+  let lastUsed = null; // the engine that spoke last (diagnostics) // the browser refused playback: no pausing at flags
 
   function audioElement() {
     if (element) return element;
@@ -619,6 +656,9 @@ export function createNarrator({
       `/runs/${encodeURIComponent(runId)}/voice-texts?style=${encodeURIComponent(textsStyle())}`,
       method === "POST" ? { method: "POST" } : undefined
     );
+    // No texts for this persona and run (the public demo has none for a
+    // persona the owner has not approved): "none", not an error to retry.
+    if (response.status === 404) return { status: "none", texts: {}, items: [] };
     if (!response.ok) throw new Error(`voice-texts HTTP ${response.status}`);
     return response.json();
   }
@@ -690,6 +730,35 @@ export function createNarrator({
     return engine?.kind === "blob" && (typeof engine.isReady !== "function" || engine.isReady());
   }
 
+  // A speech engine that can speak the run's language here (the system
+  // voice says no when the browser has no voice for it).
+  function speechUsable(e) {
+    if (e?.kind !== "speech") return false;
+    try {
+      return typeof e.hasVoice !== "function" || e.hasVoice() !== false;
+    } catch {
+      return true;
+    }
+  }
+
+  // Who speaks a flag now: the blob engine when ready (or still able to
+  // become ready while a speech engine stands in), else a speech engine.
+  function speakerNow() {
+    if (engineBlobReady()) return engine;
+    if (speechUsable(engine)) return engine;
+    if (speechUsable(fallback)) return fallback;
+    return null;
+  }
+
+  // Why nothing can speak (for the log and the page's one-time notice).
+  function silentReason() {
+    if (engine?.kind === "blob") {
+      const state = engine.getState?.() ?? "not ready";
+      return `${engineName(engine)} is ${state} and there is no browser voice for "${voice?.lang ?? "?"}"`;
+    }
+    return `no browser voice for "${voice?.lang ?? "?"}"`;
+  }
+
   function fetchAudio(stop) {
     if (!engineBlobReady()) return null;
     const key = stop.key;
@@ -716,11 +785,21 @@ export function createNarrator({
     return entry;
   }
 
+  function lead() {
+    try {
+      const value = Number(typeof leadSec === "function" ? leadSec() : leadSec);
+      return Number.isFinite(value) && value > 0 ? value : LEAD_SEC;
+    } catch {
+      return LEAD_SEC;
+    }
+  }
+
   function prefetchAhead(time) {
     if (textsPending()) return;
+    const within = lead();
     for (const stop of stops) {
       const ahead = stop.at - time;
-      if (ahead > 0 && ahead <= LEAD_SEC) fetchAudio(stop);
+      if (ahead > 0 && ahead <= within) fetchAudio(stop);
     }
   }
 
@@ -738,14 +817,15 @@ export function createNarrator({
   }
 
   // After a seek: keep only the audio for the next flag and the flags within
-  // LEAD_SEC of the new position; everything else is freed.
+  // the lead (LEAD_SEC) of the new position; everything else is freed.
   function pruneCache(time) {
     const keep = new Set();
     const next = stops.find((stop) => stop.at > time);
     if (next) keep.add(next.key);
+    const within = lead();
     for (const stop of stops) {
       const ahead = stop.at - time;
-      if (ahead > 0 && ahead <= LEAD_SEC) keep.add(stop.key);
+      if (ahead > 0 && ahead <= within) keep.add(stop.key);
     }
     if (session) for (const stop of session.queue) keep.add(stop.key);
     for (const key of [...cache.keys()]) if (!keep.has(key)) dropEntry(key);
@@ -889,10 +969,16 @@ export function createNarrator({
     };
     // No audio from the engine: the speech engine (or the fallback) speaks.
     const direct = () => {
-      const speech = engine?.kind === "speech" ? engine : fallback;
+      const speech = speechUsable(engine) ? engine : speechUsable(fallback) ? fallback : null;
       const text = currentText(stop);
-      if (speech && text) say(s, speech, text, spoken);
-      else spoken();
+      if (speech && text) {
+        if (speech !== engine) log(`${engineName(engine)} not ready (${engine?.getState?.() ?? "no audio"}): speaking with ${engineName(speech)}`);
+        lastUsed = engineName(speech);
+        say(s, speech, text, spoken);
+      } else {
+        if (!speech) log(`flag skipped: ${silentReason()}`);
+        spoken();
+      }
     };
     const entry = fetchAudio(stop);
     if (!entry) {
@@ -900,6 +986,8 @@ export function createNarrator({
       return;
     }
     if (entry.url) {
+      lastUsed = engineName(engine);
+      log(`speaking with ${engineName(engine)}`);
       play(s, entry.url, spoken);
       return;
     }
@@ -920,8 +1008,11 @@ export function createNarrator({
       settled = true;
       clearTimeout(s.waitTimer);
       s.waitTimer = null;
-      if (url) play(s, url, spoken);
-      else direct();
+      if (url) {
+        lastUsed = engineName(engine);
+        log(`speaking with ${engineName(engine)}`);
+        play(s, url, spoken);
+      } else direct();
     });
   }
 
@@ -1027,6 +1118,16 @@ export function createNarrator({
   // element play later from a timer. Cheap no-op once unlocked.
   function unlock() {
     primeClick();
+    // Web Speech too: iOS Safari speaks from a timer only after a first
+    // utterance inside a gesture (the engine speaks an empty one, once).
+    for (const speech of [engine, fallback]) {
+      if (speech?.kind !== "speech" || typeof speech.prime !== "function") continue;
+      try {
+        speech.prime();
+      } catch {
+        // priming must never block the gesture
+      }
+    }
     if (unlocked && !blocked) return;
     if (session?.audio) return; // speaking right now: already playing
     let audio;
@@ -1097,7 +1198,14 @@ export function createNarrator({
       // Playback refused by the browser: do not pause for speech that
       // cannot be heard; just free the audio.
       if (blocked) for (const stop of crossed) dropEntry(stop.key);
-      else startSession(crossed);
+      else if (!speakerNow()) {
+        // Nothing can speak (no ready model, no browser voice): never hold
+        // the video for silence; the page says why, once.
+        const reason = silentReason();
+        log(`not pausing at the flag: ${reason}`);
+        for (const stop of crossed) dropEntry(stop.key);
+        hook(onNoVoice, { reason, lang: voice?.lang ?? null, engine: engineName(engine) });
+      } else startSession(crossed);
     }
   }
 
@@ -1203,7 +1311,12 @@ export function createNarrator({
     /** Switch the voice engine (and the speech fallback); prepared audio is
      * dropped and the upcoming flags are requested again from the new one. */
     setEngine(next, nextFallback = fallback) {
+      const before = `${engineName(engine)}|${engineName(fallback)}`;
       fallback = nextFallback ?? null;
+      const after = `${engineName(next ?? engine)}|${engineName(fallback)}`;
+      if (before !== after || next !== engine) {
+        log(`engine ${engineName(next ?? engine)}, stand-in ${engineName(fallback)}${speechUsable(fallback) || !fallback ? "" : " (no voice for this language)"}`);
+      }
       if (next === engine) return;
       engine = next ?? sileroDefault();
       for (const key of [...cache.keys()]) {
@@ -1249,6 +1362,94 @@ export function createNarrator({
      * speaking and never auto-resume. */
     interrupt() {
       finish(false);
+    },
+    /** What the settings dialog's «Проверить голос» shows. */
+    diagnostics() {
+      return {
+        engine: engineName(engine),
+        engineState: engine?.getState?.() ?? (engine?.kind === "speech" ? "speech" : "ready"),
+        engineProgress: engine?.getProgress?.() ?? null,
+        engineError: engine?.getError?.() ?? null,
+        fallback: engineName(fallback),
+        fallbackHasVoice: fallback ? speechUsable(fallback) : null,
+        speaker: engineName(speakerNow()),
+        lastUsed,
+        unlocked,
+        blocked,
+        lastError,
+        persona: persona?.id ?? "dushnila",
+        textsStatus,
+        lines: Object.keys(texts ?? {}).filter((k) => String(texts[k] ?? "").trim()).length,
+        stops: stops.length,
+        enabled,
+        language: voice?.lang ?? null,
+      };
+    },
+    /**
+     * Speak `text` now, from a click (the settings dialog's test button):
+     * unlocks the audio in that gesture, then speaks with whatever would
+     * speak a flag (a speech engine at once, inside the gesture). Resolves
+     * {ok, used, error}. Never touches the video.
+     */
+    testSpeak(text, { timeoutMs = 20000 } = {}) {
+      unlock();
+      if (session) return Promise.resolve({ ok: false, used: null, error: "busy: the narrator is speaking" });
+      const speaker = speakerNow();
+      if (!speaker) {
+        const reason = silentReason();
+        log(`test: ${reason}`);
+        return Promise.resolve({ ok: false, used: null, error: reason });
+      }
+      const used = engineName(speaker);
+      log(`test: speaking with ${used}`);
+      return new Promise((resolve) => {
+        let done = false;
+        const end = (ok, error = null) => {
+          if (done) return;
+          done = true;
+          clearTimeout(guard);
+          if (ok) lastUsed = used;
+          else if (error) lastError = String(error);
+          resolve({ ok, used, error });
+        };
+        const guard = setTimeout(() => end(false, "timeout: no end of speech"), timeoutMs);
+        if (speaker.kind === "speech") {
+          try {
+            speaker.speak(text, {
+              volume: speechVolume(),
+              rate: speechRate(),
+              onEnd: () => end(true),
+              onError: (event) => end(false, describe(event) || "speech error"),
+            });
+          } catch (err) {
+            end(false, describe(err));
+          }
+          return;
+        }
+        Promise.resolve()
+          .then(() => speaker.synthesize(text, { isWanted: () => true }))
+          .then((blob) => {
+            const audio = audioElement();
+            const url = createObjectURL(blob);
+            srcGeneration += 1;
+            audio.src = url;
+            audio.volume = speechVolume();
+            listener = {
+              onEnded: () => {
+                listener = null;
+                revokeObjectURL(url);
+                end(true);
+              },
+              onError: (err) => {
+                listener = null;
+                end(false, describe(err) || "audio error");
+              },
+            };
+            const played = audio.play();
+            if (played && typeof played.then === "function") played.catch((err) => end(false, describe(err)));
+          })
+          .catch((err) => end(false, describe(err)));
+      });
     },
     tick,
     destroy() {

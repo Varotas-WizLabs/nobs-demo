@@ -6,7 +6,7 @@
 // circle is filled with its colour; an unselected one shows only a coloured
 // outline over a muted fill. No selection means "all flags".
 
-import { t } from "./i18n.js?v=5843a416a1";
+import { t } from "./i18n.js?v=3c4521b780";
 
 export const RAIL_ORDER = ["green", "yellow", "red", "insufficient", "white", "pending", "failed"];
 
@@ -28,6 +28,8 @@ export function buildRailFilters(doc, { counts = {}, selected = [], lang = "en",
     button.type = "button";
     button.className = "nobs-rail-flag";
     button.dataset.verdict = flag;
+    // The count, shown inside the circle on a touch screen (no hover title there).
+    button.dataset.count = String(counts[flag]);
     const label = `${t(`verdict.${flag}`, lang)}: ${counts[flag]}`;
     button.title = label;
     button.setAttribute("aria-label", label);

@@ -19,7 +19,7 @@
 // summary). Applies without a reload.
 //
 // voiceEngine.<lang>: which voice reads, per language of the run.
-//   "voiceEngine.ru": "piper:dmitri" (default), "piper:irina", "piper:denis",
+//   "voiceEngine.ru": "piper:dmitri" (default; "system" on a phone, src/mobile.js), "piper:irina", "piper:denis",
 //     "piper:ruslan" (generated in the browser), "silero" (the local sidecar;
 //     offered only when it answers /voice/health) or "system" (the browser's
 //     own voice). A value saved under the old single key "voiceEngine" is
@@ -36,13 +36,14 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=5843a416a1";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=5843a416a1";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=5843a416a1";
+import { t } from "./i18n.js?v=3c4521b780";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=3c4521b780";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=3c4521b780";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=3c4521b780";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null, voiceRewindSec: 1, showTimelineFlags: true, commentator: DEFAULT_COMMENTATOR });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": null, "voiceEngine.he": null, voiceRewindSec: 1, showTimelineFlags: true, commentator: DEFAULT_COMMENTATOR });
 export const VOICE_REWIND_MAX = 10;
 export const SEEK_LEAD_MAX = 30;
 
@@ -137,7 +138,9 @@ export function voiceEngine(lang = "ru") {
     if (value === "system" || (typeof value === "string" && value.startsWith("local:he:"))) return value;
     return defaultHebrewEngine(localVoiceIds("he"));
   }
-  return VOICE_ENGINES.includes(value) ? value : "piper:dmitri";
+  // Not chosen yet: Piper (dmitri) on a computer, the browser's own voice on
+  // a phone (speaks at once; Piper's ~63 MB model is slow there).
+  return VOICE_ENGINES.includes(value) ? value : defaultRussianEngine(isMobileDevice());
 }
 
 // Whether the local Silero voice answered /voice/health (set by the player);
@@ -312,6 +315,13 @@ function engineSelectField(doc, voiceLang, lang) {
   select.value = ids.includes(chosen) ? chosen : ids[0];
   select.addEventListener("change", () => setSetting(key, select.value));
   field.append(label, select);
+  // A phone: Piper downloads ~63 MB once and speaks with a delay.
+  if (base === "ru" && isMobileDevice()) {
+    const note = doc.createElement("small");
+    note.className = "nobs-settings-note";
+    note.textContent = t("settings.voiceEngine.mobileNote", lang);
+    field.append(note);
+  }
   return field;
 }
 
@@ -591,13 +601,59 @@ export function openSettingsDialog(doc, lang = "en") {
   const runVoice = baseLang(lang) === "he" ? "he" : "ru";
   const engineFields = [runVoice, ...VOICE_LANGS.filter((l) => l !== runVoice)].map((l) => engineSelectField(doc, l, lang));
 
-  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, personaField, voiceField, rewindField, ...engineFields, close);
+  const testField = voiceTestField(doc, lang);
+
+  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, personaField, voiceField, rewindField, ...engineFields, ...(testField ? [testField] : []), close);
   doc.body.appendChild(dialog);
   // The public queue's server settings: only with the local backend.
   mountQueueSettings(dialog, close, lang);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
   return dialog;
+}
+
+// «Проверить голос»: the player registers a tester (setVoiceTester); the
+// dialog then shows the button. The tester runs inside the click (so the
+// browser lets the speech play) and returns {lines, done}: status lines now
+// and a promise of the lines once the test phrase ended or failed.
+let voiceTester = null;
+export function setVoiceTester(fn) {
+  voiceTester = typeof fn === "function" ? fn : null;
+}
+
+function voiceTestField(doc, lang) {
+  if (!voiceTester) return null;
+  const box = doc.createElement("div");
+  box.className = "nobs-settings-field nobs-voice-test";
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.className = "nobs-voice-test-button";
+  button.textContent = t("settings.voiceTest", lang);
+  const status = doc.createElement("pre");
+  status.className = "nobs-voice-test-status";
+  status.setAttribute("aria-live", "polite");
+  status.hidden = true;
+  const render = (lines) => {
+    status.textContent = (lines ?? []).join("\n");
+    status.hidden = !status.textContent;
+  };
+  button.addEventListener("click", () => {
+    let result;
+    try {
+      result = voiceTester();
+    } catch (err) {
+      render([String(err?.message ?? err)]);
+      return;
+    }
+    render(result?.lines);
+    Promise.resolve(result?.done)
+      .then((lines) => {
+        if (lines) render(lines);
+      })
+      .catch((err) => render([...(result?.lines ?? []), String(err?.message ?? err)]));
+  });
+  box.append(button, status);
+  return box;
 }
 
 export const CODES_PAGE = "codes.html";
