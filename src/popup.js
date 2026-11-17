@@ -1,10 +1,10 @@
 // web/src/popup.js
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=d552f74394";
-import { isPlayerActive } from "./controlBar.js?v=d552f74394";
-import { t } from "./i18n.js?v=d552f74394";
-import { claimState, isUnchecked } from "./progress.js?v=d552f74394";
-import { seekTarget } from "./settings.js?v=d552f74394";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=d552f74394";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=801c440f90";
+import { isPlayerActive } from "./controlBar.js?v=801c440f90";
+import { t } from "./i18n.js?v=801c440f90";
+import { claimState, isUnchecked } from "./progress.js?v=801c440f90";
+import { seekTarget } from "./settings.js?v=801c440f90";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=801c440f90";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;

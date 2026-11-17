@@ -28,6 +28,20 @@
     refine_status: null,
   });
 
+  // A run just published by the public request queue (the request page
+  // opens player.html?run_id=N&v=<time>): GitHub Pages lets files be cached
+  // ~10 min and its servers update one by one, so with `v` every data file
+  // is asked for with that cache-busting query, and the run's own files
+  // are retried for a while on a 404 (not every server has them yet).
+  const freshParam = new URLSearchParams(window.location.search).get("v");
+  const fresh = freshParam && /^\d{1,16}$/.test(freshParam) ? freshParam : null;
+  function dataFetch(path, tries = fresh ? 8 : 1) {
+    const url = fresh ? `${path}?v=${fresh}${tries < 8 ? `-${tries}` : ""}` : path;
+    return realFetch(url).then((r) =>
+      r.status === 404 && tries > 1 ? new Promise((ok) => setTimeout(ok, 4000)).then(() => dataFetch(path, tries - 1)) : r,
+    );
+  }
+
   window.fetch = function demoFetch(input, init) {
     const requestMethod = typeof input === "object" && input !== null ? input.method : undefined;
     const method = String(init?.method ?? requestMethod ?? "GET").toUpperCase();
@@ -47,7 +61,7 @@
       const none = { run_id: Number(m[1]), style, status: "none", texts: {}, items: [] };
       const file = style === "casual" || style === "dushnila" ? "casual" : style !== "normal" && /^[a-z][a-z0-9-]{1,31}$/.test(style) ? style : null;
       if (!file) return Promise.resolve(json(none));
-      return realFetch(`data/runs/${m[1]}.voice-${file}.json`)
+      return dataFetch(`data/runs/${m[1]}.voice-${file}.json`)
         .then((r) => (r.ok ? r.json() : none))
         .catch(() => none)
         .then((body) => {
@@ -62,27 +76,27 @@
     // them without any way to change them).
     if (url === "/commentators" || url === "/commentators?all=1") {
       if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
-      return realFetch("data/commentators.json");
+      return dataFetch("data/commentators.json");
     }
-    if (url === "/commentators/meta" && method === "GET") return realFetch("data/commentators-meta.json");
+    if (url === "/commentators/meta" && method === "GET") return dataFetch("data/commentators-meta.json");
     if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
     // No local Silero voice here; the player uses in-browser voices.
     if (url === "/voice/health") return Promise.resolve(json({ ok: false }));
     // No local engines either (Carmit, Pocket): Hebrew uses the browser's voice.
     if (url === "/voice/engines") return Promise.resolve(json({}));
-    if (url === "/runs") return realFetch("data/runs.json");
+    if (url === "/runs") return dataFetch("data/runs.json");
     // Every demo run is complete: its status carries the progressive-delivery
     // fields as a finished run has them (files exported before they existed
     // lack them), and its delta never has anything new.
     if ((m = url.match(/^\/runs\/(\d+)\/status$/))) {
-      return realFetch(`data/runs/${m[1]}.status.json`).then((r) =>
+      return dataFetch(`data/runs/${m[1]}.status.json`).then((r) =>
         r.ok ? r.json().then((d) => json({ ...completeProgress(d), ...d })) : r,
       );
     }
     if ((m = url.match(/^\/runs\/(\d+)\/delta(?:\?(.*))?$/))) {
       const runId = Number(m[1]);
       const since = Number(new URLSearchParams(m[2] ?? "").get("since_rev") ?? 0) || 0;
-      return realFetch(`data/runs/${runId}.status.json`)
+      return dataFetch(`data/runs/${runId}.status.json`)
         .then((r) => (r.ok ? r.json() : {}))
         .catch(() => ({}))
         .then((d) => {
@@ -105,13 +119,13 @@
     }
     if ((m = url.match(/^\/runs\/(\d+)\/events(?:\?after=(\d+))?$/))) {
       const after = Number(m[2] ?? 0);
-      return realFetch(`data/runs/${m[1]}.events.json`)
+      return dataFetch(`data/runs/${m[1]}.events.json`)
         .then((r) => r.json())
         .then((d) => json({ events: (d.events ?? []).filter((e) => e.id > after) }));
     }
-    if ((m = url.match(/^\/runs\/(\d+)\/captions$/))) return realFetch(`data/runs/${m[1]}.captions.json`);
-    if ((m = url.match(/^\/runs\/(\d+)\/scoops$/))) return realFetch(`data/runs/${m[1]}.scoops.json`);
-    if ((m = url.match(/^\/runs\/(\d+)(?:\?.*)?$/))) return realFetch(`data/runs/${m[1]}.json`);
+    if ((m = url.match(/^\/runs\/(\d+)\/captions$/))) return dataFetch(`data/runs/${m[1]}.captions.json`);
+    if ((m = url.match(/^\/runs\/(\d+)\/scoops$/))) return dataFetch(`data/runs/${m[1]}.scoops.json`);
+    if ((m = url.match(/^\/runs\/(\d+)(?:\?.*)?$/))) return dataFetch(`data/runs/${m[1]}.json`);
     if (url.startsWith("/")) return Promise.resolve(json({ detail: "not in the demo" }, 404));
     return realFetch(input, init);
   };
