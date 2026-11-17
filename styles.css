@@ -182,6 +182,83 @@ main {
   background: rgba(255, 255, 255, 0.12);
 }
 
+/* The narrator's "pause" sign over the video (src/holdIcon.js): two bars in
+   the colour of the flag being read, a "pressed" bounce in and out. */
+.nobs-voice-hold {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.78;
+  --nobs-hold-color: var(--nobs-white);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.75)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
+}
+.nobs-voice-hold[hidden] {
+  display: none;
+}
+/* A soft dark disc behind the bars: keeps them readable on bright video and
+   covers the YouTube player's own paused-state button underneath. */
+.nobs-voice-hold::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 136px;
+  height: 136px;
+  margin: -68px 0 0 -68px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.6) 0 55%, rgba(0, 0, 0, 0) 72%);
+  z-index: -1;
+}
+.nobs-voice-hold > span {
+  width: 26px;
+  height: 84px;
+  border-radius: 6px;
+  background: var(--nobs-hold-color);
+  transition: background-color 180ms ease;
+}
+.nobs-voice-hold[data-flag="red"] { --nobs-hold-color: var(--nobs-red); }
+.nobs-voice-hold[data-flag="yellow"] { --nobs-hold-color: var(--nobs-yellow); }
+.nobs-voice-hold[data-flag="green"] { --nobs-hold-color: var(--nobs-green); }
+.nobs-voice-hold[data-flag="white"] { --nobs-hold-color: var(--nobs-white); }
+.nobs-voice-hold.is-in {
+  animation: nobs-hold-in 250ms ease-out both;
+}
+.nobs-voice-hold.is-out {
+  animation: nobs-hold-out 250ms ease-in both;
+}
+@keyframes nobs-hold-in {
+  0% { opacity: 0; transform: scale(1.25); }
+  60% { opacity: 0.78; transform: scale(0.9); }
+  100% { opacity: 0.78; transform: scale(1); }
+}
+@keyframes nobs-hold-out {
+  0% { opacity: 0.78; transform: scale(1); }
+  40% { opacity: 0.78; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+@keyframes nobs-hold-fade-in {
+  from { opacity: 0; }
+  to { opacity: 0.78; }
+}
+@keyframes nobs-hold-fade-out {
+  from { opacity: 0.78; }
+  to { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nobs-voice-hold.is-in { animation: nobs-hold-fade-in 120ms linear both; }
+  .nobs-voice-hold.is-out { animation: nobs-hold-fade-out 120ms linear both; }
+  .nobs-voice-hold > span { transition: none; }
+}
+
 .nobs-seek-wrap {
   position: relative;
   flex: 1;

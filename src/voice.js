@@ -6,9 +6,19 @@
 // description of the flag is read aloud, and the video resumes when the
 // voice has finished.
 //
-// The speech comes from the local voice sidecar through the backend proxy
-// (GET /voice/say?text=..&lang=ru, a WAV). Generating it takes a moment, so
-// each flag's audio is fetched LEAD_SEC seconds before playback reaches it.
+// The speech comes from an engine (voiceEngines.js): the local Silero sidecar
+// (GET /voice/say), Piper generated in the browser, or the browser's own
+// speech (Web Speech API). Blob engines produce a WAV; generating it takes a
+// moment, so each flag's audio is requested LEAD_SEC seconds before playback
+// reaches it (in order; Piper runs one request at a time). A speech engine
+// speaks directly at the flag. While a blob engine is not ready (a Piper model
+// still downloading) or its audio fails, the `fallback` speech engine (the
+// system voice) speaks instead.
+//
+// Hooks for the page (the narrator touches no DOM): onHold(claim) when it
+// pauses the video to speak, onItem(claim) as each flag's speech starts,
+// onRelease({animate}) when the hold ends -- animate is true when it is about
+// to resume the video itself, false when the viewer took over.
 //
 // Rules:
 // - A flag speaks when playback *crosses* its start (previous tick time <
@@ -338,7 +348,34 @@ export function createNarrator({
   style: initialStyle = "normal",
   errorCue = false,
   errorSound = playErrorSound,
+  engine: initialEngine = null,
+  fallback: initialFallback = null,
+  onHold = () => {},
+  onItem = () => {},
+  onRelease = () => {},
 }) {
+  // Default engine: the local sidecar through the backend proxy.
+  const sileroDefault = () => ({
+    id: "silero",
+    kind: "blob",
+    isReady: () => true,
+    synthesize: (text) =>
+      Promise.resolve()
+        .then(() => fetchImpl(`/voice/say?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(voice?.lang ?? "ru")}`))
+        .then((response) => {
+          if (!response.ok) throw new Error(`voice/say HTTP ${response.status}`);
+          return response.blob();
+        }),
+  });
+  let engine = initialEngine ?? sileroDefault();
+  let fallback = initialFallback;
+  const hook = (fn, arg) => {
+    try {
+      fn(arg);
+    } catch (err) {
+      warnOnce("voice hook failed", err);
+    }
+  };
   let enabled = false;
   let style = VOICE_STYLES.includes(initialStyle) ? initialStyle : "normal";
   // Casual texts of the current run: {runId, status, texts, loading, posted, pollTimer, gen}
@@ -497,20 +534,23 @@ export function createNarrator({
   }
 
   // ---- Audio fetching (cached per claim) ----
+  // Null when the engine speaks directly (speech engine) or is not ready yet
+  // (nothing is queued for a model still downloading).
+  function engineBlobReady() {
+    return engine?.kind === "blob" && (typeof engine.isReady !== "function" || engine.isReady());
+  }
+
   function fetchAudio(claim) {
+    if (!engineBlobReady()) return null;
     const key = claimKey(claim);
     const text = currentText(claim);
     const known = cache.get(key);
     if (known && known.text === text) return known;
     if (known?.url) revokeObjectURL(known.url);
     const entry = { text, url: null, failed: false, promise: null };
-    const lang = voice?.lang ?? "ru";
+    const source = engine;
     entry.promise = Promise.resolve()
-      .then(() => fetchImpl(`/voice/say?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}`))
-      .then((response) => {
-        if (!response.ok) throw new Error(`voice/say HTTP ${response.status}`);
-        return response.blob();
-      })
+      .then(() => source.synthesize(text, { isWanted: () => cache.get(key) === entry && engine === source }))
       .then((blob) => {
         if (cache.get(key) !== entry) return null; // torn down / replaced meanwhile
         entry.url = createObjectURL(blob);
@@ -595,6 +635,7 @@ export function createNarrator({
     session = null;
     stopAudio(s);
     prevTime = currentTime();
+    if (s.pausedByUs) hook(onRelease, { animate: Boolean(resume) });
     if (resume && s.pausedByUs) {
       const go = () => {
         try {
@@ -632,6 +673,7 @@ export function createNarrator({
       return;
     }
     const s = session;
+    hook(onHold, s.queue[0]);
     // A red flag opens with the "error" sound, other flags with the
     // "space bar" click; then the speech.
     let wait = 0;
@@ -662,19 +704,30 @@ export function createNarrator({
       finish(true);
       return;
     }
+    hook(onItem, claim);
     const key = claimKey(claim);
-    const entry = fetchAudio(claim);
     const spoken = () => {
       // Spoken (or unplayable): free its WAV. A seek back fetches it again.
       dropEntry(key);
       speakNext();
     };
+    // No audio from the engine: the speech engine (or the fallback) speaks.
+    const direct = () => {
+      const speech = engine?.kind === "speech" ? engine : fallback;
+      if (speech) say(s, speech, currentText(claim), spoken);
+      else spoken();
+    };
+    const entry = fetchAudio(claim);
+    if (!entry) {
+      direct();
+      return;
+    }
     if (entry.url) {
       play(s, entry.url, spoken);
       return;
     }
     if (entry.failed) {
-      speakNext();
+      direct();
       return;
     }
     // Not ready yet: wait for it, at most WAIT_MS.
@@ -683,7 +736,7 @@ export function createNarrator({
       if (settled || session !== s) return;
       settled = true;
       s.waitTimer = null;
-      speakNext();
+      direct();
     }, WAIT_MS);
     entry.promise.then((url) => {
       if (settled || session !== s) return;
@@ -691,8 +744,43 @@ export function createNarrator({
       clearTimeout(s.waitTimer);
       s.waitTimer = null;
       if (url) play(s, url, spoken);
-      else speakNext();
+      else direct();
     });
+  }
+
+  // Speak `text` with a speech engine for session `s`; same semantics as
+  // play(): stopping the session cancels it, `onDone` runs once when it ended
+  // or failed.
+  function say(s, speech, text, onDone) {
+    const handle = { cancel: null, pause: () => handle.cancel?.() };
+    s.audio = handle;
+    let done = false;
+    const next = () => {
+      if (done || session !== s || s.audio !== handle) return;
+      done = true;
+      s.audio = null;
+      onDone();
+    };
+    try {
+      handle.cancel = speech.speak(text, {
+        volume: speechVolume(),
+        rate: SPEECH_RATE,
+        onEnd: next,
+        onError: (event) => {
+          if (event?.error === "not-allowed") {
+            blocked = true;
+            unlocked = false;
+            warnOnce("speech refused by the browser; click the page or the voice button to allow it", event);
+          } else if (event?.error !== "interrupted" && event?.error !== "canceled") {
+            warnOnce("speech failed", event?.error ?? event);
+          }
+          next();
+        },
+      });
+    } catch (err) {
+      warnOnce("speech failed", err);
+      next();
+    }
   }
 
   // Play `url` on the shared element for session `s`; `onDone` runs once it
@@ -903,6 +991,27 @@ export function createNarrator({
     },
     getStyle() {
       return style;
+    },
+    /** Switch the voice engine (and the speech fallback); prepared audio is
+     * dropped and the upcoming flags are requested again from the new one. */
+    setEngine(next, nextFallback = fallback) {
+      fallback = nextFallback ?? null;
+      if (next === engine) return;
+      engine = next ?? sileroDefault();
+      for (const key of [...cache.keys()]) {
+        // The WAV playing right now stays valid until it ends.
+        if (session?.audio && element && cache.get(key)?.url === element.src) cache.delete(key);
+        else dropEntry(key);
+      }
+      refetchUpcoming();
+    },
+    getEngine() {
+      return engine;
+    },
+    /** The engine became ready (a Piper model finished loading): request the
+     * upcoming flags' audio now. */
+    engineReady() {
+      refetchUpcoming();
     },
     supports(captionLanguage) {
       return voiceFor(captionLanguage) !== null;

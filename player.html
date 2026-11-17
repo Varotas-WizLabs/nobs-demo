@@ -81,7 +81,9 @@
       import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
       import { checkVoiceHealth, createNarrator, loadEnabled, saveEnabled } from "./src/voice.js";
-      import { applyTheme, followPlayback, onSettingsChange, seekTarget, showTagFilter, voiceStyle, youtubeCaptions } from "./src/settings.js";
+      import { createEngine, createSystemEngine, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js";
+      import { createHoldIcon } from "./src/holdIcon.js";
+      import { applyTheme, followPlayback, onSettingsChange, seekTarget, setSileroAvailable, showTagFilter, voiceEngine, voiceStyle, youtubeCaptions } from "./src/settings.js";
       applyTheme(document);
 
       {
@@ -320,34 +322,72 @@
       }
 
       // ---- Flag narrator (src/voice.js): reads each shown flag aloud ----
-      // Its button (next to the volume control) shows only outside the public
-      // demo, when the local voice answers /voice/health, and for a run in a
-      // language that has a voice (Russian for now).
+      // Its button (next to the volume control) shows for a run in a language
+      // that has a voice (Russian for now) whenever some engine can speak here
+      // (src/voiceEngines.js): Piper in the browser (WebAssembly), the
+      // browser's own voice, or the local Silero sidecar (/voice/health ok) --
+      // in the local app and in the public demo alike.
       let narrator = null;
-      let voiceHealthy = false;
       let voiceLang = null;
+      let sileroHealthy = false;
+      const piperOk = piperSupported();
+      const systemOk = systemSupported();
+      const systemEngine = systemOk ? createSystemEngine() : null;
+      let engineId = null;
+      let engine = null;
+      let holdIcon = null;
       // The viewer's choice (localStorage "nobs.voice"); kept here too, so a
       // blocked storage still remembers it for this page.
       let voiceWanted = loadEnabled();
-      const voiceDemo = document.documentElement.dataset.demo === "1";
+      function engineFlags() {
+        return { silero: sileroHealthy, piper: piperOk, system: systemOk };
+      }
       function voiceAvailable() {
-        return !voiceDemo && voiceHealthy && Boolean(narrator?.supports(voiceLang));
+        return Boolean(narrator?.supports(voiceLang)) && resolveEngineId(voiceEngine(), engineFlags()) !== null;
       }
       function renderVoice() {
         if (!controls || !narrator) return;
         const on = voiceAvailable() && narrator.isEnabled();
         const lang = voiceLang ?? "en";
-        controls.setVoiceState({
-          available: voiceAvailable(),
-          on,
-          title: t(on ? "voice.on" : "voice.off", lang),
-          label: t("voice.label", lang),
-        });
+        let title = t(on ? "voice.on" : "voice.off", lang);
+        // A Piper model still downloading: show how far.
+        if (on && engine?.getState?.() === "loading") {
+          title = t("voice.loading", lang).replace("{pct}", String(Math.round((engine.getProgress?.() ?? 0) * 100)));
+        }
+        controls.setVoiceState({ available: voiceAvailable(), on, title, label: title });
+      }
+      // Pick the engine from the setting and what this page can do; a new
+      // engine replaces the old one at once (prepared audio is dropped).
+      function applyEngine() {
+        if (!narrator) return;
+        const id = resolveEngineId(voiceEngine(), engineFlags());
+        if (!id) return;
+        if (id !== engineId) {
+          if (engine && engine !== systemEngine) engine.destroy?.();
+          engineId = id;
+          engine =
+            id === "system"
+              ? systemEngine
+              : createEngine(id, {
+                  fetchImpl: fetch,
+                  onProgress: () => renderVoice(),
+                  onState: (state) => {
+                    if (state === "ready") narrator.engineReady();
+                    if (state === "failed") console.warn("[voice] Piper failed to load; using the browser voice");
+                    renderVoice();
+                  },
+                });
+          narrator.setEngine(engine, id === "system" ? null : systemEngine);
+        }
+        // The voice is on: start loading the model now (the system voice
+        // speaks meanwhile).
+        if (narrator.isEnabled()) engine.prepare?.().catch?.(() => {});
       }
       function applyVoice() {
         if (!narrator) return;
         narrator.setLanguage(voiceLang);
         narrator.setEnabled(voiceAvailable() && voiceWanted);
+        applyEngine();
         renderVoice();
       }
       function toggleVoice() {
@@ -358,14 +398,29 @@
         // This click is a user gesture: unlock the speech audio for later.
         if (on) narrator.unlock();
         narrator.setEnabled(on);
+        applyEngine();
         renderVoice();
       }
       function setupVoice(player) {
+        // The big flag-coloured "pause" sign while the narrator holds the video.
+        holdIcon = createHoldIcon(document.getElementById("player-container"));
         // Style from the settings ("casual" by default); red flags open with
-        // a spoken "Эррор!".
-        narrator = createNarrator({ player, fetchImpl: fetch, style: voiceStyle(), errorCue: true });
+        // the error sound.
+        narrator = createNarrator({
+          player,
+          fetchImpl: fetch,
+          style: voiceStyle(),
+          errorCue: true,
+          onHold: (claim) => holdIcon.hold(claim),
+          onItem: (claim) => holdIcon.item(claim),
+          onRelease: (how) => holdIcon.release(how),
+        });
         onSettingsChange((_settings, name) => {
           if (name === "voiceStyle") narrator.setStyle(voiceStyle());
+          if (name === "voiceEngine") {
+            applyEngine();
+            renderVoice();
+          }
         });
         // The viewer taking over the playback cancels a narration in progress
         // (and its auto-resume): play/pause, the flag and chain icons (their
@@ -386,10 +441,10 @@
         controls.seekBar.addEventListener("input", interrupt, true);
         document.getElementById("flag-icon")?.addEventListener("click", interrupt, true);
         document.getElementById("chain-icon")?.addEventListener("click", interrupt, true);
-        renderVoice();
-        if (voiceDemo) return;
+        applyVoice();
         checkVoiceHealth(fetch).then((ok) => {
-          voiceHealthy = ok;
+          sileroHealthy = ok;
+          setSileroAvailable(ok);
           applyVoice();
         });
       }

@@ -17,12 +17,17 @@
 // voiceStyle: what the flag narrator reads aloud -- "casual" (default; a
 // friend's short retelling, generated per run) or "normal" (the claim's
 // summary). Applies without a reload.
+//
+// voiceEngine: which voice reads -- "piper:dmitri" (default), "piper:irina",
+// "piper:denis", "piper:ruslan" (generated in the browser), "silero" (the
+// local sidecar; offered only when it answers /voice/health) or "system" (the
+// browser's own voice). Applies without a reload.
 
 import { t } from "./i18n.js";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual" });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", voiceEngine: "piper:dmitri" });
 export const SEEK_LEAD_MAX = 30;
 
 let cache = null;
@@ -72,6 +77,21 @@ export function setSetting(name, value) {
 export const THEMES = ["dark", "light", "system"];
 
 export const VOICE_STYLES = ["casual", "normal"];
+
+export const VOICE_ENGINES = ["piper:dmitri", "piper:irina", "piper:denis", "piper:ruslan", "silero", "system"];
+
+/** The chosen voice engine ("piper:dmitri" by default). */
+export function voiceEngine() {
+  const value = read().voiceEngine;
+  return VOICE_ENGINES.includes(value) ? value : "piper:dmitri";
+}
+
+// Whether the local Silero voice answered /voice/health (set by the player);
+// the dialog offers it only then.
+let sileroAvailable = false;
+export function setSileroAvailable(on) {
+  sileroAvailable = Boolean(on);
+}
 
 /** What the narrator reads: "casual" (default) or "normal". */
 export function voiceStyle() {
@@ -320,7 +340,26 @@ export function openSettingsDialog(doc, lang = "en") {
   voiceSelect.addEventListener("change", () => setSetting("voiceStyle", voiceSelect.value));
   voiceField.append(voiceLabel, voiceSelect);
 
-  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, close);
+  const engineField = doc.createElement("label");
+  engineField.className = "nobs-settings-field";
+  const engineLabel = doc.createElement("span");
+  engineLabel.textContent = t("settings.voiceEngine", lang);
+  const engineSelect = doc.createElement("select");
+  engineSelect.name = "voiceEngine";
+  engineSelect.className = "nobs-settings-select";
+  for (const value of VOICE_ENGINES) {
+    if (value === "silero" && !sileroAvailable) continue;
+    const option = doc.createElement("option");
+    option.value = value;
+    option.textContent = t(`settings.voiceEngine.${value}`, lang);
+    engineSelect.appendChild(option);
+  }
+  const chosen = voiceEngine();
+  engineSelect.value = chosen === "silero" && !sileroAvailable ? "piper:dmitri" : chosen;
+  engineSelect.addEventListener("change", () => setSetting("voiceEngine", engineSelect.value));
+  engineField.append(engineLabel, engineSelect);
+
+  dialog.append(title, themeField, field, possible, follow, tagRow, cc, voiceField, engineField, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");

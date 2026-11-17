@@ -14,8 +14,21 @@
     const requestMethod = typeof input === "object" && input !== null ? input.method : undefined;
     const method = String(init?.method ?? requestMethod ?? "GET").toUpperCase();
     const url = typeof input === "string" ? input : String(input?.url ?? "");
-    if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
     let m;
+    // The flag narrator's texts (exported by build_demo.py). POST (start a
+    // generation) answers like GET: whatever was exported is all there is.
+    if ((m = url.match(/^\/runs\/(\d+)\/voice-texts(?:\?(.*))?$/)) && (method === "GET" || method === "POST")) {
+      const style = new URLSearchParams(m[2] ?? "").get("style") ?? "casual";
+      const none = { run_id: Number(m[1]), style, status: "none", texts: {} };
+      if (style !== "casual") return Promise.resolve(json(none));
+      return realFetch(`data/runs/${m[1]}.voice-casual.json`)
+        .then((r) => (r.ok ? r.json() : none))
+        .catch(() => none)
+        .then((body) => json(body));
+    }
+    if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
+    // No local Silero voice here; the player uses in-browser voices.
+    if (url === "/voice/health") return Promise.resolve(json({ ok: false }));
     if (url === "/runs") return realFetch("data/runs.json");
     if ((m = url.match(/^\/runs\/(\d+)\/status$/))) return realFetch(`data/runs/${m[1]}.status.json`);
     if ((m = url.match(/^\/runs\/(\d+)\/events(?:\?after=(\d+))?$/))) {
