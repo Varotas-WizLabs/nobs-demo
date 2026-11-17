@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js"></script>
+    <script src="src/demoShim.js?v=fbb1d99ceb"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=fbb1d99ceb" />
   </head>
   <body>
     <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
@@ -69,21 +69,21 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js";
-      import { bootstrapPlayerPage } from "./src/main.js";
-      import { startProcessingLog } from "./src/processingLog.js";
-      import { startLibrary } from "./src/library.js";
-      import { buildShareControl, isSolo } from "./src/share.js";
-      import { renderClaimList } from "./src/claimList.js";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js";
-      import { t } from "./src/i18n.js";
-      import { checkVoiceHealth, createNarrator, loadEnabled, saveEnabled } from "./src/voice.js";
-      import { createEngine, createSystemEngine, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js";
-      import { createHoldIcon } from "./src/holdIcon.js";
-      import { applyTheme, followPlayback, onSettingsChange, seekTarget, setSileroAvailable, showTagFilter, voiceEngine, voiceStyle, youtubeCaptions } from "./src/settings.js";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=fbb1d99ceb";
+      import { bootstrapPlayerPage } from "./src/main.js?v=fbb1d99ceb";
+      import { startProcessingLog } from "./src/processingLog.js?v=fbb1d99ceb";
+      import { startLibrary } from "./src/library.js?v=fbb1d99ceb";
+      import { buildShareControl, isSolo } from "./src/share.js?v=fbb1d99ceb";
+      import { renderClaimList } from "./src/claimList.js?v=fbb1d99ceb";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=fbb1d99ceb";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=fbb1d99ceb";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=fbb1d99ceb";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=fbb1d99ceb";
+      import { t } from "./src/i18n.js?v=fbb1d99ceb";
+      import { checkVoiceHealth, createNarrator, loadEnabled, saveEnabled } from "./src/voice.js?v=fbb1d99ceb";
+      import { createEngine, createSystemEngine, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=fbb1d99ceb";
+      import { createHoldIcon } from "./src/holdIcon.js?v=fbb1d99ceb";
+      import { applyTheme, followPlayback, onSettingsChange, seekTarget, setSileroAvailable, showTagFilter, voiceEngine, voiceStyle, youtubeCaptions } from "./src/settings.js?v=fbb1d99ceb";
       applyTheme(document);
 
       {

@@ -23,7 +23,7 @@
 // local sidecar; offered only when it answers /voice/health) or "system" (the
 // browser's own voice). Applies without a reload.
 
-import { t } from "./i18n.js";
+import { t } from "./i18n.js?v=fbb1d99ceb";
 
 const KEY = "nobs.settings";
 
