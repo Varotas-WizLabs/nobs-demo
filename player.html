@@ -80,6 +80,7 @@
       import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
       import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
+      import { checkVoiceHealth, createNarrator, loadEnabled, saveEnabled } from "./src/voice.js";
       import { applyTheme, followPlayback, onSettingsChange, seekTarget, showTagFilter, youtubeCaptions } from "./src/settings.js";
       applyTheme(document);
 
@@ -318,6 +319,76 @@
         loadScoops(run).catch((err) => console.error("scoops failed to load", err));
       }
 
+      // ---- Flag narrator (src/voice.js): reads each shown flag aloud ----
+      // Its button (next to the volume control) shows only outside the public
+      // demo, when the local voice answers /voice/health, and for a run in a
+      // language that has a voice (Russian for now).
+      let narrator = null;
+      let voiceHealthy = false;
+      let voiceLang = null;
+      // The viewer's choice (localStorage "nobs.voice"); kept here too, so a
+      // blocked storage still remembers it for this page.
+      let voiceWanted = loadEnabled();
+      const voiceDemo = document.documentElement.dataset.demo === "1";
+      function voiceAvailable() {
+        return !voiceDemo && voiceHealthy && Boolean(narrator?.supports(voiceLang));
+      }
+      function renderVoice() {
+        if (!controls || !narrator) return;
+        const on = voiceAvailable() && narrator.isEnabled();
+        const lang = voiceLang ?? "en";
+        controls.setVoiceState({
+          available: voiceAvailable(),
+          on,
+          title: t(on ? "voice.on" : "voice.off", lang),
+          label: t("voice.label", lang),
+        });
+      }
+      function applyVoice() {
+        if (!narrator) return;
+        narrator.setLanguage(voiceLang);
+        narrator.setEnabled(voiceAvailable() && voiceWanted);
+        renderVoice();
+      }
+      function toggleVoice() {
+        if (!narrator || !voiceAvailable()) return;
+        const on = !narrator.isEnabled();
+        voiceWanted = on;
+        saveEnabled(on);
+        // This click is a user gesture: unlock the speech audio for later.
+        if (on) narrator.unlock();
+        narrator.setEnabled(on);
+        renderVoice();
+      }
+      function setupVoice(player) {
+        narrator = createNarrator({ player, fetchImpl: fetch });
+        // The viewer taking over the playback cancels a narration in progress
+        // (and its auto-resume): play/pause, the flag and chain icons (their
+        // popups), a drag on the seek bar. Capture phase: before the popup
+        // code pauses the video.
+        const interrupt = () => narrator.interrupt();
+        controls.playPause.addEventListener("click", interrupt, true);
+        // Speech plays from a timer, outside any gesture; browsers allow that
+        // only for an element first played in a gesture on this page. Unlock
+        // it on the play button and on any click or key here (a no-op once
+        // unlocked). Clicks inside the YouTube iframe do not count.
+        const unlock = () => {
+          if (narrator.isEnabled()) narrator.unlock();
+        };
+        controls.playPause.addEventListener("click", unlock, true);
+        document.addEventListener("pointerdown", unlock, true);
+        document.addEventListener("keydown", unlock, true);
+        controls.seekBar.addEventListener("input", interrupt, true);
+        document.getElementById("flag-icon")?.addEventListener("click", interrupt, true);
+        document.getElementById("chain-icon")?.addEventListener("click", interrupt, true);
+        renderVoice();
+        if (voiceDemo) return;
+        checkVoiceHealth(fetch).then((ok) => {
+          voiceHealthy = ok;
+          applyVoice();
+        });
+      }
+
       let list = null;
       let highlightTimer = null;
       let shownRun = null;
@@ -336,6 +407,12 @@
           controls.setMarkers(run.claims ?? []);
           controls.setTimelineItems(timelineItems(run));
         }
+        // The narrator reads the same flags the timeline shows.
+        if (narrator) {
+          narrator.setClaims(run.claims ?? []);
+          voiceLang = run.caption_language ?? "en";
+          applyVoice();
+        }
         setupExport(run);
         document.body.dataset.lang = run.caption_language ?? "en";
         const allItems = timelineItems(run);
@@ -344,6 +421,7 @@
           showTagFilter,
           // The list's flag and tag filters apply to the timeline too.
           onFilterChange: ({ claims, flag, tag }) => {
+            narrator?.setClaims(claims);
             if (!controls) return;
             controls.setMarkers(claims);
             controls.setTimelineItems(filterTimelineItems(allItems, { flag, tag }));
@@ -408,6 +486,7 @@
             // changed its state (video-surface click, popup, end, buffering).
             onStateChange: (event) => {
               if (controls) controls.setPlayerState(event.data);
+              narrator?.onPlayerState(event.data);
               // YouTube loads its captions module when playback starts.
               if (event.data === 1) applyCaptions(event.target);
             },
@@ -415,7 +494,10 @@
               const player = event.target;
               currentPlayer = player;
               applyCaptions(player);
-              controls = buildControlBar(player, document.getElementById("player-container"));
+              controls = buildControlBar(player, document.getElementById("player-container"), {
+                onVoiceToggle: () => toggleVoice(),
+              });
+              setupVoice(player);
 
               if (runId) {
                 bootstrapPlayerPage({

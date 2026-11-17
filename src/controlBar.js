@@ -27,6 +27,9 @@ const ICONS = {
   pause: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
   volume: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>',
   muted: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>',
+  // A head speaking (sound waves from the mouth): the flag narrator, distinct
+  // from the volume speaker next to it.
+  voice: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9 13c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.76-9.64-1.68 1.69c.84 1.18.84 2.71 0 3.89l1.68 1.69c2.02-2.02 2.02-5.07 0-7.27zM20.07 2l-1.63 1.63c2.77 3.02 2.77 7.56 0 10.74L20.07 16c3.9-3.89 3.91-9.95 0-14z"/></svg>',
   fullscreen: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 0h2v5h-5v-2h3z"/></svg>',
 };
 
@@ -61,7 +64,10 @@ function formatClock(totalSec) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
-export function buildControlBar(player, container) {
+// `options.onVoiceToggle()` (optional) is called when the flag-narrator
+// button is clicked. That button sits right after the volume control and is
+// hidden until setVoiceState({available: true, ...}) shows it.
+export function buildControlBar(player, container, { onVoiceToggle } = {}) {
   const bar = document.createElement("div");
   bar.className = "nobs-control-bar";
 
@@ -274,6 +280,23 @@ export function buildControlBar(player, container) {
     if (!volumeWrap.contains(event.target)) setPopOpen(false);
   });
 
+  // Flag narrator toggle (src/voice.js), next to the volume control. Hidden
+  // until the page knows a voice exists for this run (setVoiceState).
+  const voice = makeButton("nobs-voice-toggle");
+  voice.innerHTML = ICONS.voice;
+  voice.hidden = true;
+  voice.setAttribute("aria-pressed", "false");
+  voice.addEventListener("click", (event) => {
+    event.stopPropagation();
+    onVoiceToggle?.();
+  });
+  function setVoiceState({ available = false, on = false, title = "", label = title } = {}) {
+    voice.hidden = !available;
+    voice.setAttribute("aria-pressed", String(Boolean(on)));
+    voice.title = title;
+    voice.setAttribute("aria-label", label);
+  }
+
   const fullscreen = makeButton("nobs-fullscreen");
   fullscreen.innerHTML = ICONS.fullscreen;
   fullscreen.setAttribute("aria-label", "Fullscreen");
@@ -295,11 +318,11 @@ export function buildControlBar(player, container) {
     clearInterval(progressIntervalId);
   }
 
-  bar.append(playPause, seekWrap, time, volumeWrap, fullscreen);
+  bar.append(playPause, seekWrap, time, volumeWrap, voice, fullscreen);
   container.appendChild(bar);
 
   return {
-    playPause, seekBar, time, mute, volume, volumePop, fullscreen, setPlayerState, updateProgress, setMarkers, setTimelineItems, stop,
+    playPause, seekBar, time, mute, volume, volumePop, voice, fullscreen, setPlayerState, updateProgress, setMarkers, setTimelineItems, setVoiceState, stop,
   };
 }
 

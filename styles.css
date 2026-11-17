@@ -143,6 +143,7 @@ main {
 
 .nobs-play-pause,
 .nobs-mute,
+.nobs-voice-toggle,
 .nobs-fullscreen {
   display: inline-flex;
   align-items: center;
@@ -160,11 +161,25 @@ main {
 
 .nobs-play-pause:hover,
 .nobs-mute:hover,
+.nobs-voice-toggle:hover,
 .nobs-fullscreen:hover,
 .nobs-play-pause:focus-visible,
 .nobs-mute:focus-visible,
+.nobs-voice-toggle:focus-visible,
 .nobs-fullscreen:focus-visible {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* Flag narrator toggle (src/voice.js): dimmed when off, lit when on. */
+.nobs-voice-toggle[hidden] {
+  display: none;
+}
+.nobs-voice-toggle[aria-pressed="false"] {
+  opacity: 0.55;
+}
+.nobs-voice-toggle[aria-pressed="true"] {
+  color: var(--nobs-yellow);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .nobs-seek-wrap {
