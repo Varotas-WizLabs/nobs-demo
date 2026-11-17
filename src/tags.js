@@ -27,9 +27,9 @@
 //   verbatim words, in the popup, the tooltips (list chip, timeline) and the
 //   export.
 
-import { formatTimecode } from "./claimSync.js?v=3881c32856";
-import { t } from "./i18n.js?v=3881c32856";
-import { showPossibleTags } from "./settings.js?v=3881c32856";
+import { formatTimecode } from "./claimSync.js?v=d552f74394";
+import { t } from "./i18n.js?v=d552f74394";
+import { showPossibleTags } from "./settings.js?v=d552f74394";
 
 export function isPossible(tag) {
   return tag?.tier === "possible";
