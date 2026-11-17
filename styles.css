@@ -2244,8 +2244,16 @@ button.nobs-scoop-verdict:hover {
 .nobs-rail-flag[data-verdict="green"] { --rail-c: var(--nobs-green); }
 .nobs-rail-flag[data-verdict="yellow"] { --rail-c: var(--nobs-yellow); }
 .nobs-rail-flag[data-verdict="red"] { --rail-c: var(--nobs-red); }
-.nobs-rail-flag[data-verdict="white"],
 .nobs-rail-flag[data-verdict="insufficient"] { --rail-c: var(--nobs-white); }
+/* "Not checked": a dark grey circle with a light outline (selected: a
+   slightly lighter grey, fully opaque). */
+.nobs-rail-flag[data-verdict="white"] {
+  --rail-c: var(--nobs-white);
+  background: #2e3036;
+}
+.nobs-rail-flag[data-verdict="white"][aria-pressed="true"] {
+  background: #5a5e68;
+}
 .nobs-rail-flag[data-verdict="insufficient"] {
   border-style: dashed;
 }
