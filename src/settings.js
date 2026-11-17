@@ -29,13 +29,20 @@
 //     -- offered only when GET /voice/engines lists it available. Unset, the
 //     local app uses Carmit when available, else the system voice.
 // Applies without a reload.
+//
+// commentator: the narrator's persona id (src/commentators.js; default
+// "dushnila"). The dialog lists the personas the player loaded
+// (setCommentators) with a «(пародия)» mark, and links to the management
+// page (commentators.html). voiceStyle only concerns «душнила», so its field
+// («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=c59759a0a7";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=c59759a0a7";
+import { t } from "./i18n.js?v=6f1807fd74";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=6f1807fd74";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=6f1807fd74";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null, voiceRewindSec: 1, showTimelineFlags: true });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": "piper:dmitri", "voiceEngine.he": null, voiceRewindSec: 1, showTimelineFlags: true, commentator: DEFAULT_COMMENTATOR });
 export const VOICE_REWIND_MAX = 10;
 export const SEEK_LEAD_MAX = 30;
 
@@ -139,6 +146,25 @@ let sileroAvailable = false;
 export function setSileroAvailable(on) {
   sileroAvailable = Boolean(on);
 }
+
+// The personas the player loaded (GET /commentators); the built-ins until then.
+let commentatorList = BUILTINS;
+export function setCommentators(list) {
+  commentatorList = Array.isArray(list) && list.length ? list : BUILTINS;
+}
+export function commentators() {
+  return commentatorList;
+}
+
+/** The chosen commentator's id ("dushnila" unless changed). The player
+ * falls back to «душнила» when the id is unknown or disabled. */
+export function commentator() {
+  const value = read().commentator;
+  return typeof value === "string" && value ? value : DEFAULT_COMMENTATOR;
+}
+
+/** Link to the commentator management page. */
+export const COMMENTATORS_PAGE = "commentators.html";
 
 /** What the narrator reads: "casual" (default) or "normal". */
 export function voiceStyle() {
@@ -495,6 +521,43 @@ export function openSettingsDialog(doc, lang = "en") {
   voiceSelect.addEventListener("change", () => setSetting("voiceStyle", voiceSelect.value));
   voiceField.append(voiceLabel, voiceSelect);
 
+  // The commentator (persona) and the link to the management page.
+  const personaField = doc.createElement("div");
+  personaField.className = "nobs-settings-field nobs-settings-persona";
+  const personaPick = doc.createElement("label");
+  personaPick.className = "nobs-settings-field";
+  const personaLabelEl = doc.createElement("span");
+  personaLabelEl.textContent = t("settings.commentator", lang);
+  const personaSelect = doc.createElement("select");
+  personaSelect.name = "commentator";
+  personaSelect.className = "nobs-settings-select";
+  const parodyMark = t("commentator.parody", lang);
+  for (const profile of commentatorList) {
+    if (profile.enabled === false) continue;
+    const option = doc.createElement("option");
+    option.value = profile.id;
+    option.textContent = `${personaLabel(profile)}${profile.parody || isParody(profile) ? ` (${parodyMark})` : ""}`;
+    personaSelect.appendChild(option);
+  }
+  const chosenPersona = commentator();
+  personaSelect.value = [...personaSelect.options].some((o) => o.value === chosenPersona) ? chosenPersona : DEFAULT_COMMENTATOR;
+  const manage = doc.createElement("a");
+  manage.className = "nobs-settings-link";
+  manage.href = COMMENTATORS_PAGE;
+  manage.target = "_blank";
+  manage.rel = "noopener";
+  manage.textContent = t("settings.manageCommentators", lang);
+  personaPick.append(personaLabelEl, personaSelect);
+  personaField.append(personaPick, manage);
+  const showStyle = () => {
+    voiceField.hidden = personaSelect.value !== DEFAULT_COMMENTATOR;
+  };
+  showStyle();
+  personaSelect.addEventListener("change", () => {
+    setSetting("commentator", personaSelect.value);
+    showStyle();
+  });
+
   // After the narration: resume this many seconds before the pause point.
   const rewindField = doc.createElement("label");
   rewindField.className = "nobs-settings-field";
@@ -528,7 +591,7 @@ export function openSettingsDialog(doc, lang = "en") {
   const runVoice = baseLang(lang) === "he" ? "he" : "ru";
   const engineFields = [runVoice, ...VOICE_LANGS.filter((l) => l !== runVoice)].map((l) => engineSelectField(doc, l, lang));
 
-  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, voiceField, rewindField, ...engineFields, close);
+  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, personaField, voiceField, rewindField, ...engineFields, close);
   doc.body.appendChild(dialog);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script src="src/demoShim.js?v=6f1807fd74"></script>
+
+    <!-- Theme before first paint (settings: dark / light / system). -->
+    <script>
+      try {
+        var nobsTheme = (JSON.parse(localStorage.getItem("nobs.settings") || "{}").theme) || "dark";
+        if (nobsTheme === "system") nobsTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = nobsTheme === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOBS — демо: комментаторы</title>
+    <link rel="stylesheet" href="styles.css?v=6f1807fd74" />
+  </head>
+  <body class="nobs-cm-page">
+    <header class="nobs-cm-header">
+      <a class="nobs-cm-back" href="index.html">← NOBS</a>
+      <h1>Комментаторы</h1>
+      <p class="nobs-cm-lead">
+        Кто комментирует флажки в плеере. «Душнила» спокойно пересказывает итог проверки, «Яблогер» — открыто помеченная пародия на хайп-блогера.
+        Выбрать комментатора в плеере: двойной клик (или долгое нажатие) по кнопке голоса рядом с громкостью.
+      </p>
+    </header>
+    <main id="commentators"></main>
+    <script type="module">
+      import { applyTheme } from "./src/settings.js?v=6f1807fd74";
+      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=6f1807fd74";
+      applyTheme(document);
+      mountCommentatorsPage(document.getElementById("commentators"), { fetchImpl: fetch });
+    </script>
+  </body>
+</html>

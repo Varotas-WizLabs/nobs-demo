@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=c59759a0a7"></script>
+    <script src="src/demoShim.js?v=6f1807fd74"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=c59759a0a7" />
+    <link rel="stylesheet" href="styles.css?v=6f1807fd74" />
   </head>
   <body>
     <p class="nobs-demo-banner" role="note">Демо NOBS — статическая витрина. Разборы сделаны автоматически (языковые модели и веб-поиск) и могут содержать ошибки; проверяйте источники. Здесь ничего не принимается и не отправляется.</p>
@@ -75,25 +75,27 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=c59759a0a7";
-      import { bootstrapPlayerPage } from "./src/main.js?v=c59759a0a7";
-      import { startProcessingLog } from "./src/processingLog.js?v=c59759a0a7";
-      import { startLibrary } from "./src/library.js?v=c59759a0a7";
-      import { buildShareControl, isSolo } from "./src/share.js?v=c59759a0a7";
-      import { renderClaimList } from "./src/claimList.js?v=c59759a0a7";
-      import { buildRailFilters } from "./src/railFilters.js?v=c59759a0a7";
-      import { verdictKey } from "./src/popup.js?v=c59759a0a7";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=c59759a0a7";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=c59759a0a7";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=c59759a0a7";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=c59759a0a7";
-      import { t } from "./src/i18n.js?v=c59759a0a7";
-      import { showRunAction } from "./src/progress.js?v=c59759a0a7";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=c59759a0a7";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=c59759a0a7";
-      import { createHoldIcon } from "./src/holdIcon.js?v=c59759a0a7";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=c59759a0a7";
-      import { applyTheme, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setLocalVoices, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=c59759a0a7";
+      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=6f1807fd74";
+      import { bootstrapPlayerPage } from "./src/main.js?v=6f1807fd74";
+      import { startProcessingLog } from "./src/processingLog.js?v=6f1807fd74";
+      import { startLibrary } from "./src/library.js?v=6f1807fd74";
+      import { buildShareControl, isSolo } from "./src/share.js?v=6f1807fd74";
+      import { renderClaimList } from "./src/claimList.js?v=6f1807fd74";
+      import { buildRailFilters } from "./src/railFilters.js?v=6f1807fd74";
+      import { verdictKey } from "./src/popup.js?v=6f1807fd74";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=6f1807fd74";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=6f1807fd74";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=6f1807fd74";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=6f1807fd74";
+      import { t } from "./src/i18n.js?v=6f1807fd74";
+      import { showRunAction } from "./src/progress.js?v=6f1807fd74";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=6f1807fd74";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported } from "./src/voiceEngines.js?v=6f1807fd74";
+      import { createHoldIcon } from "./src/holdIcon.js?v=6f1807fd74";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=6f1807fd74";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=6f1807fd74";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=6f1807fd74";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=6f1807fd74";
       applyTheme(document);
 
       {
@@ -319,8 +321,13 @@
       async function loadScoops(run) {
         const response = await fetch(`/runs/${run.run_id}/scoops`);
         if (!response.ok) throw new Error(`scoops: HTTP ${response.status}`);
+        const before = scoopsResponse?.scoop_run?.id ?? null;
         scoopsResponse = await response.json();
         drawScoops(run);
+        // A new finished scoop generation: the commentator's scoop lines are
+        // stale now (voice-texts answers "stale" and is regenerated once).
+        const after = scoopsResponse?.scoop_run?.status === "complete" ? (scoopsResponse.scoop_run.id ?? null) : null;
+        if (before !== null && after !== null && before !== after) narrator?.reloadTexts();
         if (scoopsResponse.active) pollScoops(run, scoopsResponse.active.id);
       }
       function pollScoops(run, scoopRunId) {
@@ -391,6 +398,17 @@
       let engineId = null;
       let engine = null;
       let holdIcon = null;
+      // Commentators (src/commentators.js): the personas from GET
+      // /commentators (the built-ins until it answers or when it fails), the
+      // menu over the narrator button and the persona speaking now.
+      let commentatorList = builtinProfiles();
+      let commentatorMenu = null;
+      const persona = () => resolvePersona(commentatorList, commentator(), voiceLang ?? null);
+      fetchCommentators(fetch).then(({ list }) => {
+        commentatorList = list;
+        setCommentators(list);
+        applyPersona();
+      });
       // The viewer's choice (localStorage "nobs.voice"); kept here too, so a
       // blocked storage still remembers it for this page.
       let voiceWanted = loadEnabled();
@@ -402,6 +420,10 @@
         return { silero: sileroHealthy, piper: piperOk, system: systemOk };
       }
       function wantedEngineId() {
+        // The persona's own voice for this language, else the setting.
+        // (A persona voice this browser cannot use gives way to the setting.)
+        const own = persona()?.voices?.[voiceBase()];
+        if (own && resolveEngineId(own, engineFlags(), voiceBase()) === own) return own;
         return resolveEngineId(voiceEngine(voiceBase()), engineFlags(), voiceBase());
       }
       function voiceAvailable() {
@@ -423,7 +445,41 @@
         if (on && engine?.getState?.() === "loading") {
           title = t("voice.loading", lang).replace("{pct}", String(Math.round((engine.getProgress?.() ?? 0) * 100)));
         }
+        // «Комментатор: 📱 Яблогер (пародия). Клик — вкл/выкл, двойной клик — выбрать»
+        const who = persona();
+        const mark = who && (who.parody || isParody(who)) ? ` (${parodyWord(lang)})` : "";
+        title = `${title} · ${t("commentator.menu", lang)}: ${personaLabel(who)}${mark}. ${t("commentator.buttonHint", lang)}`;
         controls.setVoiceState({ available: voiceAvailable(), on, title, label: title });
+      }
+      // The persona (setting "commentator", the run's language) to the
+      // narrator; its own voice may change the engine.
+      function applyPersona() {
+        if (!narrator) return;
+        narrator.setPersona(persona());
+        applyEngine();
+        renderVoice();
+      }
+      function openCommentatorMenu() {
+        if (!commentatorMenu) return;
+        if (commentatorMenu.isOpen()) {
+          commentatorMenu.close();
+          return;
+        }
+        commentatorMenu.open({ items: commentatorList, current: persona()?.id, lang: voiceLang ?? document.body.dataset.lang ?? "ru" });
+      }
+      // Choosing a commentator means "I want to hear it": the narrator goes
+      // on (this pick is a user gesture: unlock the audio here).
+      function chooseCommentator(id) {
+        setSetting("commentator", id);
+        if (!narrator) return;
+        applyPersona();
+        if (!voiceAvailable()) return;
+        voiceWanted = true;
+        saveEnabled(true);
+        narrator.unlock();
+        narrator.setEnabled(true);
+        applyEngine();
+        renderVoice();
       }
       // Pick the engine from the setting and what this page can do; a new
       // engine replaces the old one at once (prepared audio is dropped).
@@ -461,6 +517,7 @@
         if (!narrator) return;
         // The engine first, so the new language never speaks with the old one.
         applyEngine();
+        narrator.setPersona(persona());
         narrator.setLanguage(voiceLang);
         narrator.setEnabled(voiceAvailable() && voiceWanted);
         applyEngine();
@@ -482,18 +539,28 @@
         holdIcon = createHoldIcon(document.getElementById("player-container"));
         // Style from the settings ("casual" by default); red flags open with
         // the error sound.
+        // A parody persona is labelled under the sign while it speaks (G1).
+        const caption = (stop) => parodyCaption(stop?.persona, voiceLang ?? "ru");
         narrator = createNarrator({
           player,
           fetchImpl: fetch,
           style: voiceStyle(),
+          persona: persona(),
           errorCue: true,
           rewindSec: voiceRewindSec,
-          onHold: (claim) => holdIcon.hold(claim),
-          onItem: (claim) => holdIcon.item(claim),
+          onHold: (stop) => holdIcon.hold(stop, { caption: caption(stop) }),
+          onItem: (stop) => holdIcon.item(stop, { caption: caption(stop) }),
           onRelease: (how) => holdIcon.release(how),
+        });
+        commentatorMenu = createCommentatorMenu({
+          container: document.getElementById("player-container"),
+          anchor: controls.voice,
+          onSelect: (id) => chooseCommentator(id),
+          onToggle: (open) => controls.setVoiceMenuOpen(open),
         });
         onSettingsChange((_settings, name) => {
           if (name === "voiceStyle") narrator.setStyle(voiceStyle());
+          if (name === "commentator") applyPersona();
           // "voiceEngine.ru" / "voiceEngine.he": the current run's language
           // decides which one applies.
           if (String(name).startsWith("voiceEngine")) {
@@ -757,6 +824,11 @@
               applyCaptions(player);
               controls = buildControlBar(player, document.getElementById("player-container"), {
                 onVoiceToggle: () => toggleVoice(),
+                // Double click / long press / right click: the commentator menu.
+                onVoiceMenu: () => openCommentatorMenu(),
+                // Every click is a gesture: unlock the speech audio at once
+                // (the toggle itself waits for a possible second click).
+                onVoiceGesture: () => narrator?.unlock(),
               });
               setupVoice(player);
 

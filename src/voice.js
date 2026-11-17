@@ -50,6 +50,17 @@
 //
 // Speech plays SPEECH_RATE times faster than generated, pitch preserved.
 //
+// Commentators (personas, src/commentators.js): createNarrator({persona}) /
+// setPersona(profile). «Душнила» (the default, persona null or id dushnila)
+// behaves exactly as above (voiceStyle still picks casual / normal). Another
+// persona: its own texts (voice-texts?style=<id>), the flag colours it stops
+// at (triggers.flags), scoop stops at the server's at_sec (triggers.scoops),
+// "only N" / min gap between stops (selectStops), its speech rate
+// (RATE_BY_LEVEL[speech_rate]) and its entry / exit sounds. A parody persona
+// speaks generated lines only: a stop without one is no stop at all (G6).
+// A unit of narration is a "stop": {kind: "claim", claim} or {kind: "scoop",
+// item}; the hooks get {kind, flag, ...claim, claim | scoop, persona}.
+//
 // Languages: Russian and Hebrew (caption code "iw" is Hebrew too). A new
 // language is one entry in VOICES (plus OPENERS_BY_LANG for casual) and its
 // engines in voiceEngines.js.
@@ -67,6 +78,10 @@
 // The module is DOM-free apart from the Audio element it creates (injectable
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
+
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=6f1807fd74";
+
+export { RATE_BY_LEVEL, selectStops };
 
 export const LEAD_SEC = 5;
 export const TICK_MS = 250;
@@ -363,6 +378,7 @@ export function createNarrator({
   now = () => Date.now(),
   click = playKeyClick,
   style: initialStyle = "normal",
+  persona: initialPersona = null,
   errorCue = false,
   errorSound = playErrorSound,
   rewindSec = () => 0,
@@ -405,7 +421,14 @@ export function createNarrator({
   let pollTimer = null;
   let textsGen = 0;
   let voice = null; // VOICES entry for the run's language
+  // The commentator (src/commentators.js profile); null = «душнила» as before.
+  let persona = initialPersona ?? null;
+  // Scoop lines of the current persona: [{kind: "scoop", scoop_id, at_sec, text, title}]
+  let items = [];
   let claims = [];
+  // What the narrator stops for, in time order: claim stops and scoop stops
+  // ({kind, key, at, flag, claim | item}), after the persona's triggers.
+  let stops = [];
   let timer = null;
   let prevTime = null;
   // Claims already spoken in this pass over the video (cleared by a seek), so
@@ -447,16 +470,114 @@ export function createNarrator({
     return Number.isFinite(time) ? time : 0;
   }
 
+  // ---- Persona ----
+  function isDushnila() {
+    return !persona || persona.id === "dushnila";
+  }
+
+  function parody() {
+    return Boolean(persona) && (Boolean(persona.parody) || isParody(persona));
+  }
+
+  // "generated" (texts from the backend) or "summary" (the claim's summary).
+  function textMode() {
+    if (parody()) return "generated";
+    if (isDushnila()) return style === "casual" ? "generated" : "summary";
+    return persona.text_mode === "summary" ? "summary" : "generated";
+  }
+
+  // The voice-texts style asked for: «душнила» keeps the legacy "casual"
+  // storage until its profile is customized; any other persona its id.
+  function textsStyle() {
+    if (isDushnila()) return persona?.customized ? "dushnila" : "casual";
+    return String(persona.id);
+  }
+
+  function speechRate() {
+    return persona ? rateFor(persona) : SPEECH_RATE;
+  }
+
+  // A persona that does not speak the run's language makes no stops.
+  function personaSpeaks() {
+    return !persona || !voice || supportsLang(persona, voice.lang);
+  }
+
   function claimKey(claim) {
-    return String(claim.id ?? `${claim.start_sec}:${claim.text ?? ""}`);
+    return `c:${claim.id ?? `${claim.start_sec}:${claim.text ?? ""}`}`;
   }
 
   function casualActive() {
-    return style === "casual" && Boolean(voice && OPENERS_BY_LANG[voice.lang]);
+    return textMode() === "generated" && Boolean(voice && OPENERS_BY_LANG[voice.lang]);
   }
 
-  function currentText(claim) {
-    return casualActive() ? textForStyle(claim, "casual", texts, voice.lang) : spokenText(claim, voice?.lang ?? "ru");
+  function generatedText(claim) {
+    return String(texts?.[claim?.id] ?? "").trim();
+  }
+
+  // A non-parody persona without a line for a claim: one of its openers for
+  // the colour (deterministic per claim) and the summary.
+  function personaFallback(claim, lang) {
+    const summary = spokenText(claim);
+    const list = persona?.openers?.[lang]?.[claim?.flag];
+    if (!Array.isArray(list) || !list.length) return summary;
+    const opener = String(list[hashString(claim?.id ?? claim?.start_sec ?? "") % list.length]);
+    return summary ? `${opener} ${summary}` : opener;
+  }
+
+  function claimText(claim) {
+    const lang = voice?.lang ?? "ru";
+    if (!casualActive()) return spokenText(claim, lang);
+    const generated = generatedText(claim);
+    if (generated) return capText(generated);
+    if (isDushnila()) return capText(casualFallback(claim, lang));
+    if (parody()) return "";
+    return capText(personaFallback(claim, lang));
+  }
+
+  function currentText(stop) {
+    return stop.kind === "scoop" ? capText(stop.item?.text ?? "") : claimText(stop.claim);
+  }
+
+  function claimStop(claim) {
+    return { kind: "claim", key: claimKey(claim), at: speakAt(claim), flag: claim.flag, claim };
+  }
+
+  // Recompute the stops from the claims, the scoop lines and the persona.
+  function rebuildStops() {
+    if (!personaSpeaks()) {
+      stops = [];
+    } else {
+      const triggers = persona?.triggers ?? null;
+      const flags = Array.isArray(triggers?.flags) ? triggers.flags : null;
+      const list = [];
+      for (const claim of claims) {
+        if (flags && !flags.includes(claim.flag)) continue;
+        // A parody persona never stands in a summary: no line, no stop.
+        if (parody() && !generatedText(claim)) continue;
+        list.push(claimStop(claim));
+      }
+      if (triggers?.scoops && casualActive()) {
+        for (const item of items) {
+          const at = Number(item?.at_sec);
+          if (item?.at_sec == null || !Number.isFinite(at) || !String(item.text ?? "").trim()) continue;
+          list.push({ kind: "scoop", key: `s:${item.scoop_id}`, at, flag: "scoop", item });
+        }
+      }
+      stops = triggers ? selectStops(list, triggers) : list.sort((a, b) => a.at - b.at);
+    }
+    // A stop speaking right now stays queued; later ones follow the change.
+    if (session) {
+      const keep = new Set(stops.map((stop) => stop.key));
+      session.queue = session.queue.filter((stop) => keep.has(stop.key));
+    }
+  }
+
+  // What the hooks get: the claim's fields (as before) plus kind / persona,
+  // or a scoop stop.
+  function hookStop(stop) {
+    if (!stop) return stop;
+    if (stop.kind === "scoop") return { kind: "scoop", flag: "scoop", scoop: stop.item, at_sec: stop.at, persona };
+    return { ...stop.claim, kind: "claim", claim: stop.claim, persona };
   }
 
   // ---- Casual texts (GET / POST /runs/{id}/voice-texts?style=casual) ----
@@ -468,7 +589,7 @@ export function createNarrator({
   }
 
   function wantTexts() {
-    return enabled && casualActive() && runId !== null;
+    return enabled && casualActive() && runId !== null && personaSpeaks();
   }
 
   // The first answer about the casual texts has not come yet: hold the
@@ -483,16 +604,19 @@ export function createNarrator({
 
   function applyTexts(body) {
     const first = textsStatus === null;
-    const before = JSON.stringify(texts);
+    const before = JSON.stringify([texts, items]);
     texts = body?.texts && typeof body.texts === "object" ? body.texts : {};
+    items = Array.isArray(body?.items) ? body.items.filter((item) => item?.kind === "scoop") : [];
     textsStatus = body?.status ?? "failed";
+    const changed = JSON.stringify([texts, items]) !== before;
+    if (first || changed) rebuildStops();
     // New texts (or the first answer): get the upcoming flags' audio with them.
-    if (first || JSON.stringify(texts) !== before) refetchUpcoming();
+    if (first || changed) refetchUpcoming();
   }
 
   async function requestTexts(method) {
     const response = await fetchImpl(
-      `/runs/${encodeURIComponent(runId)}/voice-texts?style=casual`,
+      `/runs/${encodeURIComponent(runId)}/voice-texts?style=${encodeURIComponent(textsStyle())}`,
       method === "POST" ? { method: "POST" } : undefined
     );
     if (!response.ok) throw new Error(`voice-texts HTTP ${response.status}`);
@@ -506,7 +630,9 @@ export function createNarrator({
       let body = await requestTexts("GET");
       if (gen !== textsGen) return;
       applyTexts(body);
-      if ((textsStatus === "none" || textsStatus === "failed") && !textsPosted) {
+      // None yet, failed, or stale (the persona or the scoops changed since
+      // they were made): ask for a generation once; stale texts serve meanwhile.
+      if ((textsStatus === "none" || textsStatus === "failed" || textsStatus === "stale") && !textsPosted) {
         textsPosted = true;
         body = await requestTexts("POST");
         if (gen !== textsGen) return;
@@ -517,7 +643,10 @@ export function createNarrator({
       warnOnce("casual voice texts failed", err);
       const first = textsStatus === null;
       textsStatus = "failed";
-      if (first) refetchUpcoming();
+      if (first) {
+        rebuildStops();
+        refetchUpcoming();
+      }
     } finally {
       if (gen === textsGen) textsLoading = false;
     }
@@ -539,6 +668,7 @@ export function createNarrator({
     if (textsStatus === "complete") return;
     if (textsStatus === "failed" && textsPosted) return;
     if (textsStatus === "none" && textsPosted) return;
+    if (textsStatus === "stale" && textsPosted) return;
     loadTexts();
   }
 
@@ -546,9 +676,11 @@ export function createNarrator({
     textsGen += 1;
     stopPoll();
     texts = {};
+    items = [];
     textsStatus = null;
     textsLoading = false;
     textsPosted = false;
+    rebuildStops();
   }
 
   // ---- Audio fetching (cached per claim) ----
@@ -558,10 +690,11 @@ export function createNarrator({
     return engine?.kind === "blob" && (typeof engine.isReady !== "function" || engine.isReady());
   }
 
-  function fetchAudio(claim) {
+  function fetchAudio(stop) {
     if (!engineBlobReady()) return null;
-    const key = claimKey(claim);
-    const text = currentText(claim);
+    const key = stop.key;
+    const text = currentText(stop);
+    if (!text) return null;
     const known = cache.get(key);
     if (known && known.text === text) return known;
     if (known?.url) revokeObjectURL(known.url);
@@ -585,15 +718,15 @@ export function createNarrator({
 
   function prefetchAhead(time) {
     if (textsPending()) return;
-    for (const claim of claims) {
-      const ahead = speakAt(claim) - time;
-      if (ahead > 0 && ahead <= LEAD_SEC) fetchAudio(claim);
+    for (const stop of stops) {
+      const ahead = stop.at - time;
+      if (ahead > 0 && ahead <= LEAD_SEC) fetchAudio(stop);
     }
   }
 
   function prefetchNext(time) {
     if (textsPending()) return;
-    const next = claims.find((claim) => speakAt(claim) > time);
+    const next = stops.find((stop) => stop.at > time);
     if (next) fetchAudio(next);
   }
 
@@ -608,13 +741,13 @@ export function createNarrator({
   // LEAD_SEC of the new position; everything else is freed.
   function pruneCache(time) {
     const keep = new Set();
-    const next = claims.find((claim) => speakAt(claim) > time);
-    if (next) keep.add(claimKey(next));
-    for (const claim of claims) {
-      const ahead = speakAt(claim) - time;
-      if (ahead > 0 && ahead <= LEAD_SEC) keep.add(claimKey(claim));
+    const next = stops.find((stop) => stop.at > time);
+    if (next) keep.add(next.key);
+    for (const stop of stops) {
+      const ahead = stop.at - time;
+      if (ahead > 0 && ahead <= LEAD_SEC) keep.add(stop.key);
     }
-    if (session) for (const claim of session.queue) keep.add(claimKey(claim));
+    if (session) for (const stop of session.queue) keep.add(stop.key);
     for (const key of [...cache.keys()]) if (!keep.has(key)) dropEntry(key);
   }
 
@@ -678,10 +811,20 @@ export function createNarrator({
       };
       // "Space bar" click before the video goes on (skipped when the browser
       // blocks audio: nothing was heard, so no click either).
-      const wait = blocked ? 0 : clickSafely();
+      const wait = blocked || exitSound() === "none" ? 0 : clickSafely();
       if (wait > 0) setTimeout(go, wait);
       else go();
     }
+  }
+
+  // The persona's sounds: entry "click" | "error_on_red" | "error" | "none",
+  // exit "click" | "none". Without a persona: the errorCue option decides.
+  function entrySound() {
+    return persona?.sounds?.entry ?? (errorCue ? "error_on_red" : "click");
+  }
+
+  function exitSound() {
+    return persona?.sounds?.exit ?? "click";
   }
 
   function clickSafely() {
@@ -705,18 +848,19 @@ export function createNarrator({
       return;
     }
     const s = session;
-    hook(onHold, s.queue[0]);
+    hook(onHold, hookStop(s.queue[0]));
     // A red flag opens with the "error" sound, other flags with the
-    // "space bar" click; then the speech.
+    // "space bar" click; then the speech (the persona's sounds decide).
+    const entry = entrySound();
     let wait = 0;
-    if (errorCue && s.queue[0]?.flag === "red" && !blocked) {
+    if (!blocked && (entry === "error" || (entry === "error_on_red" && s.queue[0]?.flag === "red"))) {
       try {
         wait = Number(errorSound(speechVolume())) || 0;
       } catch {
         wait = 0;
       }
     }
-    if (wait <= 0) wait = clickSafely();
+    if (wait <= 0 && entry !== "none") wait = clickSafely();
     if (wait > 0) {
       s.waitTimer = setTimeout(() => {
         if (session !== s) return;
@@ -731,13 +875,13 @@ export function createNarrator({
   function speakNext() {
     const s = session;
     if (!s) return;
-    const claim = s.queue.shift();
-    if (!claim || blocked) {
+    const stop = s.queue.shift();
+    if (!stop || blocked) {
       finish(true);
       return;
     }
-    hook(onItem, claim);
-    const key = claimKey(claim);
+    hook(onItem, hookStop(stop));
+    const key = stop.key;
     const spoken = () => {
       // Spoken (or unplayable): free its WAV. A seek back fetches it again.
       dropEntry(key);
@@ -746,10 +890,11 @@ export function createNarrator({
     // No audio from the engine: the speech engine (or the fallback) speaks.
     const direct = () => {
       const speech = engine?.kind === "speech" ? engine : fallback;
-      if (speech) say(s, speech, currentText(claim), spoken);
+      const text = currentText(stop);
+      if (speech && text) say(s, speech, text, spoken);
       else spoken();
     };
-    const entry = fetchAudio(claim);
+    const entry = fetchAudio(stop);
     if (!entry) {
       direct();
       return;
@@ -796,7 +941,7 @@ export function createNarrator({
     try {
       handle.cancel = speech.speak(text, {
         volume: speechVolume(),
-        rate: SPEECH_RATE,
+        rate: speechRate(),
         onEnd: next,
         onError: (event) => {
           if (event?.error === "not-allowed") {
@@ -827,8 +972,8 @@ export function createNarrator({
       // Setting src resets playbackRate to defaultPlaybackRate: set both.
       audio.preservesPitch = true;
       audio.webkitPreservesPitch = true;
-      audio.defaultPlaybackRate = SPEECH_RATE;
-      audio.playbackRate = SPEECH_RATE;
+      audio.defaultPlaybackRate = speechRate();
+      audio.playbackRate = speechRate();
     } catch (err) {
       warnOnce("audio playback failed", err);
       speakNext();
@@ -945,15 +1090,13 @@ export function createNarrator({
       prefetchAhead(time);
       return;
     }
-    const crossed = claims.filter(
-      (claim) => speakAt(claim) > prev && speakAt(claim) <= time + CROSS_EPS && !fired.has(claimKey(claim))
-    );
+    const crossed = stops.filter((stop) => stop.at > prev && stop.at <= time + CROSS_EPS && !fired.has(stop.key));
     prefetchAhead(time);
     if (crossed.length) {
-      for (const claim of crossed) fired.add(claimKey(claim));
+      for (const stop of crossed) fired.add(stop.key);
       // Playback refused by the browser: do not pause for speech that
       // cannot be heard; just free the audio.
-      if (blocked) for (const claim of crossed) dropEntry(claimKey(claim));
+      if (blocked) for (const stop of crossed) dropEntry(stop.key);
       else startSession(crossed);
     }
   }
@@ -994,10 +1137,7 @@ export function createNarrator({
         )
         .sort((a, b) => speakAt(a) - speakAt(b));
       // A claim speaking right now stays queued; later ones follow the filter.
-      if (session) {
-        const keep = new Set(claims.map(claimKey));
-        session.queue = session.queue.filter((claim) => keep.has(claimKey(claim)));
-      }
+      rebuildStops();
     },
     /** The run's caption language; narration only runs for a voiced one. */
     setLanguage(captionLanguage) {
@@ -1006,6 +1146,7 @@ export function createNarrator({
         voice = next;
         for (const entry of cache.values()) if (entry.url) revokeObjectURL(entry.url);
         cache.clear();
+        rebuildStops();
       }
       refreshRunning();
     },
@@ -1030,12 +1171,34 @@ export function createNarrator({
       const value = VOICE_STYLES.includes(next) ? next : "normal";
       if (value === style) return;
       style = value;
+      rebuildStops();
       ensureTexts();
       if (!wantTexts()) stopPoll();
       if (enabled && voice && prevTime !== null) prefetchAhead(prevTime);
     },
     getStyle() {
       return style;
+    },
+    /** Switch the commentator (a src/commentators.js profile; null =
+     * «душнила»). Another texts style asks for its texts again; the upcoming
+     * stops are re-texted, re-timed and re-voiced (rate, sounds). */
+    setPersona(next) {
+      const value = next ?? null;
+      if (value === persona || JSON.stringify(value) === JSON.stringify(persona)) return;
+      const before = textsStyle();
+      persona = value;
+      if (textsStyle() !== before) resetTexts();
+      else rebuildStops();
+      ensureTexts();
+      if (!wantTexts()) stopPoll();
+      refetchUpcoming();
+    },
+    getPersona() {
+      return persona;
+    },
+    /** The stops ahead (for tests and the page): [{kind, at, flag}]. */
+    getStops() {
+      return stops.map(({ kind, at, flag, key }) => ({ kind, at, flag, key }));
     },
     /** Switch the voice engine (and the speech fallback); prepared audio is
      * dropped and the upcoming flags are requested again from the new one. */

@@ -48,6 +48,9 @@
   --nobs-yellow: #f1c40f;
   --nobs-red: #e74c3c;
   --nobs-pending: #8b8e98; /* found, being checked: no verdict yet (same in both themes) */
+  --nobs-accent: #b48cff; /* scoop stops of a commentator (not a flag colour) */
+  --nobs-parody-bg: #ff3d7f; /* the «пародия» badge */
+  --nobs-parody-text: #ffffff;
   --nobs-overlay-z: 2147483000; /* stays above the fullscreen element's own chrome */
 }
 
@@ -84,6 +87,9 @@
   --nobs-green: #22a85a;
   --nobs-yellow: #e0b000;
   --nobs-red: #d63c2e;
+  --nobs-accent: #7a4fe0;
+  --nobs-parody-bg: #d81b60;
+  --nobs-parody-text: #ffffff;
 }
 
 /* Over the video (control bar, flag/processing overlay) the controls keep
@@ -234,6 +240,118 @@ main {
 .nobs-voice-hold[data-flag="yellow"] { --nobs-hold-color: var(--nobs-yellow); }
 .nobs-voice-hold[data-flag="green"] { --nobs-hold-color: var(--nobs-green); }
 .nobs-voice-hold[data-flag="white"] { --nobs-hold-color: var(--nobs-white); }
+.nobs-voice-hold[data-flag="scoop"] { --nobs-hold-color: var(--nobs-accent); }
+/* «📱 Яблогер · пародия» under the pause sign while a parody persona speaks. */
+.nobs-voice-hold-caption {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 74px);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 10px;
+  max-width: calc(100% - 32px);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 5;
+}
+.nobs-voice-hold-caption[hidden] {
+  display: none;
+}
+
+/* The commentator menu, rising above the narrator button (commentatorMenu.js). */
+.nobs-commentator-menu {
+  position: absolute;
+  right: 56px;
+  bottom: 56px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-width: calc(100% - 16px);
+  padding: 4px;
+  border: 1px solid #2f2f3a;
+  border-radius: 10px;
+  background: #16161c;
+  color: #f2f2f5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+}
+.nobs-commentator-menu[hidden] {
+  display: none;
+}
+.nobs-commentator-menu-title {
+  margin: 4px 10px 6px;
+  color: #9a9aa5;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.nobs-commentator-item {
+  display: grid;
+  grid-template-columns: 16px 22px 1fr auto;
+  align-items: center;
+  column-gap: 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-left: 3px solid var(--nobs-persona-color, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.nobs-commentator-item:hover,
+.nobs-commentator-item:focus-visible {
+  background: #2a2a33;
+  outline: none;
+}
+.nobs-commentator-item[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.nobs-commentator-note {
+  grid-column: 3 / -1;
+  color: #9a9aa5;
+  font-size: 12px;
+}
+.nobs-commentator-check {
+  color: var(--nobs-yellow);
+}
+.nobs-parody-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--nobs-parody-bg);
+  color: var(--nobs-parody-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-transform: lowercase;
+}
+.nobs-commentator-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: #2f2f3a;
+}
+.nobs-commentator-manage {
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #8ab4ff;
+  text-decoration: none;
+}
+.nobs-commentator-manage:hover,
+.nobs-commentator-manage:focus-visible {
+  background: #2a2a33;
+  outline: none;
+}
 .nobs-voice-hold.is-in {
   animation: nobs-hold-in 250ms ease-out both;
 }
@@ -1536,6 +1654,16 @@ main {
   color: var(--nobs-text);
   font: inherit;
 }
+.nobs-settings-field[hidden] {
+  display: none;
+}
+.nobs-settings-persona > .nobs-settings-field {
+  margin-bottom: 0;
+}
+.nobs-settings-link {
+  color: var(--nobs-link);
+  font-size: 13px;
+}
 .nobs-settings small {
   color: var(--nobs-muted);
   font-size: 12px;
@@ -2638,4 +2766,430 @@ button.nobs-scoop-verdict:hover {
   .nobs-gate-toast::before {
     animation: none;
   }
+}
+
+/* ---- Commentator management page (commentators.html, src/commentatorsPage.js) ---- */
+.nobs-cm-page {
+  margin: 0;
+  padding: 0 16px 48px;
+  background: var(--nobs-bg);
+  color: var(--nobs-text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.nobs-cm-header {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 0 8px;
+}
+.nobs-cm-header h1 {
+  margin: 6px 0 8px;
+  font-size: 24px;
+}
+.nobs-cm-back {
+  color: var(--nobs-link);
+  text-decoration: none;
+  font-size: 14px;
+}
+.nobs-cm-lead {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--nobs-muted);
+  line-height: 1.5;
+}
+#commentators {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.nobs-cm-demo {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--nobs-banner-bg);
+  color: var(--nobs-banner-text);
+}
+.nobs-cm-status {
+  min-height: 1.4em;
+  margin: 8px 0;
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+.nobs-cm-status[data-kind="error"] {
+  color: var(--nobs-red);
+}
+.nobs-cm-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .nobs-cm-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.nobs-cm-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.nobs-cm-list-head h2,
+.nobs-cm-form h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.nobs-cm-card {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid var(--nobs-border);
+  border-left: 4px solid var(--nobs-persona-color, var(--nobs-border));
+  border-radius: 10px;
+  background: var(--nobs-surface);
+}
+.nobs-cm-card[aria-current="true"] {
+  outline: 2px solid var(--nobs-link);
+  outline-offset: -1px;
+}
+.nobs-cm-emoji {
+  font-size: 26px;
+  line-height: 1.2;
+}
+.nobs-cm-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.nobs-cm-card-text code {
+  color: var(--nobs-muted);
+  font-size: 12px;
+}
+.nobs-cm-card-text small {
+  color: var(--nobs-muted);
+  line-height: 1.4;
+}
+.nobs-cm-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.nobs-cm-badge {
+  padding: 1px 7px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 999px;
+  color: var(--nobs-muted);
+  font-size: 11px;
+}
+.nobs-cm-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.nobs-cm-button {
+  padding: 6px 12px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 6px;
+  background: var(--nobs-raised);
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.nobs-cm-button:hover:not(:disabled) {
+  background: var(--nobs-raised-hover);
+}
+.nobs-cm-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.nobs-cm-button.is-primary {
+  border-color: var(--nobs-link);
+  background: var(--nobs-link);
+  color: var(--nobs-bg);
+}
+.nobs-cm-button.is-danger {
+  color: var(--nobs-red);
+}
+.nobs-cm-editor {
+  min-width: 0;
+}
+.nobs-cm-empty {
+  padding: 24px;
+  border: 1px dashed var(--nobs-border-strong);
+  border-radius: 10px;
+  color: var(--nobs-muted);
+}
+.nobs-cm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.nobs-cm-parody-note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--nobs-note-bg);
+  font-size: 14px;
+}
+.nobs-cm-parody-note[hidden] {
+  display: none;
+}
+.nobs-cm-group {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 10px;
+  background: var(--nobs-surface);
+}
+.nobs-cm-group legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+.nobs-cm-q {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+.nobs-cm-q-label {
+  font-size: 14px;
+}
+.nobs-cm-sub {
+  margin: 4px 0 10px;
+  font-size: 14px;
+}
+.nobs-cm-hint {
+  color: var(--nobs-muted);
+  font-size: 12px;
+}
+.nobs-cm-error {
+  color: var(--nobs-red);
+  font-size: 12px;
+}
+.nobs-cm-error:empty {
+  display: none;
+}
+.nobs-cm-form input[type="text"],
+.nobs-cm-form input[type="number"],
+.nobs-cm-form textarea,
+.nobs-cm-form select,
+.nobs-cm-preview select,
+.nobs-cm-preview input {
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 6px;
+  background: var(--nobs-input-bg);
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.nobs-cm-form textarea {
+  width: 100%;
+  resize: vertical;
+}
+.nobs-cm-form input:disabled,
+.nobs-cm-form textarea:disabled,
+.nobs-cm-form select:disabled {
+  opacity: 0.8;
+}
+.nobs-cm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.nobs-cm-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+.nobs-cm-small {
+  width: 70px;
+}
+.nobs-cm-small-wide {
+  width: 200px;
+}
+.nobs-cm-emoji-input {
+  width: 56px;
+  font-size: 20px;
+  text-align: center;
+}
+.nobs-cm-emoji-quick {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.nobs-cm-chip {
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+.nobs-cm-chip:hover {
+  border-color: var(--nobs-border-strong);
+}
+.nobs-cm-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nobs-cm-range input {
+  flex: 1;
+  max-width: 280px;
+}
+.nobs-cm-out {
+  min-width: 10ch;
+  color: var(--nobs-muted);
+  font-size: 13px;
+}
+.nobs-cm-manners {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+}
+.nobs-cm-manner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.nobs-cm-manner:has(input:checked) {
+  border-color: var(--nobs-link);
+  background: var(--nobs-current);
+}
+.nobs-cm-opener-lang {
+  margin-bottom: 8px;
+}
+.nobs-cm-opener-lang summary {
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.nobs-cm-rules {
+  padding: 12px 14px;
+  border: 1px solid var(--nobs-note-border);
+  border-radius: 10px;
+  background: var(--nobs-note-bg);
+}
+.nobs-cm-rules h3,
+.nobs-cm-preview h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.nobs-cm-rules-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.nobs-cm-form-actions {
+  display: flex;
+  gap: 8px;
+}
+.nobs-cm-preview {
+  padding: 12px 14px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 10px;
+  background: var(--nobs-surface);
+}
+.nobs-cm-preview-text {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--nobs-link);
+  font-size: 15px;
+}
+.nobs-cm-preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+.nobs-cm-guard.is-ok {
+  color: var(--nobs-green);
+}
+.nobs-cm-guard.is-bad {
+  color: var(--nobs-red);
+}
+.nobs-cm-spinner {
+  color: var(--nobs-muted);
+}
+
+/* Compact scoop card: timecode · title · small score ring, then a few
+   sentences. */
+.nobs-scoop-compact {
+  padding: 10px 12px;
+}
+.nobs-scoop-compact .nobs-scoop-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.nobs-scoop-compact .nobs-scoop-title {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.nobs-scoop-compact .nobs-scoop-text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--nobs-muted);
+}
+.nobs-scoop-time {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nobs-link);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.nobs-scoop-time:hover,
+.nobs-scoop-time:focus-visible {
+  background: var(--nobs-pressed);
+}
+.nobs-scoop-score {
+  --score: 0;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: conic-gradient(var(--nobs-yellow) calc(var(--score) * 1%), var(--nobs-border) 0);
+}
+.nobs-scoop-score-num {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--nobs-bg);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-scoop-compact[data-hypothesis="true"] .nobs-scoop-score {
+  opacity: 0.6;
 }

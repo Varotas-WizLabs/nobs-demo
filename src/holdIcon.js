@@ -6,6 +6,11 @@
 // and exit play a short "pressed" bounce (CSS, .is-in / .is-out); a viewer
 // taking over hides it at once. It never takes clicks (pointer-events: none).
 // Lives inside #player-container so it shows in fullscreen too.
+//
+// Commentators: a scoop stop draws the bars in the accent colour
+// (data-flag="scoop"); a parody persona speaking gets a caption under the
+// sign («📱 Яблогер · пародия», option `caption`), visible for the whole hold
+// and gone with the sign (G1: the parody is always labelled).
 
 export const OUT_MS = 260;
 
@@ -15,7 +20,11 @@ export function createHoldIcon(container, doc = container.ownerDocument) {
   root.hidden = true;
   root.setAttribute("aria-hidden", "true");
   root.append(doc.createElement("span"), doc.createElement("span"));
-  container.appendChild(root);
+  const caption = doc.createElement("p");
+  caption.className = "nobs-voice-hold-caption";
+  caption.setAttribute("role", "status");
+  caption.hidden = true;
+  container.append(root, caption);
   let outTimer = null;
 
   function clearOut() {
@@ -27,15 +36,31 @@ export function createHoldIcon(container, doc = container.ownerDocument) {
 
   function setFlag(claim) {
     const flag = claim?.flag;
-    root.dataset.flag = ["red", "yellow", "green", "white"].includes(flag) ? flag : "white";
+    root.dataset.flag = ["red", "yellow", "green", "white", "scoop"].includes(flag) ? flag : "white";
+  }
+
+  function setCaption(text) {
+    if (text === undefined) return;
+    caption.textContent = String(text ?? "");
+    caption.hidden = !caption.textContent;
+    caption.setAttribute("aria-hidden", String(caption.hidden));
+  }
+
+  function hideCaption() {
+    caption.hidden = true;
+    caption.textContent = "";
+    caption.setAttribute("aria-hidden", "true");
   }
 
   return {
     element: root,
-    /** The narrator paused the video for `claim`. */
-    hold(claim) {
+    caption,
+    /** The narrator paused the video for `claim` (a stop). `caption`: the
+     * parody label shown under the sign, "" for none. */
+    hold(claim, { caption: text = "" } = {}) {
       clearOut();
       setFlag(claim);
+      setCaption(text);
       root.classList.remove("is-out", "is-in");
       root.hidden = false;
       // Restart the entry animation.
@@ -43,8 +68,10 @@ export function createHoldIcon(container, doc = container.ownerDocument) {
       root.classList.add("is-in");
     },
     /** The next flag's speech starts: switch the colour. */
-    item(claim) {
-      if (!root.hidden) setFlag(claim);
+    item(claim, { caption: text } = {}) {
+      if (root.hidden) return;
+      setFlag(claim);
+      setCaption(text);
     },
     /** The hold ends: bounce out (`animate`) or vanish (the viewer took over). */
     release({ animate = false } = {}) {
@@ -53,6 +80,7 @@ export function createHoldIcon(container, doc = container.ownerDocument) {
       if (!animate || root.hidden) {
         root.classList.remove("is-out");
         root.hidden = true;
+        hideCaption();
         return;
       }
       root.classList.add("is-out");
@@ -60,6 +88,7 @@ export function createHoldIcon(container, doc = container.ownerDocument) {
         outTimer = null;
         root.classList.remove("is-out");
         root.hidden = true;
+        hideCaption();
       }, OUT_MS);
     },
   };

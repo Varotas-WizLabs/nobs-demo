@@ -14,10 +14,10 @@
 // hypotheses and the audience / agenda / persona map (collapsed), and a
 // totals line (passes, time, cost, models). DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=c59759a0a7";
-import { t } from "./i18n.js?v=c59759a0a7";
-import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=c59759a0a7";
-import { seekTarget } from "./settings.js?v=c59759a0a7";
+import { formatTimecode } from "./claimSync.js?v=6f1807fd74";
+import { t } from "./i18n.js?v=6f1807fd74";
+import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=6f1807fd74";
+import { seekTarget } from "./settings.js?v=6f1807fd74";
 
 /**
  * Play `player` from a scoop anchor at `sec`, the seek lead-in earlier
@@ -272,84 +272,44 @@ export function renderScoopList(root, run, response, { onSeek, lang: langOption,
 
   root.replaceChildren(section);
 
+  // Compact card (owner, 2026-11-17): title, the scoop in a few sentences,
+  // a small score indicator and the first timecode. The bars, chips, anchors
+  // and the step-by-step evidence are no longer shown on the card.
   function renderCard(scoop, isHypothesis) {
-    const item = el(doc, "li", "nobs-scoop");
+    const item = el(doc, "li", "nobs-scoop nobs-scoop-compact");
     item.dataset.scoopId = String(scoop.id);
     if (isHypothesis) item.dataset.hypothesis = "true";
     const scores = scoop.scores ?? {};
+    const total = Number(scores.total_0_100) || 0;
 
     const head = el(doc, "div", "nobs-scoop-head");
-    head.appendChild(el(doc, "h3", "nobs-scoop-title", scoop.title ?? ""));
-    const total = el(doc, "div", "nobs-scoop-total");
-    total.title = t("scoop.total", lang);
-    total.appendChild(el(doc, "span", "nobs-scoop-total-num", formatScore(scores.total_0_100, lang, 0)));
-    total.appendChild(el(doc, "span", "nobs-scoop-total-of", "/100"));
-    if (scores.band) {
-      const band = el(doc, "span", "nobs-scoop-band", t(`scoop.band.${scores.band}`, lang));
-      band.dataset.band = scores.band;
-      total.appendChild(band);
+    const anchors = scoopAnchors(scoop);
+    const first = anchors.find((x) => x.video !== "source");
+    if (first) {
+      const time = el(doc, "button", "nobs-scoop-time", formatTimecode(first.start_sec));
+      time.type = "button";
+      time.dataset.sec = String(first.start_sec);
+      time.setAttribute("aria-label", `${t("scoop.seek", lang)} ${formatTimecode(first.start_sec)}`);
+      time.addEventListener("click", () => onSeek?.(first.start_sec));
+      head.appendChild(time);
+      anchorButtons.push({ anchor: first, button: time, card: item });
     }
-    head.appendChild(total);
+    head.appendChild(el(doc, "h3", "nobs-scoop-title", scoop.title ?? ""));
+    // Small score indicator: a ring filled to the total (0–100).
+    const meter = el(doc, "span", "nobs-scoop-score");
+    meter.setAttribute("role", "meter");
+    meter.setAttribute("aria-valuemin", "0");
+    meter.setAttribute("aria-valuemax", "100");
+    meter.setAttribute("aria-valuenow", String(Math.round(total)));
+    const label = `${t("scoop.total", lang)}: ${formatScore(total, lang, 0)}/100${isHypothesis ? ` · ${t("scoop.status.hypothesis", lang)}` : ""}`;
+    meter.setAttribute("aria-label", label);
+    meter.title = label;
+    meter.style.setProperty("--score", String(Math.max(0, Math.min(100, total))));
+    meter.appendChild(el(doc, "span", "nobs-scoop-score-num", formatScore(total, lang, 0)));
+    head.appendChild(meter);
     item.appendChild(head);
 
     item.appendChild(el(doc, "p", "nobs-scoop-text", scoop.scoop ?? ""));
-
-    const bars = el(doc, "div", "nobs-scoop-bars");
-    for (const [key, label] of AXES) {
-      const value = scores[key];
-      const row = el(doc, "div", "nobs-scoop-bar");
-      row.dataset.axis = key;
-      row.appendChild(el(doc, "span", "nobs-scoop-bar-label", t(label, lang)));
-      const track = el(doc, "span", "nobs-scoop-bar-track");
-      track.setAttribute("role", "meter");
-      track.setAttribute("aria-valuemin", "0");
-      track.setAttribute("aria-valuemax", "10");
-      track.setAttribute("aria-valuenow", String(value ?? 0));
-      track.setAttribute("aria-label", t(label, lang));
-      const fill = el(doc, "span", "nobs-scoop-bar-fill");
-      fill.style.width = `${Math.max(0, Math.min(10, Number(value) || 0)) * 10}%`;
-      track.appendChild(fill);
-      row.appendChild(track);
-      row.appendChild(el(doc, "span", "nobs-scoop-bar-num", formatScore(value, lang)));
-      bars.appendChild(row);
-    }
-    item.appendChild(bars);
-
-    const chips = el(doc, "div", "nobs-scoop-chips");
-    const level = scoop.confidence?.level;
-    if (level) {
-      const chip = el(doc, "span", "nobs-scoop-chip nobs-scoop-confidence", `${t("scoop.confidence", lang)}: ${t(`scoop.confidence.${level}`, lang)}`);
-      chip.dataset.level = level;
-      chip.title = [scoop.confidence.rule, t("scoop.confidenceHint", lang)].filter(Boolean).join(". ");
-      chips.appendChild(chip);
-    }
-    const primary = scoop.types?.primary;
-    if (primary) {
-      const chip = el(doc, "span", "nobs-scoop-chip nobs-scoop-type", t(`scoop.type.${primary}`, lang));
-      chip.dataset.primary = "true";
-      chips.appendChild(chip);
-    }
-    for (const tag of scoop.types?.tags ?? []) {
-      if (tag === primary) continue;
-      chips.appendChild(el(doc, "span", "nobs-scoop-chip nobs-scoop-type", t(`scoop.type.${tag}`, lang)));
-    }
-    const statusKey = isHypothesis ? "hypothesis" : scoop.status;
-    if (statusKey) {
-      const chip = el(doc, "span", "nobs-scoop-chip nobs-scoop-status", t(`scoop.status.${statusKey}`, lang));
-      chip.title = t("scoop.statusLabel", lang);
-      chips.appendChild(chip);
-    }
-    item.appendChild(chips);
-
-    const anchors = scoopAnchors(scoop);
-    if (anchors.length) {
-      const ul = el(doc, "ul", "nobs-scoop-anchors");
-      ul.setAttribute("aria-label", t("scoop.anchors", lang));
-      for (const anchor of anchors) ul.appendChild(renderAnchor(anchor, item));
-      item.appendChild(ul);
-    }
-
-    item.appendChild(renderDetails(scoop, anchors, isHypothesis));
     return item;
   }
 

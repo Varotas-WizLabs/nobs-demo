@@ -33,17 +33,35 @@
     const method = String(init?.method ?? requestMethod ?? "GET").toUpperCase();
     const url = typeof input === "string" ? input : String(input?.url ?? "");
     let m;
-    // The flag narrator's texts (exported by build_demo.py). POST (start a
-    // generation) answers like GET: whatever was exported is all there is.
+    // The flag narrator's texts (exported by build_demo.py), per commentator:
+    // «душнила» (style casual or dushnila) from voice-casual.json, another
+    // built-in persona from voice-<id>.json (only exported once the owner
+    // reviewed it), anything else has none. POST (start a generation)
+    // answers like GET: whatever was exported is all there is. A file of the
+    // older format (texts only) gets its claim items added.
     if ((m = url.match(/^\/runs\/(\d+)\/voice-texts(?:\?(.*))?$/)) && (method === "GET" || method === "POST")) {
       const style = new URLSearchParams(m[2] ?? "").get("style") ?? "casual";
-      const none = { run_id: Number(m[1]), style, status: "none", texts: {} };
-      if (style !== "casual") return Promise.resolve(json(none));
-      return realFetch(`data/runs/${m[1]}.voice-casual.json`)
+      const none = { run_id: Number(m[1]), style, status: "none", texts: {}, items: [] };
+      const file = style === "casual" || style === "dushnila" ? "casual" : style !== "normal" && /^[a-z][a-z0-9-]{1,31}$/.test(style) ? style : null;
+      if (!file) return Promise.resolve(json(none));
+      return realFetch(`data/runs/${m[1]}.voice-${file}.json`)
         .then((r) => (r.ok ? r.json() : none))
         .catch(() => none)
-        .then((body) => json(body));
+        .then((body) => {
+          const texts = body?.texts && typeof body.texts === "object" ? body.texts : {};
+          const items = Array.isArray(body?.items)
+            ? body.items
+            : Object.entries(texts).map(([id, text]) => ({ kind: "claim", claim_id: Number(id), at_sec: null, text }));
+          return json({ ...body, style, texts, items });
+        });
     }
+    // The commentator profiles (read-only here; the management page shows
+    // them without any way to change them).
+    if (url === "/commentators" || url === "/commentators?all=1") {
+      if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
+      return realFetch("data/commentators.json");
+    }
+    if (url === "/commentators/meta" && method === "GET") return realFetch("data/commentators-meta.json");
     if (method !== "GET") return Promise.resolve(json({ detail: "read-only demo" }, 405));
     // No local Silero voice here; the player uses in-browser voices.
     if (url === "/voice/health") return Promise.resolve(json({ ok: false }));

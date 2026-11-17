@@ -74,7 +74,15 @@ const STRINGS = {
     "list.toTop": "Back to the top",
     "settings.tagFilter": "Show the “How it's phrased” filter in the claim list",
     "settings.theme": "Theme",
-    "settings.voiceStyle": "Voice reads",
+    "settings.voiceStyle": "Dushnila reads",
+    "settings.commentator": "Commentator",
+    "settings.manageCommentators": "Manage commentators",
+    "commentator.menu": "Commentator",
+    "commentator.manage": "Manage commentators…",
+    "commentator.parody": "parody",
+    "commentator.noLang.ru": "not for Russian",
+    "commentator.noLang.he": "not for Hebrew",
+    "commentator.buttonHint": "Click: on/off, double-click: choose",
     "settings.voiceStyle.normal": "plain text",
     "settings.voiceStyle.casual": "casual text",
     "settings.voiceEngine": "Voice",
@@ -373,7 +381,15 @@ const STRINGS = {
     "list.toTop": "Наверх",
     "settings.tagFilter": "Показывать фильтр «Подача» в списке",
     "settings.theme": "Тема",
-    "settings.voiceStyle": "Голос зачитывает",
+    "settings.voiceStyle": "Душнила зачитывает",
+    "settings.commentator": "Комментатор",
+    "settings.manageCommentators": "Управление комментаторами",
+    "commentator.menu": "Комментатор",
+    "commentator.manage": "Управление комментаторами…",
+    "commentator.parody": "пародия",
+    "commentator.noLang.ru": "нет для русского",
+    "commentator.noLang.he": "нет для иврита",
+    "commentator.buttonHint": "Клик — вкл/выкл, двойной клик — выбрать",
     "settings.voiceStyle.normal": "обычный текст",
     "settings.voiceStyle.casual": "фривольный текст",
     "settings.voiceEngine": "Голос",
@@ -602,10 +618,22 @@ const STRINGS = {
     "scoop.aap.mech.borrowed": "заимствованно",
     "scoop.aap.mech.negative": "от противного",
   },
+  // Hebrew: only the commentator strings so far (the rest falls back to English).
+  he: {
+    "settings.commentator": "פרשן",
+    "settings.manageCommentators": "ניהול פרשנים",
+    "commentator.menu": "פרשן",
+    "commentator.manage": "ניהול פרשנים…",
+    "commentator.parody": "פרודיה",
+    "commentator.noLang.ru": "לא לרוסית",
+    "commentator.noLang.he": "לא לעברית",
+    "commentator.buttonHint": "לחיצה: הפעלה/כיבוי, לחיצה כפולה: בחירה",
+  },
 };
 
 function baseLanguage(lang) {
-  return String(lang ?? "en").split("-")[0].toLowerCase();
+  const base = String(lang ?? "en").split("-")[0].toLowerCase();
+  return base === "iw" ? "he" : base;
 }
 
 export function t(key, lang) {

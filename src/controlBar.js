@@ -1,9 +1,9 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=c59759a0a7";
-import { t } from "./i18n.js?v=c59759a0a7";
-import { claimState, isUnchecked } from "./progress.js?v=c59759a0a7";
+import { seekTarget } from "./settings.js?v=6f1807fd74";
+import { t } from "./i18n.js?v=6f1807fd74";
+import { claimState, isUnchecked } from "./progress.js?v=6f1807fd74";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -66,10 +66,23 @@ function formatClock(totalSec) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
+// The commentator menu opens on a double click of the narrator button; a
+// single click waits this long to be sure it is not the first of two.
+export const DBLCLICK_MS = 250;
+// Holding the button this long (touch, mouse) opens the menu too.
+export const LONG_PRESS_MS = 500;
+
 // `options.onVoiceToggle()` (optional) is called when the flag-narrator
 // button is clicked. That button sits right after the volume control and is
 // hidden until setVoiceState({available: true, ...}) shows it.
-export function buildControlBar(player, container, { onVoiceToggle } = {}) {
+//
+// `options.onVoiceMenu()` (optional): the commentator menu. With it, a click
+// toggles only after DBLCLICK_MS without a second click; a double click, a
+// long press (LONG_PRESS_MS), a right click, or ArrowUp / Alt+ArrowDown /
+// the ContextMenu key on the focused button open the menu instead and never
+// toggle. `options.onVoiceGesture()` runs at once on every click (still
+// inside the user gesture, so the page can unlock audio there).
+export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu, onVoiceGesture } = {}) {
   const bar = document.createElement("div");
   bar.className = "nobs-control-bar";
 
@@ -391,10 +404,93 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
   voice.innerHTML = ICONS.voice;
   voice.hidden = true;
   voice.setAttribute("aria-pressed", "false");
+  let toggleTimer = null;
+  let pressTimer = null;
+  let suppressClick = false;
+  let menuByClick = false;
+  function cancelToggle() {
+    if (toggleTimer !== null) {
+      clearTimeout(toggleTimer);
+      toggleTimer = null;
+    }
+  }
+  function cancelPress() {
+    if (pressTimer !== null) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  }
+  function openMenu() {
+    cancelToggle();
+    onVoiceMenu?.();
+  }
   voice.addEventListener("click", (event) => {
     event.stopPropagation();
-    onVoiceToggle?.();
+    try {
+      onVoiceGesture?.();
+    } catch {
+      // the page's unlock must never block the toggle
+    }
+    if (!onVoiceMenu) {
+      onVoiceToggle?.();
+      return;
+    }
+    if (suppressClick) {
+      // The click ending a long press: the menu is already open.
+      suppressClick = false;
+      return;
+    }
+    if (toggleTimer !== null) {
+      // Second click within the window: a double click.
+      menuByClick = true;
+      openMenu();
+      return;
+    }
+    menuByClick = false;
+    toggleTimer = setTimeout(() => {
+      toggleTimer = null;
+      onVoiceToggle?.();
+    }, DBLCLICK_MS);
   });
+  if (onVoiceMenu) {
+    voice.setAttribute("aria-haspopup", "menu");
+    voice.setAttribute("aria-expanded", "false");
+    voice.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      cancelToggle();
+      if (!menuByClick) openMenu();
+      menuByClick = false;
+    });
+    voice.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      cancelPress();
+      openMenu();
+    });
+    voice.addEventListener("pointerdown", (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      cancelPress();
+      suppressClick = false;
+      pressTimer = setTimeout(() => {
+        pressTimer = null;
+        suppressClick = true;
+        openMenu();
+      }, LONG_PRESS_MS);
+    });
+    for (const type of ["pointerup", "pointerleave", "pointercancel"]) voice.addEventListener(type, cancelPress);
+    voice.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowUp" || event.key === "ContextMenu" || (event.key === "ArrowDown" && event.altKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        openMenu();
+      }
+    });
+  }
+  /** The commentator menu opened / closed (aria-expanded on the button). */
+  function setVoiceMenuOpen(open) {
+    if (onVoiceMenu) voice.setAttribute("aria-expanded", String(Boolean(open)));
+  }
   // `disabled`: shown but not usable (no voice for this run's language in
   // this browser); the title says why.
   function setVoiceState({ available = false, on = false, title = "", label = title, disabled = false } = {}) {
@@ -426,6 +522,8 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
   const progressIntervalId = setInterval(updateProgress, PROGRESS_INTERVAL_MS);
   function stop() {
     clearInterval(progressIntervalId);
+    cancelToggle();
+    cancelPress();
   }
 
   bar.append(playPause, seekWrap, time, volumeWrap, voice, fullscreen);
@@ -433,7 +531,7 @@ export function buildControlBar(player, container, { onVoiceToggle } = {}) {
 
   return {
     playPause, seekBar, time, mute, volume, volumePop, voice, fullscreen, setPlayerState, updateProgress, setMarkers,
-    upsertMarkers: setMarkers, setFrontier, setTimelineItems, setVoiceState, stop,
+    upsertMarkers: setMarkers, setFrontier, setTimelineItems, setVoiceState, setVoiceMenuOpen, stop,
   };
 }
 
