@@ -1,9 +1,9 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=6f1807fd74";
-import { t } from "./i18n.js?v=6f1807fd74";
-import { claimState, isUnchecked } from "./progress.js?v=6f1807fd74";
+import { seekTarget } from "./settings.js?v=fd4b41a77f";
+import { t } from "./i18n.js?v=fd4b41a77f";
+import { claimState, isUnchecked } from "./progress.js?v=fd4b41a77f";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -71,6 +71,8 @@ function formatClock(totalSec) {
 export const DBLCLICK_MS = 250;
 // Holding the button this long (touch, mouse) opens the menu too.
 export const LONG_PRESS_MS = 500;
+/** A contextmenu this soon after the menu opened is the same gesture (ignored). */
+export const CONTEXTMENU_AFTER_OPEN_MS = 700;
 
 // `options.onVoiceToggle()` (optional) is called when the flag-narrator
 // button is clicked. That button sits right after the volume control and is
@@ -408,6 +410,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
   let pressTimer = null;
   let suppressClick = false;
   let menuByClick = false;
+  let menuOpenedAt = -Infinity;
   function cancelToggle() {
     if (toggleTimer !== null) {
       clearTimeout(toggleTimer);
@@ -422,6 +425,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
   }
   function openMenu() {
     cancelToggle();
+    menuOpenedAt = Date.now();
     onVoiceMenu?.();
   }
   voice.addEventListener("click", (event) => {
@@ -466,6 +470,9 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
       event.preventDefault();
       event.stopPropagation();
       cancelPress();
+      // Android Chrome fires contextmenu after a long press that has already
+      // opened the menu: a second openMenu() would toggle it shut again.
+      if (suppressClick || Date.now() - menuOpenedAt < CONTEXTMENU_AFTER_OPEN_MS) return;
       openMenu();
     });
     voice.addEventListener("pointerdown", (event) => {
