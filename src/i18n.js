@@ -77,6 +77,7 @@ const STRINGS = {
     "settings.voiceStyle": "Dushnila reads",
     "settings.commentator": "Commentator",
     "settings.manageCommentators": "Manage commentators",
+    "settings.sourceIndex": "Source index",
     "commentator.menu": "Commentator",
     "commentator.manage": "Manage commentators…",
     "commentator.parody": "parody",
@@ -431,6 +432,7 @@ const STRINGS = {
     "settings.voiceStyle": "Душнила зачитывает",
     "settings.commentator": "Комментатор",
     "settings.manageCommentators": "Управление комментаторами",
+    "settings.sourceIndex": "Индекс источников",
     "commentator.menu": "Комментатор",
     "commentator.manage": "Управление комментаторами…",
     "commentator.parody": "пародия",
@@ -715,6 +717,7 @@ const STRINGS = {
   he: {
     "settings.commentator": "פרשן",
     "settings.manageCommentators": "ניהול פרשנים",
+    "settings.sourceIndex": "מדד המקורות",
     "commentator.menu": "פרשן",
     "commentator.manage": "ניהול פרשנים…",
     "commentator.parody": "פרודיה",

@@ -36,10 +36,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=c0690600a5";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=c0690600a5";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=c0690600a5";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=c0690600a5";
+import { t } from "./i18n.js?v=206d8c0082";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=206d8c0082";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=206d8c0082";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=206d8c0082";
 
 const KEY = "nobs.settings";
 
@@ -168,6 +168,9 @@ export function commentator() {
 
 /** Link to the commentator management page. */
 export const COMMENTATORS_PAGE = "commentators.html";
+
+/** Link to the source reliability index page (web/sources.html). */
+export const SOURCES_PAGE = "sources.html";
 
 /** What the narrator reads: "casual" (default) or "normal". */
 export function voiceStyle() {
@@ -558,7 +561,13 @@ export function openSettingsDialog(doc, lang = "en") {
   manage.rel = "noopener";
   manage.textContent = t("settings.manageCommentators", lang);
   personaPick.append(personaLabelEl, personaSelect);
-  personaField.append(personaPick, manage);
+  const sourcesLink = doc.createElement("a");
+  sourcesLink.className = "nobs-settings-link";
+  sourcesLink.href = SOURCES_PAGE;
+  sourcesLink.target = "_blank";
+  sourcesLink.rel = "noopener";
+  sourcesLink.textContent = t("settings.sourceIndex", lang);
+  personaField.append(personaPick, manage, sourcesLink);
   const showStyle = () => {
     voiceField.hidden = personaSelect.value !== DEFAULT_COMMENTATOR;
   };

@@ -1,0 +1,185 @@
+/* web/sources.html — the source index page. Uses the theme tokens of styles.css. */
+.nobs-src-page main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+.nobs-src-summary {
+  font-weight: 600;
+}
+.nobs-src-note {
+  color: var(--nobs-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  max-width: 70ch;
+  border-left: 3px solid var(--nobs-border-strong);
+  padding-left: 10px;
+}
+.nobs-src-muted {
+  color: var(--nobs-muted);
+  font-size: 0.9rem;
+}
+.nobs-src-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0 4px;
+}
+.nobs-src-controls input[type="search"],
+.nobs-src-controls select {
+  background: var(--nobs-input-bg);
+  color: var(--nobs-text);
+  border: 1px solid var(--nobs-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+.nobs-src-controls input[type="search"] {
+  min-width: 200px;
+  flex: 1 1 200px;
+}
+.nobs-src-table-wrap {
+  overflow-x: auto;
+  max-height: 60vh;
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+}
+.nobs-src-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.nobs-src-table th,
+.nobs-src-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--nobs-border);
+  text-align: left;
+  vertical-align: top;
+}
+.nobs-src-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--nobs-surface);
+  z-index: 1;
+}
+.nobs-src-table .is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-src-table tbody tr:hover {
+  background: var(--nobs-hover);
+}
+.nobs-src-sort,
+.nobs-src-domain {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: inherit;
+}
+.nobs-src-sort {
+  font-weight: 600;
+}
+.nobs-src-domain {
+  color: var(--nobs-link);
+}
+.nobs-src-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nobs-src-score.is-faint {
+  opacity: 0.5;
+}
+.nobs-src-bar {
+  display: inline-block;
+  width: 48px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--nobs-border);
+  overflow: hidden;
+}
+.nobs-src-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--nobs-link);
+}
+.nobs-src-conf.is-insufficient {
+  color: var(--nobs-muted);
+}
+.nobs-src-topics {
+  color: var(--nobs-muted);
+  font-size: 0.85rem;
+}
+.nobs-src-detail {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+  background: var(--nobs-surface);
+}
+.nobs-src-meta {
+  color: var(--nobs-muted);
+}
+.nobs-src-counts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  font-size: 0.9rem;
+}
+.nobs-src-counts dt {
+  color: var(--nobs-muted);
+}
+.nobs-src-counts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-src-events li,
+.nobs-src-uses li {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.nobs-src-uses a {
+  color: var(--nobs-link);
+}
+.nobs-src-use-meta {
+  color: var(--nobs-muted);
+  font-size: 0.82rem;
+}
+.nobs-src-url {
+  display: block;
+  font-size: 0.8rem;
+}
+.nobs-src-flag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: var(--nobs-on-flag);
+  background: var(--nobs-neutral);
+}
+.nobs-src-flag.is-green {
+  background: var(--nobs-green);
+}
+.nobs-src-flag.is-yellow {
+  background: var(--nobs-yellow);
+}
+.nobs-src-flag.is-red {
+  background: var(--nobs-red);
+}
+.nobs-src-flag.is-white {
+  background: var(--nobs-white);
+}
+.nobs-src-topic-list {
+  columns: 2 220px;
+  font-size: 0.9rem;
+}
+@media (max-width: 640px) {
+  .nobs-src-counts {
+    grid-template-columns: 1fr;
+  }
+}

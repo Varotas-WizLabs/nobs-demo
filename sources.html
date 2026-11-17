@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script src="src/demoShim.js?v=206d8c0082"></script>
+
+    <!-- Theme before first paint (settings: dark / light / system). -->
+    <script>
+      try {
+        var nobsTheme = (JSON.parse(localStorage.getItem("nobs.settings") || "{}").theme) || "dark";
+        if (nobsTheme === "system") nobsTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = nobsTheme === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOBS — демо: индекс источников</title>
+    <link rel="stylesheet" href="styles.css?v=206d8c0082" />
+    <link rel="stylesheet" href="sources.css" />
+  </head>
+  <body class="nobs-cm-page nobs-src-page">
+    <header class="nobs-cm-header">
+      <a class="nobs-cm-back" href="index.html">← NOBS</a>
+      <h1>Индекс источников</h1>
+      <p class="nobs-cm-lead">
+        Все сайты, на которые опирались проверки: сколько раз использованы, в какой роли, как часто сказанное ими подтвердилось,
+        и оценка надёжности 0–100. Нажмите на источник, чтобы увидеть оценки по темам, использования и что меняло оценку.
+      </p>
+    </header>
+    <main id="sources"></main>
+    <script type="module">
+      import { applyTheme } from "./src/settings.js?v=206d8c0082";
+      import { mountSourcesPage } from "./src/sourcesPage.js?v=206d8c0082";
+      applyTheme(document);
+      mountSourcesPage(document.getElementById("sources"), { fetchImpl: fetch });
+    </script>
+  </body>
+</html>
