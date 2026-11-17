@@ -24,6 +24,8 @@
         .then((r) => r.json())
         .then((d) => json({ events: (d.events ?? []).filter((e) => e.id > after) }));
     }
+    if ((m = url.match(/^\/runs\/(\d+)\/captions$/))) return realFetch(`data/runs/${m[1]}.captions.json`);
+    if ((m = url.match(/^\/runs\/(\d+)\/scoops$/))) return realFetch(`data/runs/${m[1]}.scoops.json`);
     if ((m = url.match(/^\/runs\/(\d+)(?:\?.*)?$/))) return realFetch(`data/runs/${m[1]}.json`);
     if (url.startsWith("/")) return Promise.resolve(json({ detail: "not in the demo" }, 404));
     return realFetch(input, init);

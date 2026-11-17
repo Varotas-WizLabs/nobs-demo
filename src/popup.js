@@ -45,6 +45,8 @@ export function verdictKey(claim) {
 // attribution is wrong is a sourced but not conclusive misattribution
 // ("Likely misattributed").
 export function claimVerdictLabel(claim, lang = "en") {
+  // A claim about a discussed video: whether it renders that video right.
+  if (refVerdict(claim)) return t(`ref.verdict.${refVerdict(claim)}`, lang);
   if (!isQuote(claim)) return t(`verdict.${verdictKey(claim)}`, lang);
   if (claim.flag === "yellow" && claim.quote.attribution === "wrong") return t("quoteVerdict.misattributed", lang);
   return t(`quoteVerdict.${FLAGS.includes(claim.flag) ? claim.flag : "white"}`, lang);
@@ -86,6 +88,64 @@ export function isQuote(claim) {
 function quoteMark(claim, lang) {
   const author = String(claim.quote.author ?? "").trim();
   return `<p class="claim-quote-mark"><span class="claim-quote-glyph" aria-hidden="true">\u275D</span> ${escapeHtml(t("quote.label", lang))}${author ? `: ${escapeHtml(author)}` : ""}</p>`;
+}
+
+// A claim about a discussed video (nobs.refs): `claim.ref` with its kind,
+// verdict, the source's verbatim words and the link at that second.
+export function isRef(claim) {
+  return claim?.ref != null && Boolean(claim.ref.kind);
+}
+
+// A reference not found in the discussed video was checked as usual
+// (`detail.fallback: "web"`): its flag and label are the usual ones.
+export function refVerdict(claim) {
+  if (!isRef(claim) || !claim.ref.verdict || claim.ref.detail?.fallback === "web") return "";
+  return claim.ref.verdict;
+}
+
+function safeHttpUrl(url) {
+  return /^https:\/\/(www\.)?youtube\.com\//.test(String(url ?? "")) ? String(url) : "";
+}
+
+// The «В обсуждаемом видео» block: the source title, its verbatim words,
+// a link opening the source at that second (new tab), the source run's own
+// verdict on that place, and the critic / confidence notes.
+export function refBlockHtml(claim, lang = "en") {
+  if (!isRef(claim)) return "";
+  const ref = claim.ref;
+  const parts = [`<p class="claim-ref-heading">${escapeHtml(t("ref.heading", lang))}</p>`];
+  const kind = `${t(`ref.kind.${ref.kind}`, lang)}${ref.speaker ? ` · ${ref.speaker}` : ""}`;
+  parts.push(`<p class="claim-ref-kind">${escapeHtml(kind)}</p>`);
+  const title = String(ref.source_title ?? "").trim();
+  if (title) parts.push(`<p class="claim-ref-title">${escapeHtml(title)}</p>`);
+  if (ref.detail?.fallback === "web") parts.push(`<p class="claim-ref-probable">${escapeHtml(t("ref.checkedElsewhere", lang))}</p>`);
+  const words = String(ref.source_words ?? "").trim();
+  if (words) parts.push(`<blockquote class="claim-ref-words">${escapeHtml(words)}</blockquote>`);
+  const url = safeHttpUrl(ref.source_url);
+  if (url) {
+    const at = ref.source_start_sec != null ? ` ${formatTimecode(ref.source_start_sec)}` : "";
+    const label = ref.source_start_sec != null ? `${t("ref.open", lang)}${at}` : title || url;
+    parts.push(
+      `<p class="claim-ref-link"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></p>`
+    );
+  }
+  const source = ref.source_claim;
+  if (source && FLAGS.includes(source.flag)) {
+    const runLink = source.run_id != null
+      ? ` <a class="claim-ref-run" href="player.html?run_id=${encodeURIComponent(source.run_id)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("ref.sourceRun", lang))}</a>`
+      : "";
+    parts.push(
+      `<p class="claim-ref-source-verdict">${escapeHtml(t("ref.sourceVerdict", lang))}: <span class="claim-ref-chip" data-flag="${escapeHtml(source.flag)}">${escapeHtml(t(`verdict.${source.flag}`, lang))}</span>${runLink}</p>`
+    );
+  }
+  const critic = ref.detail?.critic_right;
+  if (ref.kind === "critique" && ["yes", "no", "partly"].includes(critic)) {
+    parts.push(`<p class="claim-ref-critic">${escapeHtml(t(`ref.critic.${critic}`, lang))}</p>`);
+  }
+  if (ref.detail?.source_confidence === "probable") {
+    parts.push(`<p class="claim-ref-probable">${escapeHtml(t("ref.probable", lang))}</p>`);
+  }
+  return `<section class="claim-ref" data-ref-kind="${escapeHtml(ref.kind)}">${parts.join("")}</section>`;
 }
 
 function labelled(label, value, lang) {
@@ -146,9 +206,11 @@ export function renderClaimPopup(claim, lang = "en") {
   // One disclaimer per popup: under the chips when there are any.
   const chipsHtml = renderTagChipsHtml(claim, lang);
   const reasonsHtml = renderVerdictReasonsHtml(claim, lang, { disclaimer: !chipsHtml });
+  const refHtml = refBlockHtml(claim, lang);
   const body = summary
     ? `
       <p class="claim-summary">${escapeHtml(summary)}</p>
+      ${refHtml}
       ${chipsHtml}
       <details class="claim-details">
         <summary>${escapeHtml(t("moreDetails", lang))}</summary>
@@ -159,6 +221,7 @@ export function renderClaimPopup(claim, lang = "en") {
         ${sourcesList}
       </details>`
     : `
+      ${refHtml}
       ${chipsHtml}
       ${reasonsHtml}
       ${quoteHtml}

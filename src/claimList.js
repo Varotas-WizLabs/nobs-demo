@@ -14,7 +14,7 @@
 // Built with DOM APIs and textContent only.
 
 import { formatTimecode } from "./claimSync.js";
-import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js";
 import { t } from "./i18n.js";
 import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js";
 
@@ -46,6 +46,9 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   const claims = [...(run.claims ?? [])].sort((a, b) => a.start_sec - b.start_sec);
   let filter = "all";
   let tagFilter = "all";
+  // "References to videos": only claims about a discussed video (a toggle,
+  // combined with the other filters; shown only when the run has any).
+  let refFilter = false;
 
   const section = el(doc, "section", "nobs-claims");
   section.lang = lang;
@@ -70,7 +73,9 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     chip.addEventListener("click", () => {
       // Clicking the selected chip again clears the filter.
       filter = value === filter && value !== "all" ? "all" : value;
-      for (const c of chips.children) c.setAttribute("aria-pressed", String(c.dataset.filter === filter));
+      for (const c of chips.children) {
+        if (c.dataset.filter !== undefined) c.setAttribute("aria-pressed", String(c.dataset.filter === filter));
+      }
       applyFilter();
     });
     return chip;
@@ -78,6 +83,19 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   chips.appendChild(chipFor("all", t("list.all", lang), claims.length));
   for (const flag of FLAG_ORDER) {
     if (counts[flag]) chips.appendChild(chipFor(flag, t(`verdict.${flag}`, lang), counts[flag]));
+  }
+  const refCount = claims.filter(isRef).length;
+  if (refCount) {
+    const refChip = el(doc, "button", "nobs-claims-chip nobs-ref-filter", `${t("ref.filter", lang)} ${refCount}`);
+    refChip.type = "button";
+    refChip.dataset.refFilter = "refs";
+    refChip.setAttribute("aria-pressed", "false");
+    refChip.addEventListener("click", () => {
+      refFilter = !refFilter;
+      refChip.setAttribute("aria-pressed", String(refFilter));
+      applyFilter();
+    });
+    chips.appendChild(refChip);
   }
   header.appendChild(chips);
 
@@ -175,7 +193,9 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     let shown = 0;
     for (const { claim, item } of rows) {
       const visible =
-        (filter === "all" || verdictKey(claim) === filter) && (tagFilter === "all" || claimHasTag(claim, tagFilter));
+        (filter === "all" || verdictKey(claim) === filter) &&
+        (tagFilter === "all" || claimHasTag(claim, tagFilter)) &&
+        (!refFilter || isRef(claim));
       item.hidden = !visible;
       if (visible) shown += 1;
     }
@@ -191,6 +211,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       claims: rows.filter(({ item }) => !item.hidden).map(({ claim }) => claim),
       flag: filter,
       tag: tagFilter,
+      ...(refCount ? { refs: refFilter } : {}),
     });
   }
 

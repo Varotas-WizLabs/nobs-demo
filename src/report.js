@@ -12,8 +12,9 @@
 
 import { formatTimecode } from "./claimSync.js";
 import { t } from "./i18n.js";
-import { claimVerdictLabel, isQuote, verdictKey } from "./popup.js";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js";
 import { isNote, isPossible, qualifierLine, segmentSource, tagLabel, visibleTags } from "./tags.js";
+import { formatScoopTotals, formatScore, rejectedSummary, scoopAnchors, shownScoops } from "./scoopList.js";
 
 const VERDICT_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 
@@ -42,6 +43,22 @@ const TEXT = {
     phrasing: "Как это сказано",
     reason: "Причина вердикта",
     at: "в",
+    refs: "Отсылки к видео",
+    inSource: "в обсуждаемом видео",
+    scoops: "Скупы",
+    scoopsTop: "Топ скупов",
+    scoopEvidence: "Доказательства",
+    scoopWhy: "Почему меняет понимание",
+    scoopPatterns: "Карта паттернов",
+    scoopLimits: "Ограничения анализа",
+    scoopLimitsText: [
+      "Работа идёт по автосубтитрам: отдельные слова могут быть распознаны неверно.",
+      "Анализируется только текст: интонация, мимика и видеоряд не учитываются.",
+      "Обсуждаемые видео сопоставляются по совпадению текста; источники могут быть неполными.",
+      "Выборки малы: при знаменателе меньше 10 проценты не приводятся.",
+      "Скуп — интерпретация, а не вердикт о людях и их намерениях.",
+    ],
+    scoopMeasured: "Замер генерации",
   },
   en: {
     heading: "Video analysis",
@@ -67,6 +84,22 @@ const TEXT = {
     phrasing: "How it's phrased",
     reason: "Reason for the verdict",
     at: "at",
+    refs: "References to videos",
+    inSource: "in the discussed video",
+    scoops: "Scoops",
+    scoopsTop: "Top scoops",
+    scoopEvidence: "Evidence",
+    scoopWhy: "Why it changes the reading",
+    scoopPatterns: "Pattern map",
+    scoopLimits: "Limits of the analysis",
+    scoopLimitsText: [
+      "Based on automatic captions: single words can be misheard.",
+      "Text only: tone, facial expression and the picture are not analysed.",
+      "Discussed videos are matched by shared text; sources can be incomplete.",
+      "Samples are small: no percentages below a denominator of 10.",
+      "A scoop is an interpretation, not a verdict about people or their intentions.",
+    ],
+    scoopMeasured: "Generation measured",
   },
 };
 
@@ -131,6 +164,24 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
     // «по данным SponsorBlock» / "also marked in SponsorBlock" ('' for ours alone).
     source: segmentSource(s, lang)?.note ?? "",
   }));
+  // Referenced videos: the discussed videos and the claims about them.
+  const referencedVideos = (run.referenced_videos ?? []).map((v) => ({
+    title: String(v.title ?? "").trim() || v.source_video_id,
+    url: `https://www.youtube.com/watch?v=${encodeURIComponent(v.source_video_id ?? "")}`,
+    confidence: t(`ref.confidence.${v.confidence}`, lang),
+    runId: v.source_run_id ?? null,
+  }));
+  const refs = claims.filter(isRef).map((claim) => ({
+    sec: claim.start_sec,
+    flag: claim.flag,
+    verdict: claimVerdictLabel(claim, lang),
+    kind: t(`ref.kind.${claim.ref.kind}`, lang),
+    text: claim.text ?? "",
+    source: String(claim.ref.source_title ?? "").trim() || claim.ref.source_video_id || "",
+    sourceSec: claim.ref.source_start_sec ?? null,
+    sourceUrl: /^https:\/\/(www\.)?youtube\.com\//.test(String(claim.ref.source_url ?? "")) ? claim.ref.source_url : "",
+    words: String(claim.ref.source_words ?? "").trim(),
+  }));
   // A whole-video SponsorBlock label (sponsored / exclusive access).
   const sponsorBlockVideo = run.sponsorblock_note ? t("tags.sponsorBlockVideo", lang) : "";
 
@@ -185,9 +236,64 @@ export function buildReport(run, { title = "", now = new Date() } = {}) {
     offFlag,
     ads,
     sponsorBlockVideo,
+    referencedVideos,
+    refs,
     items,
     tagDisclaimer: t("tags.disclaimer", lang),
+    scoops: buildScoops(run, lang),
     run,
+  };
+}
+
+/** The scoops section (null when the run has no scoop generation loaded). */
+function buildScoops(run, lang) {
+  const response = run.scoops;
+  if (!response?.scoop_run || response.scoop_run.status !== "complete") return null;
+  const anchorOf = (a) => ({
+    sec: a.start_sec,
+    quote: String(a.quote ?? "").trim(),
+    source: a.video === "source",
+    url: a.video === "source" ? (/^https:\/\/(www\.)?youtube\.com\//.test(String(a.watch_url ?? "")) ? a.watch_url : "") : videoUrl(run, a.start_sec),
+  });
+  const card = (s) => ({
+    title: s.title ?? "",
+    scoop: s.scoop ?? "",
+    anchors: scoopAnchors(s).map(anchorOf),
+    before: s.reframe?.before ?? "",
+    after: s.reframe?.after ?? "",
+    confidence: s.confidence?.level ? t(`scoop.confidence.${s.confidence.level}`, lang) : "",
+    confidenceRule: s.confidence?.rule ?? "",
+    scores: s.scores
+      ? `${t("scoop.axis.sharp", lang)} ${formatScore(s.scores.sharp, lang)} · ${t("scoop.axis.interesting", lang)} ${formatScore(s.scores.interesting, lang)} · ${t("scoop.axis.nonobvious", lang)} ${formatScore(s.scores.nonobvious, lang)} · ${t("scoop.total", lang)} ${formatScore(s.scores.total_0_100, lang, 0)}/100`
+      : "",
+    status: s.status ? t(`scoop.status.${s.status}`, lang) : "",
+    directions: s.directions ?? [],
+  });
+  const shown = shownScoops(response);
+  const metrics = [];
+  const seen = new Set();
+  for (const s of shown) {
+    for (const m of s.stats_resolved ?? []) {
+      if (seen.has(m.id)) continue;
+      seen.add(m.id);
+      metrics.push({ unit: m.unit ?? "", count: m.count_text || `${m.numerator} / ${m.denominator}`, method: m.method ?? "", limits: (m.limitations ?? []).join("; ") });
+    }
+  }
+  const aap = [];
+  for (const key of ["audience", "agenda", "persona"]) {
+    for (const e of response.aap_map?.[key] ?? []) {
+      const text = key === "audience" ? e.text : key === "agenda" ? [e.observed_direction, e.inferred].filter(Boolean).join(" ") : e.role;
+      if (text) aap.push({ kind: t(`scoop.aap.${key}`, lang), text, alternative: e.alternative ?? "" });
+    }
+  }
+  return {
+    shown: shown.map(card),
+    none: shown.length ? "" : t("scoop.none", lang),
+    noneWhy: shown.length ? "" : rejectedSummary(response.scoop_run.summary, lang),
+    hypotheses: (response.hypotheses ?? []).map(card),
+    metrics,
+    aap,
+    measured: formatScoopTotals(response, lang),
   };
 }
 
@@ -218,6 +324,49 @@ export function reportMarkdown(run, options = {}) {
   for (const c of r.counts) out.push(`- ${c.label}: ${c.count}`);
   out.push("", `> ${w.disclaimerFacts}`, ">", `> ${r.tagDisclaimer}`, "");
 
+  if (r.scoops) {
+    const sc = r.scoops;
+    const anchorMd = (a) => {
+      const time = a.url ? `[${formatTimecode(a.sec)}](${a.url})` : formatTimecode(a.sec);
+      return `${time} «${mdEscape(a.quote)}»${a.source ? ` (${w.inSource})` : ""}`;
+    };
+    out.push(`## ${w.scoops}`, "", `> ${t("scoop.disclaimer", r.lang)}`, "");
+    if (sc.shown.length) {
+      out.push(`### ${w.scoopsTop}`, "");
+      for (const s of sc.shown) {
+        out.push(`#### ${mdEscape(s.title)}`, "", mdEscape(s.scoop), "");
+        if (s.anchors.length) out.push(`**${w.scoopEvidence}:** ${s.anchors.map(anchorMd).join("; ")}`, "");
+        if (s.before || s.after) out.push(`**${w.scoopWhy}:** ${t("scoop.before", r.lang)}: ${mdEscape(s.before)} / ${t("scoop.after", r.lang)}: ${mdEscape(s.after)}`, "");
+        if (s.confidence) out.push(`**${t("scoop.confidence", r.lang)}:** ${s.confidence}${s.confidenceRule ? ` — ${mdEscape(s.confidenceRule)}` : ""}${s.status ? ` · ${s.status}` : ""}`, "");
+        if (s.scores) out.push(s.scores, "");
+      }
+    } else {
+      out.push(`*${sc.none}*`, "");
+      if (sc.noneWhy) out.push(mdEscape(sc.noneWhy), "");
+    }
+    if (sc.metrics.length) {
+      out.push(`### ${w.scoopPatterns}`, "");
+      for (const m of sc.metrics) out.push(`- **${m.count}** — ${mdEscape(m.unit)}${m.method ? `. ${t("scoop.method", r.lang)}: ${mdEscape(m.method)}` : ""}${m.limits ? `. ${t("scoop.limits", r.lang)}: ${mdEscape(m.limits)}` : ""}`);
+      out.push("");
+    }
+    if (sc.aap.length && (sc.shown.length || sc.hypotheses.length)) {
+      out.push(`### ${t("scoop.aap", r.lang)}`, "", `*${t("scoop.aapNote", r.lang)}*`, "");
+      for (const a of sc.aap) out.push(`- **${a.kind}:** ${mdEscape(a.text)}${a.alternative ? ` *${t("scoop.alternative", r.lang)}: ${mdEscape(a.alternative)}*` : ""}`);
+      out.push("");
+    }
+    if (sc.hypotheses.length) {
+      out.push(`### ${t("scoop.hypotheses", r.lang)}`, "");
+      for (const h of sc.hypotheses) {
+        out.push(`- **${mdEscape(h.title)}** — ${mdEscape(h.scoop)}${h.directions.length ? ` ${t("scoop.directions", r.lang)}: ${h.directions.map(mdEscape).join("; ")}` : ""}`);
+      }
+      out.push("");
+    }
+    out.push(`### ${w.scoopLimits}`, "");
+    for (const line of w.scoopLimitsText) out.push(`- ${line}`);
+    out.push("");
+    if (sc.measured) out.push(`*${w.scoopMeasured}: ${sc.measured}*`, "");
+  }
+
   if (r.observations.length || r.offFlag.length || r.ads.length || r.sponsorBlockVideo) {
     out.push(`## ${w.observations}`, "");
     for (const o of r.observations) {
@@ -239,6 +388,20 @@ export function reportMarkdown(run, options = {}) {
       }
       out.push("");
     }
+  }
+
+  if (r.referencedVideos.length || r.refs.length) {
+    out.push(`## ${w.refs}`, "");
+    out.push(`**${t("ref.videos", r.lang)}:**`);
+    for (const v of r.referencedVideos) out.push(`- [${mdEscape(v.title)}](${v.url}) — ${mdEscape(v.confidence)}`);
+    out.push("");
+    for (const x of r.refs) {
+      out.push(`- ${mdTime(r, x.sec)} **${mdEscape(x.verdict)}** (${mdEscape(x.kind)}): «${mdEscape(x.text)}»`);
+      if (x.sourceUrl) {
+        out.push(`  - ${w.inSource} [${mdEscape(x.source)}${x.sourceSec != null ? ` ${formatTimecode(x.sourceSec)}` : ""}](${x.sourceUrl})${x.words ? `: «${mdEscape(x.words)}»` : ""}`);
+      }
+    }
+    out.push("");
   }
 
   out.push(`## ${w.list}`, "");
@@ -319,6 +482,8 @@ const PRINT_CSS = `
   .possible { color: #777; }
   .opinion-note { color: #666; }
   .qualifier { color: #555; font-style: italic; }
+  .scoop { break-inside: avoid; border-left: 3px solid #4f4bd6; padding: 4pt 0 4pt 8pt; margin: 6pt 0; }
+  .scores { color: #333; font-variant-numeric: tabular-nums; }
 `;
 
 export function reportHtml(run, options = {}) {
@@ -331,6 +496,39 @@ export function reportHtml(run, options = {}) {
   parts.push(`<p>${r.total} ${esc(w.claims)}${r.quotes ? ` · ${r.quotes} ${esc(w.quotes)}` : ""}${r.tagged ? ` · ${r.tagged} ${esc(w.tagged)}` : ""}</p>`);
   parts.push(`<ul class="counts">${r.counts.map((c) => `<li>${esc(c.label)}: ${c.count}</li>`).join("")}</ul>`);
   parts.push(`<p class="note">${esc(w.disclaimerFacts)}<br>${esc(r.tagDisclaimer)}</p>`);
+
+  if (r.scoops) {
+    const sc = r.scoops;
+    const anchorHtml = (a) =>
+      `${a.url ? `<a class="tc" href="${esc(safeUrl(a.url))}">${formatTimecode(a.sec)}</a>` : formatTimecode(a.sec)} «${esc(a.quote)}»${a.source ? ` <span class="qualifier">(${esc(w.inSource)})</span>` : ""}`;
+    parts.push(`<h2>${esc(w.scoops)}</h2><p class="note">${esc(t("scoop.disclaimer", r.lang))}</p>`);
+    if (sc.shown.length) {
+      parts.push(`<h3>${esc(w.scoopsTop)}</h3>`);
+      for (const s of sc.shown) {
+        parts.push(`<section class="scoop">
+      <p class="text">${esc(s.title)}</p>
+      <p>${esc(s.scoop)}</p>
+      ${s.anchors.length ? `<p class="label">${esc(w.scoopEvidence)}:</p><ul>${s.anchors.map((a) => `<li>${anchorHtml(a)}</li>`).join("")}</ul>` : ""}
+      ${s.before || s.after ? `<p><span class="label">${esc(w.scoopWhy)}:</span> ${esc(t("scoop.before", r.lang))}: ${esc(s.before)} / ${esc(t("scoop.after", r.lang))}: ${esc(s.after)}</p>` : ""}
+      ${s.confidence ? `<p><span class="label">${esc(t("scoop.confidence", r.lang))}:</span> ${esc(s.confidence)}${s.confidenceRule ? ` — ${esc(s.confidenceRule)}` : ""}${s.status ? ` · ${esc(s.status)}` : ""}</p>` : ""}
+      ${s.scores ? `<p class="scores">${esc(s.scores)}</p>` : ""}
+    </section>`);
+      }
+    } else {
+      parts.push(`<p><em>${esc(sc.none)}</em></p>${sc.noneWhy ? `<p class="note">${esc(sc.noneWhy)}</p>` : ""}`);
+    }
+    if (sc.metrics.length) {
+      parts.push(`<h3>${esc(w.scoopPatterns)}</h3><ul>${sc.metrics.map((m) => `<li><span class="label">${esc(m.count)}</span> — ${esc(m.unit)}${m.method ? `. ${esc(t("scoop.method", r.lang))}: ${esc(m.method)}` : ""}${m.limits ? `. ${esc(t("scoop.limits", r.lang))}: ${esc(m.limits)}` : ""}</li>`).join("")}</ul>`);
+    }
+    if (sc.aap.length && (sc.shown.length || sc.hypotheses.length)) {
+      parts.push(`<h3>${esc(t("scoop.aap", r.lang))}</h3><p class="note">${esc(t("scoop.aapNote", r.lang))}</p><ul>${sc.aap.map((a) => `<li><span class="label">${esc(a.kind)}:</span> ${esc(a.text)}${a.alternative ? ` <span class="qualifier">${esc(t("scoop.alternative", r.lang))}: ${esc(a.alternative)}</span>` : ""}</li>`).join("")}</ul>`);
+    }
+    if (sc.hypotheses.length) {
+      parts.push(`<h3>${esc(t("scoop.hypotheses", r.lang))}</h3><ul>${sc.hypotheses.map((h) => `<li><span class="label">${esc(h.title)}</span> — ${esc(h.scoop)}${h.directions.length ? ` <span class="qualifier">${esc(t("scoop.directions", r.lang))}: ${h.directions.map(esc).join("; ")}</span>` : ""}</li>`).join("")}</ul>`);
+    }
+    parts.push(`<h3>${esc(w.scoopLimits)}</h3><ul>${w.scoopLimitsText.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>`);
+    if (sc.measured) parts.push(`<p class="note">${esc(w.scoopMeasured)}: ${esc(sc.measured)}</p>`);
+  }
 
   if (r.observations.length || r.offFlag.length || r.ads.length || r.sponsorBlockVideo) {
     parts.push(`<h2>${esc(w.observations)}</h2>`);
@@ -345,6 +543,12 @@ export function reportHtml(run, options = {}) {
     if (r.ads.length || r.sponsorBlockVideo) {
       parts.push(`<h3>${esc(w.ads)}</h3>${r.sponsorBlockVideo ? `<p class="note">${esc(r.sponsorBlockVideo)}</p>` : ""}<ul>${r.ads.map((a) => `<li>${htmlTime(r, a.start)}–${formatTimecode(a.end)} ${esc(a.name)}${a.spans.length ? `: «${a.spans.map(esc).join("» … «")}»` : ""}${a.source ? ` <span class="qualifier">(${esc(a.source)})</span>` : ""}</li>`).join("")}</ul>`);
     }
+  }
+
+  if (r.referencedVideos.length || r.refs.length) {
+    parts.push(`<h2>${esc(w.refs)}</h2>`);
+    parts.push(`<p class="label">${esc(t("ref.videos", r.lang))}:</p><ul>${r.referencedVideos.map((v) => `<li><a href="${esc(v.url)}">${esc(v.title)}</a> — ${esc(v.confidence)}</li>`).join("")}</ul>`);
+    parts.push(`<ul class="refs">${r.refs.map((x) => `<li><span class="dot" data-flag="${esc(x.flag)}"></span> ${htmlTime(r, x.sec)} <span class="verdict">${esc(x.verdict)}</span> (${esc(x.kind)}): «${esc(x.text)}»${x.sourceUrl ? `<br>${esc(w.inSource)} <a href="${esc(x.sourceUrl)}">${esc(x.source)}${x.sourceSec != null ? ` ${formatTimecode(x.sourceSec)}` : ""}</a>${x.words ? `: <blockquote>${esc(x.words)}</blockquote>` : ""}` : ""}</li>`).join("")}</ul>`);
   }
 
   parts.push(`<h2>${esc(w.list)}</h2>`);
@@ -387,6 +591,44 @@ export function downloadMarkdown(run, { title = "", doc = document } = {}) {
   const link = doc.createElement("a");
   link.href = url;
   link.download = `${fileStem(run, title)}.md`;
+  doc.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * The original transcript as plain text: a short header, then one caption
+ * cue per line as "[m:ss] text"; a speaker change (YouTube's ">>") starts a
+ * new paragraph marked ">>".
+ */
+export function transcriptText(run, cues, { title = "" } = {}) {
+  const head = [];
+  if (title) head.push(title);
+  if (run.video_id) head.push(`https://www.youtube.com/watch?v=${run.video_id}`);
+  const lines = [];
+  for (const cue of cues ?? []) {
+    const text = String(cue.text ?? "").replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    if (cue.voice_change && lines.length) lines.push("");
+    lines.push(`[${formatTimecode(cue.start_sec)}] ${cue.voice_change ? ">> " : ""}${text}`);
+  }
+  return `${head.length ? `${head.join("\n")}\n\n` : ""}${lines.join("\n")}\n`;
+}
+
+/** Fetch the run's caption cues and download them as a .txt file. */
+export async function downloadTranscript(run, { title = "", doc = document, fetchImpl = fetch } = {}) {
+  const response = await fetchImpl(`/runs/${run.run_id}/captions`);
+  if (!response.ok) throw new Error(`captions: HTTP ${response.status}`);
+  const { cues } = await response.json();
+  saveBlob(doc, new Blob([transcriptText(run, cues, { title })], { type: "text/plain;charset=utf-8" }), `${fileStem(run, title)} - transcript.txt`);
+}
+
+function saveBlob(doc, blob, name) {
+  const url = URL.createObjectURL(blob);
+  const link = doc.createElement("a");
+  link.href = url;
+  link.download = name;
   doc.body.appendChild(link);
   link.click();
   link.remove();

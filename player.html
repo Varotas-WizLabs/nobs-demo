@@ -51,10 +51,19 @@
     </main>
     <!-- Claim list (src/claimList.js) in a collapsible right-hand panel:
          outside #player-container, so it is hidden in fullscreen; click a row
-         to jump there and play. -->
+         to jump there and play. A second tab, «Скупы» (src/scoopList.js),
+         appears when the run has a scoop generation. -->
     <aside id="claims-panel" class="nobs-claims-panel" aria-label="Claims">
-      <div class="nobs-claims-panel-bar"></div>
-      <div id="claim-list"></div>
+      <div class="nobs-claims-panel-bar">
+        <div class="nobs-panel-tabs" role="tablist" hidden>
+          <button type="button" class="nobs-panel-tab" role="tab" id="tab-claims" data-tab="claims" aria-controls="claim-list" aria-selected="true"></button>
+          <button type="button" class="nobs-panel-tab" role="tab" id="tab-scoops" data-tab="scoops" aria-controls="scoop-list" aria-selected="false" tabindex="-1"></button>
+        </div>
+      </div>
+      <div id="claims-panel-content">
+        <div id="claim-list" role="tabpanel" aria-labelledby="tab-claims"></div>
+        <div id="scoop-list" role="tabpanel" aria-labelledby="tab-scoops" hidden></div>
+      </div>
     </aside>
     </div>
 
@@ -64,10 +73,12 @@
       import { bootstrapPlayerPage } from "./src/main.js";
       import { startProcessingLog } from "./src/processingLog.js";
       import { startLibrary } from "./src/library.js";
+      import { buildShareControl, isSolo } from "./src/share.js";
       import { renderClaimList } from "./src/claimList.js";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js";
       import { filterTimelineItems, timelineItems } from "./src/tags.js";
       import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js";
-      import { downloadMarkdown, printReport } from "./src/report.js";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js";
       import { t } from "./src/i18n.js";
       import { applyTheme, followPlayback, onSettingsChange, seekTarget, showTagFilter, youtubeCaptions } from "./src/settings.js";
       applyTheme(document);
@@ -75,7 +86,7 @@
       {
         const panel = document.getElementById("claims-panel");
         const toggle = makePanelToggle(panel, {
-          contentId: "claim-list",
+          contentId: "claims-panel-content",
           makeIcon: listIcon,
           showLabel: "Show claims",
           hideLabel: "Hide claims",
@@ -119,11 +130,16 @@
             entry.dataset.export = kind;
             entry.addEventListener("click", () => {
               closeMenu();
-              if (exportRun) action(exportRun, { title: videoTitle() });
+              // The scoops section of the write-up comes from the loaded tab.
+              if (exportRun) action(scoopsResponse ? { ...exportRun, scoops: scoopsResponse } : exportRun, { title: videoTitle() });
             });
             return entry;
           };
-          menu.append(item("pdf", printReport), item("md", downloadMarkdown));
+          menu.append(
+            item("pdf", printReport),
+            item("md", downloadMarkdown),
+            item("txt", (run, opts) => downloadTranscript(run, opts).catch((err) => console.error("transcript download failed", err)))
+          );
           const closeMenu = () => {
             menu.hidden = true;
             button.setAttribute("aria-expanded", "false");
@@ -142,17 +158,33 @@
           wrap.append(button, menu);
           bar.insertBefore(wrap, bar.firstChild);
         }
+        // Share: the public single-video link, next to download.
+        bar.querySelector(".nobs-share")?.remove();
+        wrap.after(
+          buildShareControl(document, {
+            getRunId: () => exportRun.run_id,
+            lang,
+            demo: document.documentElement.dataset.demo === "1",
+          })
+        );
         const button = wrap.querySelector(".nobs-export-button");
         button.title = t("export.button", lang);
         button.setAttribute("aria-label", button.title);
         wrap.querySelector('[data-export="pdf"]').textContent = t("export.pdf", lang);
         wrap.querySelector('[data-export="md"]').textContent = t("export.md", lang);
+        wrap.querySelector('[data-export="txt"]').textContent = t("export.txt", lang);
       }
 
       const params = new URLSearchParams(window.location.search);
       const runId = params.get("run_id");
 
-      startLibrary({ root: document.getElementById("library"), fetchImpl: fetch, currentRunId: runId });
+      // `?solo=1` (a shared link): only this video, no library of others.
+      if (isSolo(window.location.search)) {
+        document.documentElement.dataset.solo = "1";
+        document.getElementById("library").hidden = true;
+      } else {
+        startLibrary({ root: document.getElementById("library"), fetchImpl: fetch, currentRunId: runId });
+      }
 
       // Started at once, independently of the YouTube player: the log and
       // status show even while the video loads (or if it fails to).
@@ -163,6 +195,127 @@
           pollIntervalMs: 1500,
           root: document.getElementById("processing-log"),
         });
+      }
+
+      // ---- Right panel tabs: claims / scoops ----
+      const TAB_KEY = "nobs.panelTab";
+      const tabs = document.querySelector(".nobs-panel-tabs");
+      const panes = { claims: document.getElementById("claim-list"), scoops: document.getElementById("scoop-list") };
+      let scoopsResponse = null;
+      let scoopsKey = null;
+      let scoopView = null;
+      let scoopPoll = null;
+      function savedTab() {
+        try {
+          return localStorage.getItem(TAB_KEY) === "scoops" ? "scoops" : "claims";
+        } catch {
+          return "claims";
+        }
+      }
+      function selectTab(name) {
+        if (tabs.hidden) name = "claims";
+        for (const button of tabs.querySelectorAll("[role=tab]")) {
+          const on = button.dataset.tab === name;
+          button.setAttribute("aria-selected", String(on));
+          button.tabIndex = on ? 0 : -1;
+        }
+        for (const [key, pane] of Object.entries(panes)) pane.hidden = key !== name;
+      }
+      for (const button of tabs.querySelectorAll("[role=tab]")) {
+        button.addEventListener("click", () => {
+          selectTab(button.dataset.tab);
+          try {
+            localStorage.setItem(TAB_KEY, button.dataset.tab);
+          } catch {
+            // Storage blocked: the choice lasts for this page only.
+          }
+        });
+        button.addEventListener("keydown", (event) => {
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          const other = tabs.querySelector(`[role=tab]:not([data-tab="${button.dataset.tab}"])`);
+          other.click();
+          other.focus();
+        });
+      }
+      function labelTabs(lang, count) {
+        tabs.querySelector('[data-tab="claims"]').textContent = t("scoop.tabClaims", lang);
+        const scoopTab = tabs.querySelector('[data-tab="scoops"]');
+        scoopTab.textContent = t("scoop.tab", lang);
+        if (count) {
+          const badge = document.createElement("span");
+          badge.className = "nobs-panel-tab-count";
+          badge.textContent = String(count);
+          scoopTab.appendChild(badge);
+        }
+      }
+      function seekTo(sec) {
+        seekToAnchor(currentPlayer, sec);
+      }
+      function drawScoops(run, status) {
+        const lang = run.caption_language ?? "en";
+        const demo = document.documentElement.dataset.demo === "1";
+        scoopView = renderScoopList(panes.scoops, run, scoopsResponse, {
+          lang,
+          status,
+          onSeek: seekTo,
+          onSelectClaim: (claim) => seekTo(claim.start_sec),
+          onRegenerate: demo ? undefined : () => regenerateScoops(run),
+        });
+        labelTabs(lang, scoopsResponse?.scoop_run?.status === "complete" ? (scoopsResponse.scoops ?? []).length : 0);
+      }
+      async function loadScoops(run) {
+        const response = await fetch(`/runs/${run.run_id}/scoops`);
+        if (!response.ok) throw new Error(`scoops: HTTP ${response.status}`);
+        scoopsResponse = await response.json();
+        drawScoops(run);
+        if (scoopsResponse.active) pollScoops(run, scoopsResponse.active.id);
+      }
+      function pollScoops(run, scoopRunId) {
+        clearTimeout(scoopPoll);
+        scoopPoll = setTimeout(async () => {
+          try {
+            const status = await (await fetch(`/scoop-runs/${scoopRunId}/status`)).json();
+            if (status.status === "pending" || status.status === "running") {
+              drawScoops(run, status);
+              pollScoops(run, scoopRunId);
+            } else {
+              await loadScoops(run);
+            }
+          } catch (err) {
+            console.error("scoop status failed", err);
+            pollScoops(run, scoopRunId);
+          }
+        }, 3000);
+      }
+      async function regenerateScoops(run) {
+        try {
+          const response = await fetch(`/runs/${run.run_id}/scoops`, { method: "POST" });
+          if (!response.ok && response.status !== 409) throw new Error(`scoops: HTTP ${response.status}`);
+          await loadScoops(run);
+        } catch (err) {
+          console.error("scoop generation failed to start", err);
+        }
+      }
+      // The tab exists only when the run has a scoop generation (finished,
+      // running or failed); otherwise the panel shows the claims alone.
+      function setupScoops(run) {
+        const summary = run.scoops ?? null;
+        tabs.hidden = !summary;
+        if (!summary) {
+          scoopsResponse = null;
+          scoopView = null;
+          selectTab("claims");
+          return;
+        }
+        labelTabs(run.caption_language ?? "en", summary.shown ?? 0);
+        selectTab(savedTab());
+        const key = `${run.run_id}:${summary.scoop_run_id}:${summary.active_id}`;
+        if (key === scoopsKey) {
+          if (scoopsResponse) drawScoops(run);
+          return;
+        }
+        scoopsKey = key;
+        loadScoops(run).catch((err) => console.error("scoops failed to load", err));
       }
 
       let list = null;
@@ -200,8 +353,13 @@
             currentPlayer.playVideo();
           },
         });
+        setupScoops(run);
         if (highlightTimer === null) {
-          highlightTimer = setInterval(() => list && list.highlight(currentPlayer.getCurrentTime()), 500);
+          highlightTimer = setInterval(() => {
+            const now = currentPlayer.getCurrentTime();
+            if (list && !panes.claims.hidden) list.highlight(now);
+            if (scoopView && !panes.scoops.hidden) scoopView.highlight(now);
+          }, 500);
         }
       }
       let currentPlayer = null;
