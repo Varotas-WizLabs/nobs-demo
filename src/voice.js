@@ -113,20 +113,39 @@ export function speakAt(claim) {
   return Number.isFinite(end) && end > 0 ? end : Number(claim?.start_sec);
 }
 
-// A short "space bar pressed" click, synthesized with Web Audio (no asset):
-// a filtered noise burst with a fast decay plus a low thump. Played when the
-// narrator pauses the video and again before it resumes. Returns how long to
-// wait (ms) before going on; 0 when Web Audio is unavailable (no wait).
-export const CLICK_MS = 140;
+// The "space bar pressed" click played when the narrator pauses the video and
+// again before it resumes: a real recording (web/sounds/key-spacebar.wav, the
+// Android Open Source Project's KeypressSpacebar.wav, Apache 2.0; see
+// web/sounds/NOTICE.md), decoded once with Web Audio. Until it has loaded (or
+// if it cannot be), a synthesized click stands in. playKeyClick returns how
+// long to wait (ms) before going on; 0 when Web Audio is unavailable.
+export const CLICK_MS = 200;
+export const CLICK_URL = "sounds/key-spacebar.wav";
 let clickContext = null;
+let clickBuffer = null;
+let clickLoading = null;
+function loadClick(ctx) {
+  if (clickBuffer || clickLoading || typeof fetch !== "function") return;
+  clickLoading = fetch(CLICK_URL)
+    .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(`HTTP ${response.status}`))))
+    .then((bytes) => ctx.decodeAudioData(bytes))
+    .then((buffer) => {
+      clickBuffer = buffer;
+    })
+    .catch(() => {
+      // keep the synthesized click; try again on the next gesture
+      clickLoading = null;
+    });
+}
 // Create / resume the click's AudioContext inside a user gesture, so the
-// browser lets it sound later from a timer.
+// browser lets it sound later from a timer; also starts loading the sample.
 export function primeClick() {
   try {
     const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
     if (!Ctx) return;
     clickContext ??= new Ctx();
     if (clickContext.state === "suspended") clickContext.resume?.();
+    loadClick(clickContext);
   } catch {
     // no Web Audio: clicks are skipped
   }
@@ -138,6 +157,16 @@ export function playKeyClick(volume = 1) {
     clickContext ??= new Ctx();
     const ctx = clickContext;
     if (ctx.state === "suspended") ctx.resume?.();
+    if (clickBuffer) {
+      const source = ctx.createBufferSource();
+      source.buffer = clickBuffer;
+      const gain = ctx.createGain();
+      gain.gain.value = volume;
+      source.connect(gain).connect(ctx.destination);
+      source.start();
+      return CLICK_MS;
+    }
+    loadClick(ctx);
     const t0 = ctx.currentTime + 0.005;
     const length = Math.floor(ctx.sampleRate * 0.06);
     const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
