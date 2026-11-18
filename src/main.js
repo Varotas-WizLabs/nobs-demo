@@ -1,9 +1,9 @@
 // web/src/main.js
-import { withFrames } from "./frames.js?v=77c4f1eb55";
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=77c4f1eb55";
-import { wireFlagIconClick } from "./popup.js?v=77c4f1eb55";
-import { t } from "./i18n.js?v=77c4f1eb55";
-import { mergeDelta } from "./progress.js?v=77c4f1eb55";
+import { withFrames } from "./frames.js?v=9e27a1be87";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=9e27a1be87";
+import { wireFlagIconClick } from "./popup.js?v=9e27a1be87";
+import { t } from "./i18n.js?v=9e27a1be87";
+import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=9e27a1be87";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 
@@ -95,7 +95,9 @@ export function bootstrapPlayerPage({
     wireFlagIconClick(domRefs.flagIcon, domRefs.chainIcon, player, domRefs.popupContainer, currentOverlayState);
   }
 
-  function startFlagLoop(run) {
+  function startFlagLoop(loaded) {
+    // Each finding once (no superseded claim, no repeat merged into another).
+    const run = withVisibleClaims(loaded);
     latestRun = run;
     if (run.status === "failed" && run.error && domRefs.failedIndicator) {
       domRefs.failedIndicator.textContent = `${t("analysisFailed", run.caption_language)}: ${run.error}`;
@@ -124,10 +126,10 @@ export function bootstrapPlayerPage({
             pollTags();
             return;
           }
-          latestRun = run;
+          latestRun = withVisibleClaims(run);
           if (onRunUpdated) {
             try {
-              onRunUpdated(run);
+              onRunUpdated(latestRun);
             } catch (err) {
               console.error("onRunUpdated failed", err);
             }
@@ -220,7 +222,7 @@ export function bootstrapPlayerPage({
         if (stopped || finished) return;
         let changes;
         if (heldRev === null) {
-          const claims = [...(data.claims ?? [])].filter((c) => c.verify_state !== "superseded");
+          const claims = visibleClaims(data.claims ?? []);
           latestRun = { ...data, claims, rev: Number(data.rev) || 0 };
           changes = { first: true, added: claims, changed: [], revised: [], removed: [] };
         } else {

@@ -6,8 +6,8 @@
 // processing line «Проанализировано 7:40 / 41:20 · 23 утверждения · 5
 // проверяются». Pure functions; no DOM.
 
-import { formatTimecode } from "./claimSync.js?v=77c4f1eb55";
-import { t } from "./i18n.js?v=77c4f1eb55";
+import { formatTimecode } from "./claimSync.js?v=9e27a1be87";
+import { t } from "./i18n.js?v=9e27a1be87";
 
 const STATES = new Set(["pending", "checking", "done", "failed", "superseded"]);
 
@@ -28,6 +28,36 @@ export function isVerified(claim) {
   return claimState(claim) === "done";
 }
 
+/**
+ * A claim a viewer is never shown: superseded, or merged into another claim
+ * (`merged_into`: a «repeat» of a finding already listed). Owner 2026-11-18:
+ * «повторения той же находки несколько раз подряд» -- the same finding is
+ * shown, marked and read aloud once.
+ */
+export function isHiddenDuplicate(claim) {
+  return claimState(claim) === "superseded" || (claim?.merged_into !== undefined && claim?.merged_into !== null);
+}
+
+/**
+ * The claims a viewer sees, each finding once: hidden duplicates dropped
+ * (isHiddenDuplicate) and every id kept once (the last copy wins), in the
+ * input order. Every list, marker, overlay and narrator input passes here.
+ */
+export function visibleClaims(claims) {
+  const list = (claims ?? []).filter((claim) => claim && !isHiddenDuplicate(claim));
+  const last = new Map();
+  list.forEach((claim, i) => {
+    if (claim.id !== undefined && claim.id !== null) last.set(claim.id, i);
+  });
+  return list.filter((claim, i) => claim.id === undefined || claim.id === null || last.get(claim.id) === i);
+}
+
+/** `run` with its claims passed through visibleClaims (a new object). */
+export function withVisibleClaims(run) {
+  if (!run || !Array.isArray(run.claims)) return run;
+  return { ...run, claims: visibleClaims(run.claims) };
+}
+
 function byPlayback(a, b) {
   return a.start_sec - b.start_sec || a.end_sec - b.end_sec || (a.id ?? 0) - (b.id ?? 0);
 }
@@ -41,14 +71,15 @@ function byPlayback(a, b) {
  * with a new revision (revised_from_flag), `removed` the ids dropped.
  */
 export function mergeDelta(run, delta) {
-  const byId = new Map((run?.claims ?? []).map((c) => [c.id, c]));
+  const byId = new Map(visibleClaims(run?.claims ?? []).map((c) => [c.id, c]));
   const added = [];
   const changed = [];
   const revised = [];
   const removed = [];
   for (const claim of delta?.claims ?? []) {
     const before = byId.get(claim.id);
-    if (claimState(claim) === "superseded") {
+    // A superseded claim, or one merged into another (a repeat), leaves.
+    if (isHiddenDuplicate(claim)) {
       if (before) {
         byId.delete(claim.id);
         removed.push(claim.id);

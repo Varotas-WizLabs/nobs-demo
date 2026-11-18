@@ -81,7 +81,7 @@
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
 
-import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=77c4f1eb55";
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=9e27a1be87";
 
 export { RATE_BY_LEVEL, selectStops };
 
@@ -89,6 +89,17 @@ export const LEAD_SEC = 5;
 export const TICK_MS = 250;
 export const WAIT_MS = 8000;
 export const MAX_STEP_SEC = 2;
+// After its own rewind (finish: seekTo(pause point - voiceRewindSec)) the
+// YouTube player still reports the old time for a moment, then jumps back:
+// for OWN_SEEK_GRACE_MS a backward step of at most the rewind plus
+// OWN_SEEK_SLACK_SEC (the seek landing short, a few ticks of lag) is that
+// landing, not a seek: the flags just read stay read (owner 2026-11-18: the
+// same finding read twice, a second or more apart). A longer jump back, even
+// then, is the viewer's own seek. At any time a backward step of at most
+// BACK_JITTER_SEC (buffering) is jitter, not a seek.
+export const OWN_SEEK_GRACE_MS = 1500;
+export const OWN_SEEK_SLACK_SEC = 1;
+export const BACK_JITTER_SEC = 0.5;
 export const MIN_VOLUME = 30;
 export const MAX_TEXT_CHARS = 300;
 export const STORAGE_KEY = "nobs.voice";
@@ -470,6 +481,8 @@ export function createNarrator({
   // Claims already spoken in this pass over the video (cleared by a seek), so
   // a flag right at a tick boundary is never read twice.
   const fired = new Set();
+  // Until when a backward step is the narrator's own rewind landing late.
+  let ownSeekUntil = 0;
   // claim id -> {text, promise, url, failed}
   const cache = new Map();
 
@@ -799,14 +812,24 @@ export function createNarrator({
     const within = lead();
     for (const stop of stops) {
       const ahead = stop.at - time;
-      if (ahead > 0 && ahead <= within) fetchAudio(stop);
+      // A flag read in this pass is not synthesized again (after the rewind
+      // it is a second ahead: that work would delay the next flag).
+      if (ahead > 0 && ahead <= within && !fired.has(stop.key)) fetchAudio(stop);
     }
   }
 
   function prefetchNext(time) {
     if (textsPending()) return;
-    const next = stops.find((stop) => stop.at > time);
+    const next = stops.find((stop) => stop.at > time && !fired.has(stop.key));
     if (next) fetchAudio(next);
+  }
+
+  function rewindAmount() {
+    try {
+      return Math.max(0, Number(rewindSec()) || 0);
+    } catch {
+      return 0;
+    }
   }
 
   function dropEntry(key) {
@@ -873,16 +896,12 @@ export function createNarrator({
           // Resume a little before the pause point (setting voiceRewindSec),
           // so the phrase is not cut. prevTime follows the jump, so it is not
           // taken for a seek and the flag just read is not read again.
-          let back = 0;
-          try {
-            back = Math.max(0, Number(rewindSec()) || 0);
-          } catch {
-            back = 0;
-          }
+          const back = rewindAmount();
           if (back > 0) {
             const target = Math.max(0, (Number.isFinite(s.pausedVideoAt) ? s.pausedVideoAt : currentTime()) - back);
             player.seekTo?.(target, true);
             prevTime = target;
+            ownSeekUntil = now() + OWN_SEEK_GRACE_MS;
           }
           player.playVideo();
         } catch (err) {
@@ -1181,6 +1200,10 @@ export function createNarrator({
       return;
     }
     const step = time - prev;
+    // Our own rewind landing late, or a small backward jitter: not a seek;
+    // what was read stays read (prevTime follows the time).
+    const ownLanding = now() < ownSeekUntil && -step <= rewindAmount() + OWN_SEEK_SLACK_SEC;
+    if (step < 0 && (ownLanding || -step <= BACK_JITTER_SEC)) return;
     if (step < 0 || step > MAX_STEP_SEC) {
       // A seek: re-arm from the new position and get the next flag ready.
       fired.clear();
@@ -1238,12 +1261,16 @@ export function createNarrator({
      * run's claim still being checked (or whose check failed) has no verdict
      * to read and is skipped until it gets one. */
     setClaims(list) {
-      claims = [...(list ?? [])]
-        .filter(
-          (claim) =>
-            claim && claim.flag && (claim.verify_state ?? "done") === "done" && Number.isFinite(speakAt(claim))
-        )
-        .sort((a, b) => speakAt(a) - speakAt(b));
+      // Each finding once: never a repeat merged into another claim
+      // (merged_into), never the same id twice (owner 2026-11-18).
+      const byId = new Map();
+      for (const claim of list ?? []) {
+        if (!claim || !claim.flag || (claim.verify_state ?? "done") !== "done") continue;
+        if (claim.merged_into !== undefined && claim.merged_into !== null) continue;
+        if (!Number.isFinite(speakAt(claim))) continue;
+        byId.set(claim.id ?? Symbol("claim"), claim);
+      }
+      claims = [...byId.values()].sort((a, b) => speakAt(a) - speakAt(b));
       // A claim speaking right now stays queued; later ones follow the filter.
       rebuildStops();
     },
