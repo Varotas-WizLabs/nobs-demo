@@ -3456,6 +3456,59 @@ button.nobs-scoop-verdict:hover {
   min-height: 120px;
   font-size: 14px;
 }
+.nobs-codes-templates label,
+.nobs-codes-template-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--nobs-muted);
+}
+.nobs-codes-templates input,
+.nobs-codes-templates textarea,
+.nobs-codes-templates select,
+.nobs-codes-template-pick select {
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
+}
+.nobs-codes-templates textarea {
+  max-width: none;
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+}
+.nobs-codes select {
+  padding: 10px 12px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 15px;
+}
+.nobs-codes-template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nobs-codes-template-actions button.nobs-secondary {
+  margin-right: 0;
+}
+.nobs-codes-template-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--nobs-border);
+  border-radius: 10px;
+  background: var(--nobs-surface);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+}
 .nobs-codes-new code {
   font-size: 18px;
   font-weight: 700;
