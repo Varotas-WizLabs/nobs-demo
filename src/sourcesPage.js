@@ -7,7 +7,8 @@
 //
 // The score is shown for reading only: it never decides a verdict.
 
-import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=99de0217ce";
+import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=77c4f1eb55";
+import { renderTrustRow } from "./trustPage.js?v=77c4f1eb55";
 
 // The weight of a corroboration / contradiction by the evidence behind it
 // (claims about research only; backend nobs.sources.evidence).
@@ -329,6 +330,21 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   const doc = root.ownerDocument;
   const isDemo = demo ?? doc.documentElement?.dataset.demo === "1";
   let snapshot = null;
+  let trustSnapshot = null;
+  // The trust-connector signals of one domain (web/trust.html): live from
+  // /trust/signals, in the demo from data/trust.json. Optional.
+  const trustOf = async (domain) => {
+    if (isDemo) {
+      if (!trustSnapshot) {
+        const r = await fetchImpl("data/trust.json");
+        trustSnapshot = r.ok ? await r.json() : {};
+      }
+      return trustSnapshot.signals?.[domain] ?? null;
+    }
+    const r = await fetchImpl(`/trust/signals?domains=${encodeURIComponent(domain)}`);
+    if (!r.ok) return null;
+    return (await r.json())?.domains?.[domain] ?? null;
+  };
   const getJson = async (path) => {
     if (isDemo) {
       if (!snapshot) {
@@ -401,6 +417,12 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
       const view = renderDetail(doc, detail);
       detailWrap.append(view);
       view.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      try {
+        const row = renderTrustRow(doc, await trustOf(detail.source.domain));
+        if (row) view.querySelector(".nobs-src-meta")?.after(row);
+      } catch {
+        // the trust signals are optional
+      }
     } catch (err) {
       detailWrap.textContent = `Не удалось загрузить: ${err?.message ?? err}`;
     }

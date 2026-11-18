@@ -6,8 +6,10 @@
 // 1. The video id is read from the link; a video the site already has opens
 //    at once (its run list, GET /runs -- the demo shim answers it from
 //    data/runs.json), so nothing is queued and no use is spent.
-// 2. Otherwise POST {url, code} to the queue Worker (workers/nobs-queue),
-//    which files a request the owner's NOBS server picks up.
+// 2. Otherwise POST {url, code, mode} to the queue Worker (workers/nobs-queue),
+//    which files a request the owner's NOBS server picks up. `mode`: Light or
+//    Deep (src/effort.js); Deep on a video the site has only in Light is filed
+//    too (the deep upgrade), and the light version opens meanwhile.
 // 3. The page waits, polling GET /status every 10 s: queued, processing N %,
 //    done (then it waits until the published run's data is on the site --
 //    GitHub Pages caches ~10 min, so its URLs get a cache-busting query --
@@ -16,7 +18,7 @@
 // The invite code may come in the link's fragment (#code=…, never sent to a
 // server); it pre-fills the field and is remembered for this visitor.
 
-import { t } from "./i18n.js?v=99de0217ce";
+import { t } from "./i18n.js?v=77c4f1eb55";
 
 export const WORKER_URL = "https://nobs-queue.iopuki-6fa.workers.dev";
 export const POLL_MS = 10000;
@@ -54,9 +56,25 @@ export function codeFromHash(hash) {
 
 /** The newest complete run of a video in a GET /runs list, or null. */
 export function findExistingRun(runs, videoId) {
+  return findExistingEntry(runs, videoId)?.run_id ?? null;
+}
+
+/** The GET /runs entry of a video (its served run), or null. */
+export function findExistingEntry(runs, videoId) {
   const match = (runs ?? []).filter((r) => r.video_id === videoId);
   if (!match.length) return null;
-  return match.reduce((a, b) => (Number(b.run_id) > Number(a.run_id) ? b : a)).run_id;
+  return match.reduce((a, b) => (Number(b.run_id) > Number(a.run_id) ? b : a));
+}
+
+/**
+ * Whether a video already on the site opens at once for the chosen mode:
+ * yes, unless Deep was chosen and the site has only a light version with no
+ * deep pass under way (then the request is filed: the deep upgrade).
+ */
+export function opensExisting(entry, mode) {
+  if (!entry) return false;
+  if (mode !== "deep") return true;
+  return entry.effort === "deep" || Boolean(entry.upgrading);
 }
 
 export function withParam(url, name, value) {
@@ -133,6 +151,7 @@ export function mountRequestPage({
   now = () => Date.now(),
   workerUrl = WORKER_URL,
   lang = "ru",
+  getEffort = () => "light",
 } = {}) {
   const state = { pending: storageGet(storage, PENDING_KEY), last: null, timer: null, ticker: null };
 
@@ -246,13 +265,15 @@ export function mountRequestPage({
     }
     els.button.disabled = true;
     try {
-      // Already on the site: open it at once.
+      const mode = getEffort() === "deep" ? "deep" : "light";
+      // Already on the site: open it at once (Deep chosen and only a light
+      // version there: the request is filed -- the deep upgrade).
       try {
         const r = await fetchImpl("/runs");
         if (r.ok) {
-          const runId = findExistingRun((await r.json()).runs, videoId);
-          if (runId != null) {
-            navigate(`player.html?run_id=${runId}`);
+          const entry = findExistingEntry((await r.json()).runs, videoId);
+          if (opensExisting(entry, mode)) {
+            navigate(`player.html?run_id=${Number(entry.run_id)}`);
             return "existing";
           }
         }
@@ -270,7 +291,7 @@ export function mountRequestPage({
         response = await fetchImpl(`${workerUrl}/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}`, code }),
+          body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}`, code, mode }),
         });
         body = await response.json().catch(() => null);
       } catch {

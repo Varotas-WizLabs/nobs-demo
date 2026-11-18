@@ -36,10 +36,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=99de0217ce";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=99de0217ce";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=99de0217ce";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=99de0217ce";
+import { t } from "./i18n.js?v=77c4f1eb55";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=77c4f1eb55";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=77c4f1eb55";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=77c4f1eb55";
 
 const KEY = "nobs.settings";
 
@@ -171,6 +171,9 @@ export const COMMENTATORS_PAGE = "commentators.html";
 
 /** Link to the source reliability index page (web/sources.html). */
 export const SOURCES_PAGE = "sources.html";
+
+/** Link to the trust-signal connectors page (web/trust.html). */
+export const TRUST_PAGE = "trust.html";
 
 /** What the narrator reads: "casual" (default) or "normal". */
 export function voiceStyle() {
@@ -567,7 +570,13 @@ export function openSettingsDialog(doc, lang = "en") {
   sourcesLink.target = "_blank";
   sourcesLink.rel = "noopener";
   sourcesLink.textContent = t("settings.sourceIndex", lang);
-  personaField.append(personaPick, manage, sourcesLink);
+  const trustLink = doc.createElement("a");
+  trustLink.className = "nobs-settings-link";
+  trustLink.href = TRUST_PAGE;
+  trustLink.target = "_blank";
+  trustLink.rel = "noopener";
+  trustLink.textContent = t("settings.trustSignals", lang);
+  personaField.append(personaPick, manage, sourcesLink, trustLink);
   const showStyle = () => {
     voiceField.hidden = personaSelect.value !== DEFAULT_COMMENTATOR;
   };

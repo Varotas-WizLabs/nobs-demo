@@ -125,6 +125,9 @@
     }
     if ((m = url.match(/^\/runs\/(\d+)\/captions$/))) return dataFetch(`data/runs/${m[1]}.captions.json`);
     if ((m = url.match(/^\/runs\/(\d+)\/scoops$/))) return dataFetch(`data/runs/${m[1]}.scoops.json`);
+    // Effort modes: a run's effort and its video's served run (build_demo.py
+    // writes one for every exported run and for each run a deep one replaced).
+    if ((m = url.match(/^\/runs\/(\d+)\/served$/))) return dataFetch(`data/runs/${m[1]}.served.json`);
     // Video frames: observations and a small set of evidence thumbnails (data/frames/).
     if ((m = url.match(/^\/runs\/(\d+)\/frames$/))) return dataFetch(`data/runs/${m[1]}.frames.json`);
     if ((m = url.match(/^\/runs\/(\d+)(?:\?.*)?$/))) return dataFetch(`data/runs/${m[1]}.json`);

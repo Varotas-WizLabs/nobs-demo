@@ -9,9 +9,10 @@
 // toggle). The state lives on the root's data-collapsed, so it survives the
 // periodic re-render.
 
-import { formatCost, formatDuration } from "./runStats.js?v=99de0217ce";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=99de0217ce";
-import { buildSettingsButton } from "./settings.js?v=99de0217ce";
+import { formatCost, formatDuration } from "./runStats.js?v=77c4f1eb55";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=77c4f1eb55";
+import { buildSettingsButton } from "./settings.js?v=77c4f1eb55";
+import { buildEffortBadge } from "./effort.js?v=77c4f1eb55";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -60,6 +61,8 @@ function renderItem(doc, run, currentRunId) {
   const took = formatDuration(run.stats?.duration_sec);
   const cost = formatCost(run.stats?.cost_usd);
   meta.textContent = [`#${runId}`, when, `${run.claim_count ?? 0} claims`, took, cost].filter(Boolean).join(" · ");
+  // Effort mode (src/effort.js): Light / Deep / «Deep готовится…».
+  if (run.effort) meta.prepend(buildEffortBadge(doc, run.effort, { upgrading: Boolean(run.upgrading) }), " ");
   body.appendChild(meta);
 
   const flags = doc.createElement("div");

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script src="src/demoShim.js?v=77c4f1eb55"></script>
+
+    <!-- Theme before first paint (settings: dark / light / system). -->
+    <script>
+      try {
+        var nobsTheme = (JSON.parse(localStorage.getItem("nobs.settings") || "{}").theme) || "dark";
+        if (nobsTheme === "system") nobsTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = nobsTheme === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOBS — демо: сигналы доверия</title>
+    <link rel="stylesheet" href="styles.css?v=77c4f1eb55" />
+    <link rel="stylesheet" href="sources.css" />
+  </head>
+  <body class="nobs-cm-page nobs-src-page nobs-trust-page">
+    <header class="nobs-cm-header">
+      <a class="nobs-cm-back" href="index.html">← NOBS</a> · <a class="nobs-cm-back" href="sources.html">Индекс источников</a>
+      <h1>Сигналы доверия</h1>
+      <p class="nobs-cm-lead">
+        Полный список «коннекторов», с которыми мы сверяем источники: наши собственные проверки, бесплатные рейтинги и списки,
+        сервисы по ключу и платные. У каждого — чьё это суждение, лицензия и известные перекосы. Внешние сигналы показываются
+        рядом, но влияют на оценку только после того, как вы их включите, и только на исходную оценку (приор) источника.
+      </p>
+    </header>
+    <main id="trust"></main>
+    <script type="module">
+      import { applyTheme } from "./src/settings.js?v=77c4f1eb55";
+      import { mountTrustPage } from "./src/trustPage.js?v=77c4f1eb55";
+      applyTheme(document);
+      mountTrustPage(document.getElementById("trust"), { fetchImpl: fetch });
+    </script>
+  </body>
+</html>

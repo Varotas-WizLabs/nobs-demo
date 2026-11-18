@@ -207,3 +207,147 @@
   font-size: 0.88rem;
   font-style: italic;
 }
+
+/* web/trust.html — trust-signal connectors (src/trustPage.js). */
+.nobs-trust-rules {
+  margin: 0 0 12px;
+  padding-left: 28px;
+}
+.nobs-trust-rules li {
+  margin: 2px 0;
+}
+.nobs-trust-message:empty {
+  display: none;
+}
+.nobs-trust-message {
+  font-size: 0.9rem;
+  border-left: 3px solid var(--nobs-link);
+  padding-left: 10px;
+}
+.nobs-trust-group h3 {
+  margin: 20px 0 8px;
+}
+.nobs-trust-card {
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+  background: var(--nobs-surface);
+  padding: 12px 14px;
+  margin: 0 0 10px;
+}
+.nobs-trust-card.is-candidate,
+.nobs-trust-card.is-paid_not_subscribed {
+  opacity: 0.85;
+}
+.nobs-trust-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.nobs-trust-name {
+  font-weight: 600;
+  margin-right: 4px;
+}
+a.nobs-trust-name {
+  color: var(--nobs-link);
+}
+.nobs-trust-chip {
+  display: inline-block;
+  font-size: 0.78rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--nobs-border-strong);
+  color: var(--nobs-muted);
+  white-space: nowrap;
+}
+.nobs-trust-chip.is-active,
+.nobs-trust-chip.is-on {
+  color: var(--nobs-text);
+  border-color: var(--nobs-green);
+}
+.nobs-trust-chip.is-needs_key {
+  border-color: var(--nobs-yellow);
+  color: var(--nobs-text);
+}
+.nobs-trust-chip.is-disabled {
+  border-color: var(--nobs-red);
+}
+.nobs-trust-chip.is-faint {
+  border-style: dashed;
+}
+.nobs-trust-facts {
+  font-size: 0.85rem;
+}
+.nobs-trust-facts dd {
+  overflow-wrap: anywhere;
+}
+.nobs-trust-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+.nobs-trust-weight {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.nobs-trust-weight output {
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5em;
+}
+.nobs-trust-sync,
+.nobs-trust-lazy,
+.nobs-trust-lookup button[type="submit"] {
+  background: var(--nobs-raised);
+  color: var(--nobs-text);
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+.nobs-trust-sync:hover,
+.nobs-trust-lazy:hover {
+  background: var(--nobs-raised-hover);
+}
+.nobs-trust-lookup {
+  margin: 16px 0 8px;
+}
+.nobs-trust-table-wrap {
+  max-height: none;
+}
+.nobs-trust-table tr.is-empty td {
+  color: var(--nobs-muted);
+}
+.nobs-trust-table tr.is-outlier td {
+  background: color-mix(in srgb, var(--nobs-yellow) 14%, transparent);
+}
+.nobs-trust-disagree {
+  border-left: 3px solid var(--nobs-yellow);
+  padding-left: 10px;
+  font-weight: 600;
+}
+.nobs-trust-prior {
+  font-size: 0.88rem;
+  color: var(--nobs-muted);
+}
+.nobs-trust-row h3 a {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--nobs-link);
+}
+.nobs-trust-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+.nobs-trust-chips .nobs-trust-chip {
+  white-space: normal;
+}
