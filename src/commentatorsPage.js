@@ -37,9 +37,9 @@ import {
   levelForSpeed,
   rateFor,
   SPEED_STEP,
-} from "./commentators.js?v=4a6a7b52fe";
-import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=4a6a7b52fe";
-import { t } from "./i18n.js?v=4a6a7b52fe";
+} from "./commentators.js?v=f7e5408037";
+import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=f7e5408037";
+import { t } from "./i18n.js?v=f7e5408037";
 
 const FLAG_LABEL = { red: "🔴 красный (неверно)", yellow: "🟡 жёлтый (неточно)", green: "🟢 зелёный (верно)", white: "⚪ белый (не проверить)", scoop: "🕵️ скуп" };
 const KNOB_LABEL = {
@@ -620,9 +620,9 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=4a6a7b52fe");
-    const engines = await import("./voiceEngines.js?v=4a6a7b52fe");
-    const settings = await import("./settings.js?v=4a6a7b52fe");
+    const voice = await import("./voice.js?v=f7e5408037");
+    const engines = await import("./voiceEngines.js?v=f7e5408037");
+    const settings = await import("./settings.js?v=f7e5408037");
     const text = String(result?.text ?? "");
     if (!text) return;
     const flags = lang === "he"

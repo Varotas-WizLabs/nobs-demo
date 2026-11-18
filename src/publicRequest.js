@@ -18,33 +18,17 @@
 // The invite code may come in the link's fragment (#code=…, never sent to a
 // server); it pre-fills the field and is remembered for this visitor.
 
-import { t } from "./i18n.js?v=4a6a7b52fe";
+import { t } from "./i18n.js?v=f7e5408037";
+import { VIDEO_ID_RE, extractVideoId, youtubeVideoId } from "./youtubeId.js?v=f7e5408037";
 
 export const WORKER_URL = "https://nobs-queue.iopuki-6fa.workers.dev";
 export const POLL_MS = 10000;
 const PENDING_KEY = "nobs.queue.pending";
 const CODE_KEY = "nobs.queue.code";
-const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
-const YT_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be", "www.youtu.be"]);
-
-/** The 11-character YouTube id of a link, or null (same rules as the Worker). */
+/** The 11-character YouTube id of a link, or null (src/youtubeId.js: the
+ * shared rules of the backend and the queue Worker). */
 export function parseVideoId(url) {
-  if (typeof url !== "string") return null;
-  let parsed;
-  try {
-    parsed = new URL(url.trim());
-  } catch {
-    // A bare id is accepted too.
-    return VIDEO_ID.test(url.trim()) ? url.trim() : null;
-  }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
-  const host = parsed.hostname.toLowerCase();
-  if (!YT_HOSTS.has(host)) return null;
-  let id = null;
-  if (host.endsWith("youtu.be")) id = parsed.pathname.split("/")[1] ?? null;
-  else if (parsed.pathname === "/watch") id = parsed.searchParams.get("v");
-  else id = parsed.pathname.match(/^\/(?:shorts|embed|live|v)\/([^/?#]+)/)?.[1] ?? null;
-  return id && VIDEO_ID.test(id) ? id : null;
+  return extractVideoId(url);
 }
 
 /** The invite code in a location hash ("#code=NOBS-…"), or null. */
@@ -97,7 +81,7 @@ export function pickLang(loc) {
 
 /** The visitor-facing text of a Worker error code. */
 export function errorText(code, lang) {
-  const known = ["bad_url", "bad_code", "code_used_up", "rate_limited", "no_code", "network", "forbidden_origin"];
+  const known = ["bad_url", "clip", "bad_code", "code_used_up", "rate_limited", "no_code", "network", "forbidden_origin"];
   return t(`request.error.${known.includes(code) ? code : "other"}`, lang);
 }
 
@@ -258,10 +242,12 @@ export function mountRequestPage({
   async function submit() {
     showError("");
     const url = els.url.value.trim();
-    const videoId = parseVideoId(url);
+    const { id: videoId, reason } = youtubeVideoId(url);
     if (!videoId) {
-      showError(errorText("bad_url", lang));
-      return "bad_url";
+      // A clip id is not a video id (the queue cannot resolve clips).
+      const code = reason === "clip" ? "clip" : "bad_url";
+      showError(errorText(code, lang));
+      return code;
     }
     els.button.disabled = true;
     try {
@@ -338,7 +324,7 @@ export function renderRecent(root, runs, lang, limit = 12) {
     const a = doc.createElement("a");
     a.className = "nobs-request-recent-item";
     a.href = `player.html?run_id=${Number(run.run_id)}`;
-    if (VIDEO_ID.test(run.video_id ?? "")) {
+    if (VIDEO_ID_RE.test(run.video_id ?? "")) {
       const img = doc.createElement("img");
       img.src = `https://i.ytimg.com/vi/${run.video_id}/mqdefault.jpg`;
       img.alt = "";
