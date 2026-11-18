@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=9e27a1be87"></script>
+    <script src="src/demoShim.js?v=b1280f6b60"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -16,7 +16,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо: сигналы доверия</title>
-    <link rel="stylesheet" href="styles.css?v=9e27a1be87" />
+    <link rel="stylesheet" href="styles.css?v=b1280f6b60" />
     <link rel="stylesheet" href="sources.css" />
   </head>
   <body class="nobs-cm-page nobs-src-page nobs-trust-page">
@@ -31,8 +31,8 @@
     </header>
     <main id="trust"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=9e27a1be87";
-      import { mountTrustPage } from "./src/trustPage.js?v=9e27a1be87";
+      import { applyTheme } from "./src/settings.js?v=b1280f6b60";
+      import { mountTrustPage } from "./src/trustPage.js?v=b1280f6b60";
       applyTheme(document);
       mountTrustPage(document.getElementById("trust"), { fetchImpl: fetch });
     </script>

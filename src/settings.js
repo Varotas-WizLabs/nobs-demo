@@ -36,10 +36,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=9e27a1be87";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=9e27a1be87";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=9e27a1be87";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=9e27a1be87";
+import { t } from "./i18n.js?v=b1280f6b60";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=b1280f6b60";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=b1280f6b60";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=b1280f6b60";
 
 const KEY = "nobs.settings";
 
@@ -557,26 +557,10 @@ export function openSettingsDialog(doc, lang = "en") {
   }
   const chosenPersona = commentator();
   personaSelect.value = [...personaSelect.options].some((o) => o.value === chosenPersona) ? chosenPersona : DEFAULT_COMMENTATOR;
-  const manage = doc.createElement("a");
-  manage.className = "nobs-settings-link";
-  manage.href = COMMENTATORS_PAGE;
-  manage.target = "_blank";
-  manage.rel = "noopener";
-  manage.textContent = t("settings.manageCommentators", lang);
   personaPick.append(personaLabelEl, personaSelect);
-  const sourcesLink = doc.createElement("a");
-  sourcesLink.className = "nobs-settings-link";
-  sourcesLink.href = SOURCES_PAGE;
-  sourcesLink.target = "_blank";
-  sourcesLink.rel = "noopener";
-  sourcesLink.textContent = t("settings.sourceIndex", lang);
-  const trustLink = doc.createElement("a");
-  trustLink.className = "nobs-settings-link";
-  trustLink.href = TRUST_PAGE;
-  trustLink.target = "_blank";
-  trustLink.rel = "noopener";
-  trustLink.textContent = t("settings.trustSignals", lang);
-  personaField.append(personaPick, manage, sourcesLink, trustLink);
+  // Managing commentators, sources, trust signals and the queue is the
+  // operator's (the local admin page, «Админ» below), not the viewer's.
+  personaField.append(personaPick);
   const showStyle = () => {
     voiceField.hidden = personaSelect.value !== DEFAULT_COMMENTATOR;
   };
@@ -621,13 +605,33 @@ export function openSettingsDialog(doc, lang = "en") {
 
   const testField = voiceTestField(doc, lang);
 
-  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, personaField, voiceField, rewindField, ...engineFields, ...(testField ? [testField] : []), close);
+  const adminField = adminEntryField(doc);
+
+  dialog.append(title, themeField, field, flagsOnLine, possible, follow, tagRow, cc, personaField, voiceField, rewindField, ...engineFields, ...(testField ? [testField] : []), ...(adminField ? [adminField] : []), close);
   doc.body.appendChild(dialog);
-  // The public queue's server settings: only with the local backend.
-  mountQueueSettings(dialog, close, lang);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
   return dialog;
+}
+
+// The operator's page: registered only by a local-app module that the public
+// demo never ships, so this module holds no address of it. Without a
+// registration the dialog shows no such link.
+let adminEntry = null;
+export function setAdminEntry(href, label) {
+  adminEntry = typeof href === "string" && href ? { href, label: String(label || href) } : null;
+}
+
+function adminEntryField(doc) {
+  if (!adminEntry || doc.documentElement?.dataset.demo === "1") return null;
+  const box = doc.createElement("div");
+  box.className = "nobs-settings-field nobs-settings-admin";
+  const link = doc.createElement("a");
+  link.className = "nobs-settings-link nobs-settings-admin-link";
+  link.href = adminEntry.href;
+  link.textContent = adminEntry.label;
+  box.append(link);
+  return box;
 }
 
 // «Проверить голос»: the player registers a tester (setVoiceTester); the
@@ -677,7 +681,8 @@ function voiceTestField(doc, lang) {
 export const CODES_PAGE = "codes.html";
 
 /**
- * The local server's public request queue settings (GET/PUT /queue/config):
+ * The local server's public request queue settings (GET/PUT /queue/config),
+ * shown on the admin page (no longer in the viewer's settings dialog):
  * «Интервал синхронизации очереди, сек» (10..600), on/off, and a link to
  * the invite codes page. Added only when the backend answers -- never in
  * the public demo (no backend; its shim refuses the path).
