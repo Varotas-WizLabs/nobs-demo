@@ -7,7 +7,7 @@
 // is a lead, never evidence: the popup says so when the original was not
 // found. Frames never change a flag.
 
-import { formatTimecode } from "./claimSync.js?v=f7e5408037";
+import { formatTimecode } from "./claimSync.js?v=4d60deaed2";
 
 const LABELS = {
   ru: {

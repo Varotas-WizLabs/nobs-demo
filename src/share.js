@@ -9,7 +9,7 @@
 // whether this run is published there and says so if not yet. Inside the
 // demo itself the link is the current page's own address.
 
-import { t } from "./i18n.js?v=f7e5408037";
+import { t } from "./i18n.js?v=4d60deaed2";
 
 export const PUBLIC_PLAYER = "https://varotas-wizlabs.github.io/nobs-demo/player.html";
 
@@ -22,6 +22,33 @@ export function isSolo(search) {
 export function shareUrl(runId, { demoHref = null } = {}) {
   const base = demoHref ? demoHref.split(/[?#]/)[0] : PUBLIC_PLAYER;
   return `${base}?run_id=${encodeURIComponent(runId)}&solo=1`;
+}
+
+/**
+ * In watch mode (an Unlisted / Private analysis opened through watch.html:
+ * `?run_id=N&solo=1&watch=1`) the public link would not work: the run is not
+ * on the public site. The link to give is the watch.html address the viewer
+ * came from (the manifest's `back`: `watch.html?v=ID`, plus `&t=TOKEN` when it
+ * had one). Same origin and watch.html only; null otherwise.
+ */
+export function watchShareUrl(search, storage, origin) {
+  try {
+    const query = new URLSearchParams(search);
+    const runId = query.get("run_id");
+    if (query.get("watch") !== "1" || !/^\d{1,10}$/.test(runId ?? "")) return null;
+    const manifest = JSON.parse(storage?.getItem(`nobs.watch.${runId}`) || "null");
+    const back = new URL(String(manifest?.back ?? ""), origin);
+    if (back.origin !== origin || !/\/watch\.html$/.test(back.pathname)) return null;
+    const v = back.searchParams.get("v");
+    if (!/^[A-Za-z0-9_-]{11}$/.test(v ?? "")) return null;
+    const out = new URL(back.pathname, origin);
+    out.searchParams.set("v", v);
+    const token = back.searchParams.get("t");
+    if (/^[0-9a-f]{32}$/.test(token ?? "")) out.searchParams.set("t", token);
+    return out.toString();
+  } catch {
+    return null;
+  }
 }
 
 /** Whether the public demo has this run (its data file exists). null when it cannot tell. */
@@ -74,9 +101,11 @@ async function copyText(doc, input, text) {
 
 /**
  * The share control: a button and its popup. `getRunId()` gives the current
- * run; `demo` is true inside the public demo. Returns the wrapper element.
+ * run; `demo` is true inside the public demo; `watchUrl` (watch mode, see
+ * watchShareUrl) replaces the public link with the watch.html one. Returns
+ * the wrapper element.
  */
-export function buildShareControl(doc, { getRunId, lang = "en", demo = false, fetchImpl = fetch }) {
+export function buildShareControl(doc, { getRunId, lang = "en", demo = false, fetchImpl = fetch, watchUrl = null }) {
   const wrap = doc.createElement("div");
   wrap.className = "nobs-share";
   const button = doc.createElement("button");
@@ -91,18 +120,19 @@ export function buildShareControl(doc, { getRunId, lang = "en", demo = false, fe
   const pop = doc.createElement("div");
   pop.className = "nobs-share-pop";
   pop.setAttribute("role", "dialog");
-  pop.setAttribute("aria-label", t("share.title", lang));
+  const titleKey = watchUrl ? "share.watchTitle" : "share.title";
+  pop.setAttribute("aria-label", t(titleKey, lang));
   pop.hidden = true;
   const title = doc.createElement("p");
   title.className = "nobs-share-title";
-  title.textContent = t("share.title", lang);
+  title.textContent = t(titleKey, lang);
   const row = doc.createElement("div");
   row.className = "nobs-share-row";
   const input = doc.createElement("input");
   input.type = "text";
   input.readOnly = true;
   input.className = "nobs-share-url";
-  input.setAttribute("aria-label", t("share.title", lang));
+  input.setAttribute("aria-label", t(titleKey, lang));
   const copy = doc.createElement("button");
   copy.type = "button";
   copy.className = "nobs-share-copy";
@@ -119,14 +149,14 @@ export function buildShareControl(doc, { getRunId, lang = "en", demo = false, fe
   };
   const open = () => {
     const runId = getRunId();
-    input.value = shareUrl(runId, { demoHref: demo ? doc.defaultView.location.href : null });
+    input.value = watchUrl || shareUrl(runId, { demoHref: demo ? doc.defaultView.location.href : null });
     copy.textContent = t("share.copy", lang);
-    note.textContent = t("share.hint", lang);
+    note.textContent = t(watchUrl ? "share.watchHint" : "share.hint", lang);
     pop.hidden = false;
     button.setAttribute("aria-expanded", "true");
     input.focus();
     input.select();
-    if (!demo) {
+    if (!demo && !watchUrl) {
       isPublished(runId, fetchImpl).then((published) => {
         if (pop.hidden) return;
         if (published === false) note.textContent = t("share.notPublished", lang);

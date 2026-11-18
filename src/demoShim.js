@@ -33,9 +33,56 @@
   // ~10 min and its servers update one by one, so with `v` every data file
   // is asked for with that cache-busting query, and the run's own files
   // are retried for a while on a 404 (not every server has them yet).
-  const freshParam = new URLSearchParams(window.location.search).get("v");
+  // An Unlisted / Private analysis opened through watch.html (accounts, spec
+  // 2026-11-18-accounts §2a): player.html?run_id=N&solo=1&watch=1, with the
+  // manifest {run_id, files: {"N.json": <signed URL>, …}, expires_at, back}
+  // that watch.html put in sessionStorage. That run's data files come from
+  // the signed Storage URLs (never from data/: they are not on this site).
+  // An expired manifest, or a signed URL the bucket refuses, goes back to
+  // watch.html (it checks access again and signs anew) -- at most once a
+  // minute, so a refused link cannot loop.
+  const query = new URLSearchParams(window.location.search);
+  const watch = (() => {
+    const runId = query.get("run_id");
+    if (query.get("watch") !== "1" || !/^\d{1,10}$/.test(runId ?? "")) return null;
+    try {
+      const m = JSON.parse(window.sessionStorage.getItem(`nobs.watch.${runId}`) || "null");
+      return m && String(m.run_id) === runId && m.files && typeof m.files === "object" ? m : null;
+    } catch {
+      return null;
+    }
+  })();
+  function watchBack() {
+    const key = `nobs.watch.bounce.${watch.run_id}`;
+    try {
+      const last = Number(window.sessionStorage.getItem(key) || 0);
+      if (Date.now() - last < 60000) return;
+      window.sessionStorage.setItem(key, String(Date.now()));
+      const back = new URL(String(watch.back ?? ""), window.location.href);
+      if (back.origin === window.location.origin && /\/watch\.html$/.test(back.pathname)) window.location.replace(back.toString());
+    } catch {
+      // no way back: the page shows what it could load
+    }
+  }
+  function watchFetch(path) {
+    const name = path.slice("data/runs/".length);
+    const signed = Object.prototype.hasOwnProperty.call(watch.files, name) ? watch.files[name] : null;
+    if (typeof signed !== "string" || !/^https:\/\//.test(signed)) return Promise.resolve(json({ detail: "not in this analysis" }, 404));
+    const expires = Date.parse(watch.expires_at ?? "");
+    if (Number.isFinite(expires) && Date.now() >= expires) {
+      watchBack();
+      return Promise.resolve(json({ detail: "link expired" }, 404));
+    }
+    return realFetch(signed).then((r) => {
+      if (r.status === 400 || r.status === 401 || r.status === 403) watchBack();
+      return r;
+    });
+  }
+
+  const freshParam = watch ? null : query.get("v");
   const fresh = freshParam && /^\d{1,16}$/.test(freshParam) ? freshParam : null;
   function dataFetch(path, tries = fresh ? 8 : 1) {
+    if (watch && path.startsWith(`data/runs/${watch.run_id}.`)) return watchFetch(path);
     const url = fresh ? `${path}?v=${fresh}${tries < 8 ? `-${tries}` : ""}` : path;
     return realFetch(url).then((r) =>
       r.status === 404 && tries > 1 ? new Promise((ok) => setTimeout(ok, 4000)).then(() => dataFetch(path, tries - 1)) : r,

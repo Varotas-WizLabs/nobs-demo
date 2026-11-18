@@ -3399,6 +3399,182 @@ button.nobs-scoop-verdict:hover {
 .nobs-request-recent-item:hover span {
   text-decoration: underline;
 }
+
+/* ---- Accounts (account.html, watch.html; src/accountPage.js, src/watchPage.js) ---- */
+.nobs-account {
+  padding-bottom: 48px;
+}
+.nobs-account h1 {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+.nobs-account-card {
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--nobs-surface);
+  border: 1px solid var(--nobs-border);
+  min-width: 0;
+}
+.nobs-account-card .nobs-tagline {
+  margin-bottom: 14px;
+}
+.nobs-account-card .nobs-effort {
+  margin: 0;
+}
+.nobs-account button,
+.nobs-account .nobs-account-open {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--nobs-green);
+  color: var(--nobs-on-flag);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.nobs-account button.nobs-secondary {
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  border: 1px solid var(--nobs-border);
+  font-weight: 400;
+}
+.nobs-account button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.nobs-account-google {
+  margin-top: 14px;
+}
+.nobs-account-who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: var(--nobs-muted);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.nobs-account-balance {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.nobs-account-note,
+.nobs-account-sent {
+  display: block;
+  color: var(--nobs-muted);
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 6px 0 0;
+}
+.nobs-account-sent {
+  color: var(--nobs-text);
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.nobs-account-inline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nobs-account-inline input,
+.nobs-account-visibility-select {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+  background: var(--nobs-input-bg);
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 16px;
+}
+.nobs-account-visibility-select {
+  flex: 0 1 auto;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.nobs-account-result,
+.nobs-account-message {
+  margin: 10px 0 0;
+  overflow-wrap: anywhere;
+}
+.nobs-account-result[data-ok="0"] {
+  color: var(--nobs-red);
+}
+.nobs-account-offline {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--nobs-banner-bg);
+  color: var(--nobs-banner-text);
+}
+.nobs-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.nobs-account-videos {
+  display: grid;
+  gap: 12px;
+}
+.nobs-account-video {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.nobs-account-video img {
+  flex: 0 0 120px;
+  width: 120px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--nobs-bg);
+}
+.nobs-account-video-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.nobs-account-video-title {
+  overflow-wrap: anywhere;
+}
+.nobs-account-video-status {
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+.nobs-account-video .nobs-account-actions button,
+.nobs-account-video .nobs-account-open {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+@media (max-width: 480px) {
+  .nobs-account-video {
+    flex-direction: column;
+  }
+  .nobs-account-video img {
+    width: 100%;
+    flex-basis: auto;
+  }
+  .nobs-account button,
+  .nobs-account .nobs-account-open {
+    min-height: 44px;
+  }
+  /* iOS Safari zooms into any form field under 16px on focus */
+  .nobs-account-visibility-select {
+    font-size: 16px;
+  }
+}
 .nobs-library-request {
   color: var(--nobs-green);
   text-decoration: none;

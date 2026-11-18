@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script src="src/demoShim.js?v=4d60deaed2"></script>
+
+    <!-- Theme before first paint (settings: dark / light / system). -->
+    <script>
+      try {
+        var nobsTheme = (JSON.parse(localStorage.getItem("nobs.settings") || "{}").theme) || "dark";
+        if (nobsTheme === "system") nobsTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = nobsTheme === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <meta name="referrer" content="no-referrer" />
+    <title>душнила AI — разбор</title>
+    <link rel="stylesheet" href="styles.css?v=4d60deaed2" />
+    <script src="vendor/supabase.js"></script>
+  </head>
+  <body>
+    <header class="nobs-topbar">
+      <a class="nobs-logo" href="index.html" aria-label="душнила AI">
+        <span class="nobs-logo-word">душнила</span><span class="nobs-logo-ai">AI</span>
+      </a>
+    </header>
+    <main class="nobs-home nobs-request nobs-account">
+      <div id="watch-root" class="nobs-account-card" aria-live="polite"></div>
+    </main>
+
+    <script type="module">
+      import { t } from "./src/i18n.js?v=4d60deaed2";
+      import { pickLang } from "./src/publicRequest.js?v=4d60deaed2";
+      import { runWatchPage } from "./src/watchPage.js?v=4d60deaed2";
+
+      const lang = pickLang(location);
+      document.documentElement.lang = lang;
+      document.title = t("watch.pageTitle", lang);
+      runWatchPage({ root: document.getElementById("watch-root"), lang });
+    </script>
+  </body>
+</html>
