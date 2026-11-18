@@ -81,7 +81,7 @@
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
 
-import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=06ff4a31dd";
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=e6fca76189";
 
 export { RATE_BY_LEVEL, selectStops };
 
@@ -373,11 +373,14 @@ export async function checkVoiceHealth(fetchImpl) {
   }
 }
 
+// The commentator is ON by default: a first visit (nothing stored, or
+// storage blocked) starts with the voice on; only the viewer's own "off"
+// ("0") turns it off.
 export function loadEnabled(storage = globalThis.localStorage) {
   try {
-    return storage?.getItem(STORAGE_KEY) === "1";
+    return storage?.getItem(STORAGE_KEY) !== "0";
   } catch {
-    return false;
+    return true;
   }
 }
 
