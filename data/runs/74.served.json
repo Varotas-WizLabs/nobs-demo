@@ -1,1 +1,1 @@
-{"run_id":74,"effort":"light","served":{"run_id":74,"effort":"light","upgrade":{"state":"none","run_id":null}}}
+{"run_id":74,"effort":"light","superseded_by":75,"served":{"run_id":75,"effort":"deep","upgrade":{"state":"ready","run_id":75}}}

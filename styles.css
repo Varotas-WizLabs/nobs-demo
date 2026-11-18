@@ -4395,3 +4395,190 @@ html.nobs-pseudo-fs-open body {
     grid-template-columns: 70px 1fr auto;
   }
 }
+
+/* ---- admin tab «Сервер и очередь» (local app only) ---- */
+.nobs-live-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--nobs-muted);
+}
+.nobs-live-error:empty {
+  display: none;
+}
+.nobs-live-block .nobs-admin-tiles {
+  margin: 8px 0 12px;
+}
+.nobs-live-block .nobs-admin-tile {
+  min-width: 0;
+  background: var(--nobs-bg);
+}
+.nobs-live-block .nobs-admin-tile .nobs-admin-note {
+  overflow-wrap: anywhere;
+}
+.nobs-live-checks {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.nobs-live-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.nobs-live-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--nobs-neutral);
+  align-self: center;
+}
+.nobs-live-check[data-state="ok"] .nobs-live-dot { background: var(--nobs-green); }
+.nobs-live-check[data-state="warn"] .nobs-live-dot { background: var(--nobs-red); }
+.nobs-live-check[data-state="off"] .nobs-live-dot { background: var(--nobs-muted); }
+.nobs-live-check[data-state="unknown"] .nobs-live-dot { background: var(--nobs-yellow); }
+.nobs-live-check-name {
+  font-weight: 600;
+}
+.nobs-live-check-text {
+  color: var(--nobs-muted);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.nobs-live-card {
+  margin: 10px 0 0;
+  padding: 12px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 10px;
+  background: var(--nobs-bg);
+  min-width: 0;
+}
+.nobs-live-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nobs-live-title {
+  font-weight: 600;
+  color: var(--nobs-link);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.nobs-live-run {
+  flex: none;
+  white-space: nowrap;
+}
+.nobs-live-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.nobs-live-badges .nobs-admin-badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.nobs-live-badges [data-effort="deep"] {
+  border-color: var(--nobs-link);
+  color: var(--nobs-link);
+}
+.nobs-live-label {
+  color: var(--nobs-text);
+}
+.nobs-live-stage {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.nobs-live-stage-msg {
+  color: var(--nobs-muted);
+}
+.nobs-live-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+.nobs-live-progress {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--nobs-hover);
+  overflow: hidden;
+}
+.nobs-live-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--nobs-link);
+  transition: width 0.4s ease;
+}
+.nobs-live-pct {
+  flex: none;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-live-sub {
+  margin: 14px 0 6px;
+  font-size: 14px;
+}
+.nobs-live-post,
+.nobs-live-queue {
+  margin: 0;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.nobs-live-queue li,
+.nobs-live-post li {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.nobs-live-queue .nobs-admin-badge {
+  margin-left: 6px;
+}
+.nobs-live-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 8px;
+}
+.nobs-live-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--nobs-muted);
+  min-width: 0;
+}
+.nobs-live-filter select {
+  max-width: 180px;
+}
+.nobs-live-incoming td:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .nobs-live-block .nobs-admin-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nobs-live-block .nobs-admin-tile-value {
+    font-size: 18px;
+  }
+  .nobs-live-filter {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  .nobs-live-filter select {
+    max-width: 60%;
+  }
+}

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=e6fca76189"></script>
+    <script src="src/demoShim.js?v=e0cc254638"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -16,7 +16,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо: индекс источников</title>
-    <link rel="stylesheet" href="styles.css?v=e6fca76189" />
+    <link rel="stylesheet" href="styles.css?v=e0cc254638" />
     <link rel="stylesheet" href="sources.css" />
   </head>
   <body class="nobs-cm-page nobs-src-page">
@@ -31,8 +31,8 @@
     </header>
     <main id="sources"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=e6fca76189";
-      import { mountSourcesPage } from "./src/sourcesPage.js?v=e6fca76189";
+      import { applyTheme } from "./src/settings.js?v=e0cc254638";
+      import { mountSourcesPage } from "./src/sourcesPage.js?v=e0cc254638";
       applyTheme(document);
       mountSourcesPage(document.getElementById("sources"), { fetchImpl: fetch });
     </script>
