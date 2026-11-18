@@ -1,10 +1,10 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=b1280f6b60";
-import { t } from "./i18n.js?v=b1280f6b60";
-import { claimState, isUnchecked } from "./progress.js?v=b1280f6b60";
-import { canFullscreen } from "./mobile.js?v=b1280f6b60";
+import { seekTarget } from "./settings.js?v=c103dc2fed";
+import { t } from "./i18n.js?v=c103dc2fed";
+import { claimState, isUnchecked } from "./progress.js?v=c103dc2fed";
+import { canFullscreen } from "./mobile.js?v=c103dc2fed";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -580,6 +580,26 @@ export function whenYouTubeApiReady(win, callback) {
   if (win.YT && win.YT.loaded) {
     fire();
   }
+}
+
+// The run to open when player.html has neither `run_id` nor `video_id`:
+// the most recently created analysis in the library (GET /runs, which lists
+// the served run per video). Null when the library is empty.
+export function latestRunId(payload) {
+  const runs = Array.isArray(payload) ? payload : payload?.runs;
+  if (!Array.isArray(runs) || runs.length === 0) return null;
+  let best = null;
+  for (const run of runs) {
+    if (run?.run_id == null) continue;
+    if (
+      best === null ||
+      String(run.created_at ?? "") > String(best.created_at ?? "") ||
+      (String(run.created_at ?? "") === String(best.created_at ?? "") && run.run_id > best.run_id)
+    ) {
+      best = run;
+    }
+  }
+  return best ? best.run_id : null;
 }
 
 // Resolve the YouTube video id to play from player.html's query string.

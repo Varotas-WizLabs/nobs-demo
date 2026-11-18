@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=b1280f6b60"></script>
+    <script src="src/demoShim.js?v=c103dc2fed"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=b1280f6b60" />
+    <link rel="stylesheet" href="styles.css?v=c103dc2fed" />
   </head>
   <body>
     <!-- Brand bar: the «душнила AI» logo, top left. -->
@@ -76,30 +76,30 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=b1280f6b60";
-      import { bootstrapPlayerPage } from "./src/main.js?v=b1280f6b60";
-      import { startProcessingLog } from "./src/processingLog.js?v=b1280f6b60";
-      import { startLibrary } from "./src/library.js?v=b1280f6b60";
-      import { buildShareControl, isSolo } from "./src/share.js?v=b1280f6b60";
-      import { renderClaimList } from "./src/claimList.js?v=b1280f6b60";
-      import { buildRailFilters } from "./src/railFilters.js?v=b1280f6b60";
-      import { verdictKey } from "./src/popup.js?v=b1280f6b60";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=b1280f6b60";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=b1280f6b60";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=b1280f6b60";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=b1280f6b60";
-      import { t } from "./src/i18n.js?v=b1280f6b60";
-      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=b1280f6b60";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=b1280f6b60";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=b1280f6b60";
-      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=b1280f6b60";
-      import { createHoldIcon } from "./src/holdIcon.js?v=b1280f6b60";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=b1280f6b60";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=b1280f6b60";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=b1280f6b60";
-      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=b1280f6b60";
-      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=b1280f6b60";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=b1280f6b60";
+      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=c103dc2fed";
+      import { bootstrapPlayerPage } from "./src/main.js?v=c103dc2fed";
+      import { startProcessingLog } from "./src/processingLog.js?v=c103dc2fed";
+      import { startLibrary } from "./src/library.js?v=c103dc2fed";
+      import { buildShareControl, isSolo } from "./src/share.js?v=c103dc2fed";
+      import { renderClaimList } from "./src/claimList.js?v=c103dc2fed";
+      import { buildRailFilters } from "./src/railFilters.js?v=c103dc2fed";
+      import { verdictKey } from "./src/popup.js?v=c103dc2fed";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=c103dc2fed";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=c103dc2fed";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=c103dc2fed";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=c103dc2fed";
+      import { t } from "./src/i18n.js?v=c103dc2fed";
+      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=c103dc2fed";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=c103dc2fed";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=c103dc2fed";
+      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=c103dc2fed";
+      import { createHoldIcon } from "./src/holdIcon.js?v=c103dc2fed";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=c103dc2fed";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=c103dc2fed";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=c103dc2fed";
+      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=c103dc2fed";
+      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=c103dc2fed";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=c103dc2fed";
       applyTheme(document);
       // A phone or tablet (src/mobile.js): the system voice by default, a
       // longer Piper lead, touch hints; CSS keys the layout on the screen size.
@@ -202,6 +202,16 @@
 
       const params = new URLSearchParams(window.location.search);
       const runId = params.get("run_id");
+
+      // No run and no video in the address: open the latest analysis.
+      if (!runId && !params.get("video_id")) {
+        const latest = await fetch("/runs").then((r) => (r.ok ? r.json() : null)).then(latestRunId).catch(() => null);
+        if (latest != null) {
+          params.set("run_id", String(latest));
+          window.location.replace(`${window.location.pathname}?${params}${window.location.hash}`);
+          await new Promise(() => {}); // the page is being replaced
+        }
+      }
 
       // Effort modes (src/effort.js): an old link to a light run that a deep
       // run has replaced opens the deep one -- on page load only, never under

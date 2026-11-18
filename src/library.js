@@ -9,10 +9,10 @@
 // toggle). The state lives on the root's data-collapsed, so it survives the
 // periodic re-render.
 
-import { formatCost, formatDuration } from "./runStats.js?v=b1280f6b60";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=b1280f6b60";
-import { buildSettingsButton } from "./settings.js?v=b1280f6b60";
-import { buildEffortBadge } from "./effort.js?v=b1280f6b60";
+import { formatCost, formatDuration } from "./runStats.js?v=c103dc2fed";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=c103dc2fed";
+import { buildSettingsButton } from "./settings.js?v=c103dc2fed";
+import { buildEffortBadge } from "./effort.js?v=c103dc2fed";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
