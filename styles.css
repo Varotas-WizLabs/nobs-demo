@@ -4635,3 +4635,482 @@ html.nobs-pseudo-fs-open body {
     max-width: 60%;
   }
 }
+
+/* ==== Playlists (spec 2026-11-18-playlists; local app only) ====
+   Library folders (src/library.js): a folder entry, the «← Все разборы»
+   row, the folder sub-heading and the pinned run's «в папке» line. */
+.nobs-library-folders-link {
+  color: var(--nobs-link);
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+.nobs-library-folders-link:hover {
+  text-decoration: underline;
+}
+.nobs-library[data-collapsed="true"] .nobs-library-folders-link {
+  display: none;
+}
+.nobs-library-folder {
+  align-items: center;
+}
+.nobs-library-folder-icon {
+  flex: none;
+  width: 96px;
+  height: 40px;
+  padding: 7px 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: var(--nobs-surface);
+  color: var(--nobs-muted);
+}
+.nobs-library-folder:hover .nobs-library-folder-icon {
+  color: var(--nobs-text);
+}
+.nobs-library-back {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.nobs-library-back:hover,
+.nobs-library-back:focus-visible {
+  background: var(--nobs-hover);
+}
+.nobs-library-subheading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px 2px;
+}
+.nobs-library-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nobs-text);
+  overflow-wrap: anywhere;
+}
+.nobs-library-manage {
+  font-size: 12px;
+  color: var(--nobs-link);
+  text-decoration: none;
+}
+.nobs-library-manage:hover {
+  text-decoration: underline;
+}
+.nobs-library-in-folder {
+  font-size: 11px;
+  color: var(--nobs-muted);
+  font-style: italic;
+}
+
+/* «Доработать до Deep» at the top of the right panel (local app only). */
+.nobs-deep-upgrade {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 10px;
+  background: var(--nobs-surface);
+}
+.nobs-deep-upgrade-button {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border: 1px solid #7c9cff;
+  border-radius: 8px;
+  background: transparent;
+  color: #7c9cff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nobs-deep-upgrade-button:hover:not(:disabled),
+.nobs-deep-upgrade-button:focus-visible {
+  background: var(--nobs-hover);
+}
+.nobs-deep-upgrade-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.nobs-deep-upgrade-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--nobs-muted);
+}
+.nobs-deep-upgrade-status {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0a43a;
+}
+.nobs-deep-upgrade-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--nobs-red);
+}
+
+/* The owner's playlists page (local app only). */
+.nobs-playlists {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  box-sizing: border-box;
+}
+.nobs-playlists h1 {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.nobs-playlists section {
+  margin-top: 24px;
+}
+.nobs-playlists a {
+  color: var(--nobs-link);
+}
+.nobs-playlists input[type="text"],
+.nobs-playlists textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 8px;
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  font: inherit;
+  font-size: 16px;
+  min-width: 0;
+  width: 100%;
+  max-width: 720px;
+  box-sizing: border-box;
+}
+.nobs-playlists textarea {
+  max-width: none;
+  min-height: 110px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.nobs-playlists input:focus,
+.nobs-playlists textarea:focus {
+  outline: 2px solid var(--nobs-green);
+  outline-offset: 1px;
+}
+.nobs-playlists button {
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--nobs-green);
+  color: var(--nobs-on-flag);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nobs-playlists button.nobs-secondary {
+  background: var(--nobs-surface);
+  color: var(--nobs-text);
+  border: 1px solid var(--nobs-border);
+}
+.nobs-playlists button.nobs-secondary:hover:not(:disabled) {
+  background: var(--nobs-hover);
+}
+.nobs-playlists button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.nobs-playlists button.nobs-playlists-danger {
+  color: var(--nobs-red);
+}
+.nobs-playlists-create {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.nobs-playlists-add {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 10px;
+  background: var(--nobs-surface);
+}
+.nobs-playlists-add[hidden] {
+  display: none;
+}
+.nobs-playlists-add textarea {
+  background: var(--nobs-input-bg);
+}
+.nobs-playlists-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--nobs-muted);
+  min-width: 0;
+}
+.nobs-playlists-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.nobs-playlists-hint {
+  margin: 0;
+  color: var(--nobs-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.nobs-playlists-queue {
+  margin: 0 0 12px;
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+.nobs-playlists-import {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.nobs-playlists-import:empty,
+.nobs-playlists-toast:empty,
+.nobs-playlists-error:empty {
+  display: none;
+}
+.nobs-playlists-error {
+  color: var(--nobs-red);
+  overflow-wrap: anywhere;
+}
+.nobs-playlists-toast {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--nobs-green);
+  background: var(--nobs-surface);
+  font-size: 14px;
+}
+.nobs-playlists-back {
+  display: inline-block;
+  margin: 0 0 12px;
+  font-size: 14px;
+  text-decoration: none;
+}
+.nobs-playlists-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin: 0 0 4px;
+}
+.nobs-playlists-header h1 {
+  margin: 0;
+}
+.nobs-playlists-header .nobs-playlists-field {
+  flex: 1 1 320px;
+}
+.nobs-playlists-header + .nobs-playlists-hint {
+  margin: 0 0 12px;
+}
+.nobs-playlists-selection {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  margin: 16px 0 0;
+  padding: 10px 0;
+  background: var(--nobs-bg);
+  border-bottom: 1px solid var(--nobs-border);
+}
+.nobs-playlists-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: center;
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+.nobs-playlists button.nobs-playlists-pick {
+  padding: 2px 4px;
+  background: none;
+  color: var(--nobs-link);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.nobs-playlists-count {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.nobs-playlists-table-wrap {
+  max-width: 100%;
+}
+.nobs-playlists-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.nobs-playlists-table th,
+.nobs-playlists-table td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--nobs-border);
+  vertical-align: middle;
+}
+.nobs-playlists-table th {
+  color: var(--nobs-muted);
+  font-weight: 600;
+  font-size: 12px;
+}
+.nobs-playlists-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--nobs-green);
+}
+.nobs-playlists-thumb {
+  display: block;
+  width: 96px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #000;
+}
+.nobs-playlists-title {
+  min-width: 180px;
+  overflow-wrap: anywhere;
+}
+.nobs-playlists-title a {
+  color: var(--nobs-text);
+  text-decoration: none;
+}
+.nobs-playlists-title a:hover {
+  text-decoration: underline;
+}
+.nobs-playlists-duration {
+  white-space: nowrap;
+}
+.nobs-playlists-long {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #e0a43a;
+  color: #e0a43a;
+  font-size: 11px;
+}
+.nobs-playlists-state {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--nobs-border);
+  color: var(--nobs-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.nobs-playlists-state-light {
+  color: var(--nobs-green);
+  border-color: currentColor;
+}
+.nobs-playlists-state-deep {
+  color: #7c9cff;
+  border-color: currentColor;
+}
+.nobs-playlists-state-queued {
+  color: var(--nobs-text);
+  border-style: dashed;
+}
+.nobs-playlists-state-running {
+  color: #e0a43a;
+  border-color: currentColor;
+}
+.nobs-playlists-state-failed {
+  color: var(--nobs-red);
+  border-color: currentColor;
+  cursor: help;
+}
+.nobs-playlists-item-actions > * {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+  vertical-align: middle;
+}
+.nobs-playlists-table .nobs-playlists-item-actions button {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.nobs-playlists-open {
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+@media (max-width: 760px) {
+  .nobs-playlists {
+    padding: 16px 16px 48px;
+  }
+  .nobs-playlists-table thead {
+    display: none;
+  }
+  .nobs-playlists-table,
+  .nobs-playlists-table tbody {
+    display: block;
+  }
+  .nobs-playlists-table tr {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--nobs-border);
+  }
+  .nobs-playlists-table td {
+    display: block;
+    padding: 3px 0;
+    border: 0;
+  }
+  .nobs-playlists-table td[data-label]::before {
+    content: attr(data-label) ": ";
+    color: var(--nobs-muted);
+    font-size: 12px;
+  }
+  .nobs-playlists-items tr {
+    display: grid;
+    grid-template-columns: 28px 96px minmax(0, 1fr);
+    gap: 4px 10px;
+    align-items: start;
+  }
+  .nobs-playlists-items td {
+    grid-column: 3;
+  }
+  .nobs-playlists-items td.nobs-playlists-check {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .nobs-playlists-items td.nobs-playlists-thumb-cell {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .nobs-playlists-items td.nobs-playlists-title {
+    grid-row: 1;
+    min-width: 0;
+  }
+  .nobs-playlists-items td.nobs-playlists-item-actions {
+    grid-column: 1 / -1;
+    padding-top: 6px;
+  }
+  .nobs-playlists-items td[colspan] {
+    grid-column: 1 / -1;
+  }
+  .nobs-playlists-selection {
+    gap: 6px 12px;
+  }
+}
+@media (max-width: 420px) {
+  .nobs-playlists-items tr {
+    grid-template-columns: 28px 72px minmax(0, 1fr);
+  }
+  .nobs-playlists-thumb {
+    width: 72px;
+    height: 40px;
+  }
+}
