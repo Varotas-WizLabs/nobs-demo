@@ -37,9 +37,9 @@ import {
   levelForSpeed,
   rateFor,
   SPEED_STEP,
-} from "./commentators.js?v=c103dc2fed";
-import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=c103dc2fed";
-import { t } from "./i18n.js?v=c103dc2fed";
+} from "./commentators.js?v=06ff4a31dd";
+import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=06ff4a31dd";
+import { t } from "./i18n.js?v=06ff4a31dd";
 
 const FLAG_LABEL = { red: "🔴 красный (неверно)", yellow: "🟡 жёлтый (неточно)", green: "🟢 зелёный (верно)", white: "⚪ белый (не проверить)", scoop: "🕵️ скуп" };
 const KNOB_LABEL = {
@@ -232,12 +232,23 @@ export function mountCommentatorsPage(root, {
         if (action === "reset") reset(profile);
         if (action === "delete") remove(profile);
       });
+      // On/off in the system: a disabled commentator is not offered in the
+      // player's menu (and a player that had chosen it falls back).
+      let toggle = null;
+      if (!demo) {
+        const on = profile.enabled !== false;
+        const input = el(doc, "input", { type: "checkbox", role: "switch", checked: on, dataset: { action: "toggle" } });
+        input.setAttribute("aria-label", `${profile.name || profile.id}: ${on ? "включён" : "выключен"}`);
+        toggle = el(doc, "label", { class: "nobs-cm-switch", title: on ? "Включён — выключить" : "Выключен — включить" }, input, el(doc, "span", { class: "nobs-cm-switch-track", "aria-hidden": "true" }), el(doc, "span", { text: on ? "вкл" : "выкл" }));
+        input.addEventListener("change", () => setEnabled(profile, input.checked, input));
+      }
       const card = el(
         doc,
         "article",
-        { class: "nobs-cm-card", dataset: { id: profile.id } },
+        { class: `nobs-cm-card${profile.enabled === false ? " is-off" : ""}`, dataset: { id: profile.id } },
         el(doc, "span", { class: "nobs-cm-emoji", "aria-hidden": "true", text: profile.emoji }),
         el(doc, "div", { class: "nobs-cm-card-text" }, el(doc, "strong", { text: profile.name || profile.id }), el(doc, "code", { text: profile.id }), badges, profile.description ? el(doc, "small", { text: profile.description }) : null),
+        toggle,
         actions
       );
       card.style.setProperty("--nobs-persona-color", profile.color ?? "transparent");
@@ -477,6 +488,36 @@ export function mountCommentatorsPage(root, {
     }
   }
 
+  // The card's on/off switch: saves the profile with only `enabled` changed.
+  // At least one commentator stays on, so the player always has a voice.
+  async function setEnabled(profile, enabled, input) {
+    if (!enabled && !state.list.some((p) => p.id !== profile.id && p.enabled !== false)) {
+      if (input) input.checked = true;
+      say("Нельзя выключить всех: хотя бы один комментатор должен остаться включённым.", "error");
+      return;
+    }
+    if (state.dirty && state.editing?.id === profile.id && !state.isNew) {
+      if (!confirmImpl("В форме этого комментатора есть несохранённые изменения. Отбросить их?")) {
+        if (input) input.checked = !enabled;
+        return;
+      }
+      state.dirty = false;
+    }
+    if (input) input.disabled = true;
+    try {
+      await send("PUT", `/commentators/${encodeURIComponent(profile.id)}`, profilePayload({ ...profile, enabled }));
+      say(enabled ? `«${profile.name}» включён.` : `«${profile.name}» выключен: в меню плеера его не будет.`);
+      await reload();
+      if (state.editing?.id === profile.id && !state.isNew) edit(state.list.find((p) => p.id === profile.id) ?? { ...profile, enabled });
+    } catch (err) {
+      if (input) {
+        input.checked = !enabled;
+        input.disabled = false;
+      }
+      say(`Не сохранено: ${err.message}`, "error");
+    }
+  }
+
   async function reset(profile) {
     if (!confirmImpl(`Вернуть «${profile.name}» к настройкам по умолчанию? Ваши изменения пропадут.`)) return;
     try {
@@ -579,9 +620,9 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=c103dc2fed");
-    const engines = await import("./voiceEngines.js?v=c103dc2fed");
-    const settings = await import("./settings.js?v=c103dc2fed");
+    const voice = await import("./voice.js?v=06ff4a31dd");
+    const engines = await import("./voiceEngines.js?v=06ff4a31dd");
+    const settings = await import("./settings.js?v=06ff4a31dd");
     const text = String(result?.text ?? "");
     if (!text) return;
     const flags = lang === "he"

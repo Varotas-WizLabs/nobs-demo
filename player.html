@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=c103dc2fed"></script>
+    <script src="src/demoShim.js?v=06ff4a31dd"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=c103dc2fed" />
+    <link rel="stylesheet" href="styles.css?v=06ff4a31dd" />
   </head>
   <body>
     <!-- Brand bar: the «душнила AI» logo, top left. -->
@@ -76,30 +76,30 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=c103dc2fed";
-      import { bootstrapPlayerPage } from "./src/main.js?v=c103dc2fed";
-      import { startProcessingLog } from "./src/processingLog.js?v=c103dc2fed";
-      import { startLibrary } from "./src/library.js?v=c103dc2fed";
-      import { buildShareControl, isSolo } from "./src/share.js?v=c103dc2fed";
-      import { renderClaimList } from "./src/claimList.js?v=c103dc2fed";
-      import { buildRailFilters } from "./src/railFilters.js?v=c103dc2fed";
-      import { verdictKey } from "./src/popup.js?v=c103dc2fed";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=c103dc2fed";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=c103dc2fed";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=c103dc2fed";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=c103dc2fed";
-      import { t } from "./src/i18n.js?v=c103dc2fed";
-      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=c103dc2fed";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=c103dc2fed";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=c103dc2fed";
-      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=c103dc2fed";
-      import { createHoldIcon } from "./src/holdIcon.js?v=c103dc2fed";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=c103dc2fed";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=c103dc2fed";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=c103dc2fed";
-      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=c103dc2fed";
-      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=c103dc2fed";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=c103dc2fed";
+      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=06ff4a31dd";
+      import { bootstrapPlayerPage } from "./src/main.js?v=06ff4a31dd";
+      import { startProcessingLog } from "./src/processingLog.js?v=06ff4a31dd";
+      import { startLibrary } from "./src/library.js?v=06ff4a31dd";
+      import { buildShareControl, isSolo } from "./src/share.js?v=06ff4a31dd";
+      import { renderClaimList } from "./src/claimList.js?v=06ff4a31dd";
+      import { buildRailFilters } from "./src/railFilters.js?v=06ff4a31dd";
+      import { verdictKey } from "./src/popup.js?v=06ff4a31dd";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=06ff4a31dd";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=06ff4a31dd";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=06ff4a31dd";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=06ff4a31dd";
+      import { t } from "./src/i18n.js?v=06ff4a31dd";
+      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=06ff4a31dd";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=06ff4a31dd";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=06ff4a31dd";
+      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=06ff4a31dd";
+      import { createHoldIcon } from "./src/holdIcon.js?v=06ff4a31dd";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=06ff4a31dd";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=06ff4a31dd";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=06ff4a31dd";
+      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=06ff4a31dd";
+      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=06ff4a31dd";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=06ff4a31dd";
       applyTheme(document);
       // A phone or tablet (src/mobile.js): the system voice by default, a
       // longer Piper lead, touch hints; CSS keys the layout on the screen size.

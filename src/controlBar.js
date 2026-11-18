@@ -1,10 +1,10 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=c103dc2fed";
-import { t } from "./i18n.js?v=c103dc2fed";
-import { claimState, isUnchecked } from "./progress.js?v=c103dc2fed";
-import { canFullscreen } from "./mobile.js?v=c103dc2fed";
+import { seekTarget } from "./settings.js?v=06ff4a31dd";
+import { t } from "./i18n.js?v=06ff4a31dd";
+import { claimState, isUnchecked } from "./progress.js?v=06ff4a31dd";
+import { canFullscreen } from "./mobile.js?v=06ff4a31dd";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,

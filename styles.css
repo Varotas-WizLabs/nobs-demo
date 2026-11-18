@@ -2868,7 +2868,7 @@ button.nobs-scoop-verdict:hover {
 }
 .nobs-cm-card {
   display: grid;
-  grid-template-columns: 36px 1fr;
+  grid-template-columns: 36px 1fr auto;
   gap: 4px 10px;
   margin-bottom: 10px;
   padding: 12px;
@@ -2876,6 +2876,60 @@ button.nobs-scoop-verdict:hover {
   border-left: 4px solid var(--nobs-persona-color, var(--nobs-border));
   border-radius: 10px;
   background: var(--nobs-surface);
+}
+.nobs-cm-card.is-off .nobs-cm-emoji,
+.nobs-cm-card.is-off .nobs-cm-card-text {
+  opacity: 0.5;
+}
+/* On/off switch on a commentator card (active in the system or not). */
+.nobs-cm-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: start;
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--nobs-muted);
+  font-size: 13px;
+  user-select: none;
+}
+.nobs-cm-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.nobs-cm-switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--nobs-border);
+  transition: background 0.15s;
+}
+.nobs-cm-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.nobs-cm-switch input:checked + .nobs-cm-switch-track {
+  background: var(--nobs-green);
+}
+.nobs-cm-switch input:checked + .nobs-cm-switch-track::after {
+  transform: translateX(18px);
+}
+.nobs-cm-switch input:focus-visible + .nobs-cm-switch-track {
+  outline: 2px solid var(--nobs-link);
+  outline-offset: 2px;
+}
+.nobs-cm-switch input:disabled + .nobs-cm-switch-track {
+  opacity: 0.5;
 }
 .nobs-cm-card[aria-current="true"] {
   outline: 2px solid var(--nobs-link);
