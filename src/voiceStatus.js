@@ -11,8 +11,8 @@
 //   shows: engine chosen / used, Piper model state, browser voices, autoplay,
 //   commentator and its lines, last error.
 
-import { DEFAULT_COMMENTATOR, isParody, resolvePersona } from "./commentators.js?v=04a8d84c10";
-import { labelLanguage } from "./i18n.js?v=04a8d84c10";
+import { DEFAULT_COMMENTATOR, isParody, resolvePersona } from "./commentators.js?v=c1233d3052";
+import { labelLanguage } from "./i18n.js?v=c1233d3052";
 
 /** A persona that speaks only generated lines (a parody). */
 export function needsLines(profile) {
@@ -52,7 +52,7 @@ function pct(x) {
 /**
  * Status lines for «Проверить голос». `info`: {chosen, setting, diag (the
  * narrator's diagnostics()), result ({ok, used, error} or null while
- * speaking), voices: {ru: [...], he: [...]}, activation (bool|null),
+ * speaking), voices: {ru: [...], he: [...], en: [...]}, activation (bool|null),
  * persona, chosenPersona, lines (number|null), personaFallback, lang}.
  */
 export function voiceStatusLines(info, lang = "ru") {
@@ -79,7 +79,7 @@ export function voiceStatusLines(info, lang = "ru") {
             : L("не загружена", "not loaded");
   }
   lines.push(`${L("Модель Piper", "Piper model")}: ${piper}`);
-  for (const code of ["ru", "he"]) {
+  for (const code of ["ru", "he", "en"]) {
     const names = info?.voices?.[code] ?? [];
     lines.push(`${L("Голоса браузера", "Browser voices")} ${code}: ${names.length ? names.join(", ") : L("нет", "none")}`);
   }

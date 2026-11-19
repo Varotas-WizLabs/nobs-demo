@@ -21,6 +21,9 @@
 //
 // Languages: Russian has Piper, Silero and the system voice; Hebrew has the
 // system voice (he-IL) and the local engines. Piper has no Hebrew voice.
+// English has the system voice (en-US) and any "local:en:<engine>" the
+// sidecar lists (none today; e.g. a Kokoro sidecar later). Piper's voices
+// here are Russian, Silero is Russian: neither reads English.
 //
 // Blob engines: {id, kind: "blob", isReady(), synthesize(text, {isWanted}) ->
 // Promise<Blob>}. Speech engines: {id, kind: "speech", speak(text, {volume,
@@ -148,9 +151,23 @@ export function normalizeHebrew(text) {
     .trim();
 }
 
+// English text for the browser's voice: "+" read as "plus", "&" as "and",
+// Russian stress marks dropped. Latin stays Latin (the Russian path below
+// would transliterate it into Cyrillic); the voice reads numbers itself.
+export function normalizeEnglish(text) {
+  return String(text ?? "")
+    .replace(/\u0301/g, "")
+    .replace(/\+/g, " plus ")
+    .replace(/&/g, " and ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([,.:;!?…])/g, "$1")
+    .trim();
+}
+
 /** Text ready for Piper / the system voice (not needed for Silero). */
 export function normalizeForSynth(text, lang = "ru") {
   if (baseLang(lang) === "he") return normalizeHebrew(text);
+  if (baseLang(lang) === "en") return normalizeEnglish(text);
   let s = String(text ?? "");
   s = s.replace(/\+/g, " плюс ");
   s = s.replace(/&/g, " и ").replace(/№/g, " номер ");
@@ -172,7 +189,11 @@ export function baseLang(lang) {
 }
 
 // BCP-47 tag the browser voice is asked for, per base language.
-export const SPEECH_LANG = Object.freeze({ ru: "ru-RU", he: "he-IL" });
+export const SPEECH_LANG = Object.freeze({ ru: "ru-RU", he: "he-IL", en: "en-US" });
+
+// Languages spoken only by the system voice and local sidecar engines (no
+// Piper, no Silero): their engine choice is resolveLocalOrSystemEngineId.
+export const SYSTEM_LANGS = Object.freeze(["he", "en"]);
 
 /** A browser voice for `lang` ("he" matches he-IL, he, iw-IL), or null. */
 export function findSystemVoice(lang, synth = globalThis.speechSynthesis) {
@@ -250,6 +271,7 @@ export function systemSupported(g = globalThis) {
  */
 export function resolveEngineId(wanted, { silero = false, piper = false, system = false, local = [] } = {}, lang = "ru") {
   if (baseLang(lang) === "he") return resolveHebrewEngineId(wanted, { system, local });
+  if (baseLang(lang) === "en") return resolveLocalOrSystemEngineId(wanted, { system, local }, "en");
   const ok = (id) => (id === "silero" ? silero : id === "system" ? system : id.startsWith("piper:") ? piper : false);
   const id = ENGINE_IDS.includes(wanted) ? wanted : DEFAULT_ENGINE;
   if (ok(id)) return id;
@@ -266,10 +288,22 @@ export function resolveEngineId(wanted, { silero = false, piper = false, system 
  * `local`: ids of the available local engines ("local:he:say", ...).
  */
 export function resolveHebrewEngineId(wanted, { system = false, local = [] } = {}) {
-  const ids = Array.isArray(local) ? local : [];
+  return resolveLocalOrSystemEngineId(wanted, { system, local }, "he");
+}
+
+/**
+ * A language without Piper / Silero (Hebrew, English): the wanted engine
+ * when it can speak here; otherwise the language's preferred local engine
+ * (Hebrew: Carmit), the system voice (only when the browser has a voice in
+ * the language), any local engine of the language; null when none.
+ */
+export function resolveLocalOrSystemEngineId(wanted, { system = false, local = [] } = {}, lang = "he") {
+  const base = baseLang(lang);
+  const prefix = `local:${base}:`;
+  const ids = (Array.isArray(local) ? local : []).filter((id) => typeof id === "string" && id.startsWith(prefix));
   if (wanted === "system" && system) return "system";
-  if (typeof wanted === "string" && wanted.startsWith("local:he:") && ids.includes(wanted)) return wanted;
-  if (ids.includes("local:he:say")) return "local:he:say";
+  if (typeof wanted === "string" && wanted.startsWith(prefix) && ids.includes(wanted)) return wanted;
+  if (base === "he" && ids.includes("local:he:say")) return "local:he:say";
   if (system) return "system";
   return ids[0] ?? null;
 }
@@ -436,7 +470,7 @@ function mainThreadPort() {
       handle.then(run);
       return;
     }
-    handle = import("./piperWorker.js?v=04a8d84c10").then(({ createPiperHandler }) => createPiperHandler(post));
+    handle = import("./piperWorker.js?v=c1233d3052").then(({ createPiperHandler }) => createPiperHandler(post));
     handle.then(run, (err) => port.onerror?.(err));
   };
   port.terminate = () => {

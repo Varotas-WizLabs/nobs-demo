@@ -5,7 +5,7 @@
 // (src/commentators.js), in Russian and English. Persona line texts, opener
 // phrases and anything spoken stay as they are (content, not labels).
 
-import { registerStrings } from "./i18n.js?v=04a8d84c10";
+import { registerStrings } from "./i18n.js?v=c1233d3052";
 
 const ru = {
   "cmui.pageTitle": "Skepticum — Комментаторы",
@@ -43,6 +43,7 @@ const ru = {
   "cmui.exit.none": "без звука",
   "cmui.lang.ru": "русский",
   "cmui.lang.he": "иврит",
+  "cmui.lang.en": "английский",
   "cmui.voice.asSettings": "как в настройках",
 
   "cmui.badge.builtIn": "встроенный",
@@ -227,6 +228,7 @@ const en = {
   "cmui.exit.none": "no sound",
   "cmui.lang.ru": "Russian",
   "cmui.lang.he": "Hebrew",
+  "cmui.lang.en": "English",
   "cmui.voice.asSettings": "as in the settings",
 
   "cmui.badge.builtIn": "built-in",

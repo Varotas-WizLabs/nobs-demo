@@ -61,7 +61,7 @@
 // A unit of narration is a "stop": {kind: "claim", claim} or {kind: "scoop",
 // item}; the hooks get {kind, flag, ...claim, claim | scoop, persona}.
 //
-// Languages: Russian and Hebrew (caption code "iw" is Hebrew too). A new
+// Languages: Russian, Hebrew (caption code "iw" is Hebrew too) and English. A new
 // language is one entry in VOICES (plus OPENERS_BY_LANG for casual) and its
 // engines in voiceEngines.js.
 //
@@ -81,7 +81,7 @@
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
 
-import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=04a8d84c10";
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=c1233d3052";
 
 export { RATE_BY_LEVEL, selectStops };
 
@@ -162,12 +162,22 @@ export const HE_OPENERS = Object.freeze({
   white: ["את זה אי אפשר לבדוק."],
 });
 
-export const OPENERS_BY_LANG = Object.freeze({ ru: OPENERS, he: HE_OPENERS });
+// English openers per flag colour (Dushnila's, in English).
+export const EN_OPENERS = Object.freeze({
+  red: ["Hmm, that's just not right.", "Uh… no, not really."],
+  yellow: ["That's not quite accurate.", "Well, not exactly."],
+  green: ["This one checks out."],
+  white: ["This one can't be checked."],
+});
+
+export const OPENERS_BY_LANG = Object.freeze({ ru: OPENERS, he: HE_OPENERS, en: EN_OPENERS });
 
 // Run caption language (base code) -> voice language sent to /voice/say.
+// English is spoken by the browser's en-US voice (or a local:en:* engine).
 export const VOICES = Object.freeze({
   ru: { lang: "ru" },
   he: { lang: "he" },
+  en: { lang: "en" },
 });
 
 // Caption code -> voice base code: "iw" (YouTube's old Hebrew code) is "he".

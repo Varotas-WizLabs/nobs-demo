@@ -11,8 +11,8 @@
 // menuitemradio entries; arrow keys move, Enter / Space pick, Escape or a
 // click outside closes and gives the focus back to the button.
 
-import { isParody, parodyWord, personaName, supportsLang } from "./commentators.js?v=04a8d84c10";
-import { t } from "./i18n.js?v=04a8d84c10";
+import { isParody, parodyWord, personaName, supportsLang } from "./commentators.js?v=c1233d3052";
+import { t } from "./i18n.js?v=c1233d3052";
 
 export const MANAGE_HREF = "commentators.html";
 
@@ -100,7 +100,7 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
         badge.textContent = parodyWord(lang);
         item.appendChild(badge);
       }
-      const speaks = !["ru", "he"].includes(runLang) || supportsLang(profile, runLang);
+      const speaks = !["ru", "he", "en"].includes(runLang) || supportsLang(profile, runLang);
       const missing = unavailable?.[profile.id];
       if (!speaks || missing) {
         item.setAttribute("aria-disabled", "true");

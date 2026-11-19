@@ -28,6 +28,9 @@
 //     public page) or a local engine "local:he:say" (Carmit), "local:he:pocket:<voice>"
 //     -- offered only when GET /voice/engines lists it available. Unset, the
 //     local app uses Carmit when available, else the system voice.
+//   "voiceEngine.en": "system" (the browser's en-US voice; the default) or a
+//     local engine "local:en:<engine>" -- offered only when GET /voice/engines
+//     lists one (the sidecar has none today).
 // Applies without a reload.
 //
 // commentator: the narrator's persona id (src/commentators.js; default
@@ -36,14 +39,14 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=04a8d84c10";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=04a8d84c10";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=04a8d84c10";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=04a8d84c10";
+import { t } from "./i18n.js?v=c1233d3052";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=c1233d3052";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=c1233d3052";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=c1233d3052";
 
 const KEY = "nobs.settings";
 
-export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": null, "voiceEngine.he": null, voiceRewindSec: 1, showTimelineFlags: true, commentator: DEFAULT_COMMENTATOR });
+export const DEFAULTS = Object.freeze({ seekLeadSec: 3, showPossibleTags: true, followPlayback: true, youtubeCaptions: false, showTagFilter: false, theme: "dark", voiceStyle: "casual", "voiceEngine.ru": null, "voiceEngine.he": null, "voiceEngine.en": null, voiceRewindSec: 1, showTimelineFlags: true, commentator: DEFAULT_COMMENTATOR });
 export const VOICE_REWIND_MAX = 10;
 export const SEEK_LEAD_MAX = 30;
 
@@ -103,11 +106,17 @@ export const VOICE_STYLES = ["casual", "normal"];
 export const VOICE_ENGINES = ["piper:dmitri", "piper:irina", "piper:denis", "piper:ruslan", "silero", "system"];
 
 // Languages with a voice setting, in the dialog's default order.
-export const VOICE_LANGS = ["ru", "he"];
+export const VOICE_LANGS = ["ru", "he", "en"];
 
-/** The settings key of a language's voice ("voiceEngine.ru", "voiceEngine.he"). */
+// A run language -> the voice setting it uses ("ru" for any other).
+function voiceBaseOf(lang) {
+  const base = baseLang(lang);
+  return base === "he" || base === "en" ? base : "ru";
+}
+
+/** The settings key of a language's voice ("voiceEngine.ru", "voiceEngine.he", "voiceEngine.en"). */
 export function voiceEngineKey(lang = "ru") {
-  return `voiceEngine.${baseLang(lang) === "he" ? "he" : "ru"}`;
+  return `voiceEngine.${voiceBaseOf(lang)}`;
 }
 
 // What GET /voice/engines answered (set by the player; {} when the sidecar is
@@ -126,14 +135,23 @@ export function hebrewEngineOptions() {
   return ["system", ...localVoiceIds("he")];
 }
 
+/** The English choices offered here: the system voice, then the available local engines. */
+export function englishEngineOptions() {
+  return ["system", ...localVoiceIds("en")];
+}
+
 /**
  * The chosen voice engine for a run language ("ru" by default):
  * Russian "piper:dmitri" unless changed; Hebrew the saved choice, else local
  * Carmit when available, else "system".
  */
 export function voiceEngine(lang = "ru") {
-  const base = baseLang(lang) === "he" ? "he" : "ru";
+  const base = voiceBaseOf(lang);
   const value = read()[voiceEngineKey(base)];
+  if (base === "en") {
+    if (value === "system" || (typeof value === "string" && value.startsWith("local:en:"))) return value;
+    return "system";
+  }
   if (base === "he") {
     if (value === "system" || (typeof value === "string" && value.startsWith("local:he:"))) return value;
     return defaultHebrewEngine(localVoiceIds("he"));
@@ -299,8 +317,16 @@ export function hebrewEngineLabel(id, lang = "en") {
   return engine;
 }
 
+/** An English engine's label: "Browser system voice", "<label> (local)". */
+export function englishEngineLabel(id, lang = "en") {
+  if (id === "system") return t("settings.voiceEngine.en.system", lang);
+  const engine = String(id).replace(/^local:en:/, "");
+  const option = localEngines(localVoices, "en").find((o) => o.engine === engine);
+  return t("settings.voiceEngine.en.local", lang).replace("{name}", option?.label ?? engine);
+}
+
 function engineSelectField(doc, voiceLang, lang) {
-  const base = voiceLang === "he" ? "he" : "ru";
+  const base = voiceBaseOf(voiceLang);
   const key = voiceEngineKey(base);
   const field = doc.createElement("label");
   field.className = "nobs-settings-field";
@@ -310,11 +336,13 @@ function engineSelectField(doc, voiceLang, lang) {
   const select = doc.createElement("select");
   select.name = key;
   select.className = "nobs-settings-select";
-  const ids = base === "he" ? hebrewEngineOptions() : VOICE_ENGINES.filter((v) => v !== "silero" || sileroAvailable);
+  const ids =
+    base === "he" ? hebrewEngineOptions() : base === "en" ? englishEngineOptions() : VOICE_ENGINES.filter((v) => v !== "silero" || sileroAvailable);
   for (const value of ids) {
     const option = doc.createElement("option");
     option.value = value;
-    option.textContent = base === "he" ? hebrewEngineLabel(value, lang) : t(`settings.voiceEngine.${value}`, lang);
+    option.textContent =
+      base === "he" ? hebrewEngineLabel(value, lang) : base === "en" ? englishEngineLabel(value, lang) : t(`settings.voiceEngine.${value}`, lang);
     select.appendChild(option);
   }
   const chosen = voiceEngine(base);
@@ -605,7 +633,7 @@ export function openSettingsDialog(doc, lang = "en") {
   });
 
   // One voice select per language; the run's language first.
-  const runVoice = baseLang(lang) === "he" ? "he" : "ru";
+  const runVoice = voiceBaseOf(lang);
   const engineFields = [runVoice, ...VOICE_LANGS.filter((l) => l !== runVoice)].map((l) => engineSelectField(doc, l, lang));
 
   const testField = voiceTestField(doc, lang);

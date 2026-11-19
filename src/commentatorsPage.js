@@ -40,10 +40,10 @@ import {
   levelForSpeed,
   rateFor,
   SPEED_STEP,
-} from "./commentators.js?v=04a8d84c10";
-import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=04a8d84c10";
-import { labelLanguage, t } from "./i18n.js?v=04a8d84c10";
-import { fillVars } from "./stringsCommentators.js?v=04a8d84c10";
+} from "./commentators.js?v=c1233d3052";
+import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=c1233d3052";
+import { labelLanguage, t } from "./i18n.js?v=c1233d3052";
+import { fillVars } from "./stringsCommentators.js?v=c1233d3052";
 
 // Labels (src/stringsCommentators.js), read at draw time in the interface language.
 const L = (key, vars) => fillVars(t(`cmui.${key}`, "ru"), vars);
@@ -68,6 +68,7 @@ function mannerLabel(m) {
     const key = `cmui.manner.${m.key}`;
     const en = t(key, "en");
     if (en !== key) return en;
+    if (m.label_en) return m.label_en;
   }
   return m.label_ru ?? m.key;
 }
@@ -101,6 +102,10 @@ export function voiceChoices(lang, enginesBody = {}) {
   const asSettings = { id: "", label: L("voice.asSettings") };
   if (lang === "he") {
     return [asSettings, { id: "system", label: t("settings.voiceEngine.he.system", "ru") }, ...localEngines(enginesBody, "he").map((o) => ({ id: o.id, label: o.label ?? o.id }))];
+  }
+  // English: the browser's voice, or a local engine the sidecar lists (none today).
+  if (lang === "en") {
+    return [asSettings, { id: "system", label: t("settings.voiceEngine.en.system", "ru") }, ...localEngines(enginesBody, "en").map((o) => ({ id: o.id, label: o.label ?? o.id }))];
   }
   return [asSettings, ...ENGINE_IDS.map((id) => ({ id, label: t(`settings.voiceEngine.${id}`, "ru") }))];
 }
@@ -417,7 +422,7 @@ export function mountCommentatorsPage(root, {
 
     const rules = el(doc, "section", { class: "nobs-cm-rules", "aria-label": L("rulesLabel") },
       el(doc, "h3", { text: L("rulesTitle") }),
-      el(doc, "pre", { class: "nobs-cm-rules-text", text: isEnglish() ? L("guardrails") : state.meta?.guardrails_text_ru || L("guardrails") }));
+      el(doc, "pre", { class: "nobs-cm-rules-text", text: isEnglish() ? state.meta?.guardrails_text_en || L("guardrails") : state.meta?.guardrails_text_ru || L("guardrails") }));
 
     const buttons = el(doc, "div", { class: "nobs-cm-form-actions" });
     if (!demo) {
@@ -627,13 +632,13 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=04a8d84c10");
-    const engines = await import("./voiceEngines.js?v=04a8d84c10");
-    const settings = await import("./settings.js?v=04a8d84c10");
+    const voice = await import("./voice.js?v=c1233d3052");
+    const engines = await import("./voiceEngines.js?v=c1233d3052");
+    const settings = await import("./settings.js?v=c1233d3052");
     const text = String(result?.text ?? "");
     if (!text) return;
-    const flags = lang === "he"
-      ? { system: engines.systemSupported() && Boolean(engines.findSystemVoice("he")), local: settings.localVoiceIds("he") }
+    const flags = lang === "he" || lang === "en"
+      ? { system: engines.systemSupported() && Boolean(engines.findSystemVoice(lang)), local: settings.localVoiceIds(lang) }
       : { piper: engines.piperSupported(), system: engines.systemSupported(), silero: await voice.checkVoiceHealth(fetchImpl) };
     settings.setLocalVoices(state.engines);
     const own = draft.voices?.[lang];

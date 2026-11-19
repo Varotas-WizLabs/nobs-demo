@@ -15,8 +15,8 @@
 // (never taken from the form), crude humour is capped at 2, and nothing in
 // this module turns a guardrail off.
 
-import { labelLanguage, t as tr } from "./i18n.js?v=04a8d84c10";
-import { fillVars } from "./stringsCommentators.js?v=04a8d84c10";
+import { labelLanguage, t as tr } from "./i18n.js?v=c1233d3052";
+import { fillVars } from "./stringsCommentators.js?v=c1233d3052";
 
 /** A label of src/stringsCommentators.js with {placeholders} filled. */
 const msg = (key, vars) => fillVars(tr(`cmui.${key}`, "ru"), vars);
@@ -31,7 +31,7 @@ export const ID_PATTERN = /^[a-z][a-z0-9-]{1,31}$/;
 export const RESERVED_IDS = Object.freeze(["normal", "casual", "dushnila", "yablogger", "all", "new", "meta"]);
 export const FLAGS = Object.freeze(["red", "yellow", "green", "white"]);
 export const OPENER_KEYS = Object.freeze([...FLAGS, "scoop"]);
-export const LANGS = Object.freeze(["ru", "he"]);
+export const LANGS = Object.freeze(["ru", "he", "en"]);
 export const ENTRY_SOUNDS = Object.freeze(["click", "error_on_red", "error", "none"]);
 export const EXIT_SOUNDS = Object.freeze(["click", "none"]);
 export const INTENSITY_KNOBS = Object.freeze(["exaggeration", "humor", "slang", "drama", "crude"]);
@@ -56,14 +56,14 @@ export const LIMITS = Object.freeze({
 // Manners offered when /commentators/meta cannot be loaded (the server's list
 // is the source of truth: prompt.py holds the role templates).
 export const FALLBACK_MANNERS = Object.freeze([
-  { key: "neutral", label_ru: "нейтральный", label_he: "ניטרלי", parody: false },
-  { key: "friendly", label_ru: "дружеский", label_he: "ידידותי", parody: false },
-  { key: "frivolous", label_ru: "фривольный", label_he: "קליל", parody: false },
-  { key: "zoomer_blogger", label_ru: "зумер-блогер", label_he: "בלוגר זומר", parody: true },
-  { key: "sarcastic", label_ru: "саркастичный", label_he: "סרקסטי", parody: true },
-  { key: "academic", label_ru: "академичный", label_he: "אקדמי", parody: false },
-  { key: "news_anchor", label_ru: "ведущий новостей", label_he: "מגיש חדשות", parody: false },
-  { key: "standup", label_ru: "стендап", label_he: "סטנדאפ", parody: true },
+  { key: "neutral", label_ru: "нейтральный", label_he: "ניטרלי", label_en: "neutral", parody: false },
+  { key: "friendly", label_ru: "дружеский", label_he: "ידידותי", label_en: "friendly", parody: false },
+  { key: "frivolous", label_ru: "фривольный", label_he: "קליל", label_en: "playful", parody: false },
+  { key: "zoomer_blogger", label_ru: "зумер-блогер", label_he: "בלוגר זומר", label_en: "Gen Z blogger", parody: true },
+  { key: "sarcastic", label_ru: "саркастичный", label_he: "סרקסטי", label_en: "sarcastic", parody: true },
+  { key: "academic", label_ru: "академичный", label_he: "אקדמי", label_en: "academic", parody: false },
+  { key: "news_anchor", label_ru: "ведущий новостей", label_he: "מגיש חדשות", label_en: "news anchor", parody: false },
+  { key: "standup", label_ru: "стендап", label_he: "סטנדאפ", label_en: "stand-up", parody: true },
 ]);
 
 const DUSHNILA = Object.freeze({
@@ -75,7 +75,7 @@ const DUSHNILA = Object.freeze({
   built_in: true,
   parody: false,
   customized: false,
-  languages: ["ru", "he"],
+  languages: ["ru", "he", "en"],
   speech_rate: 3,
   speech_speed: 1.1,
   complexity: 3,
@@ -98,8 +98,15 @@ const DUSHNILA = Object.freeze({
       white: ["את זה אי אפשר לבדוק."],
       scoop: [],
     },
+    en: {
+      red: ["Hmm, that's just not right…", "Uh… no, not really…", "Nope, that one misses…", "Well, actually, no…"],
+      yellow: ["That's not quite accurate…", "Well, not exactly…", "There's a catch here…", "Almost, but…"],
+      green: ["This one checks out…", "Yep, that's right…", "No arguments here…"],
+      white: ["This one can't be checked…", "Hard to say here…", "That's just an opinion…"],
+      scoop: [],
+    },
   },
-  voices: { ru: null, he: null },
+  voices: { ru: null, he: null, en: null },
   sounds: { entry: "error_on_red", exit: "click" },
   text_mode: "generated",
   extra_instructions: "",
@@ -115,7 +122,7 @@ const YABLOGGER = Object.freeze({
   built_in: true,
   parody: true,
   customized: false,
-  languages: ["ru", "he"],
+  languages: ["ru", "he", "en"],
   speech_rate: 4,
   speech_speed: 1.25,
   complexity: 1,
@@ -138,8 +145,15 @@ const YABLOGGER = Object.freeze({
       white: [],
       scoop: ["בלעדי!"],
     },
+    en: {
+      red: ["WHAT?! Plot twist…", "Okay, stop, this is a scandal…", "Guys, the exposé of the century…", "Is this based? Nah, not based…"],
+      yellow: ["Guys, I'm shook…", "Cringe, honestly…", "Kinda mid, not gonna lie…", "Half-truth alert, hold on…"],
+      green: ["Okay, no drama, it's actually true…", "Ugh, it's legit for real…"],
+      white: ["Can't be checked, but the vibe is sus…", "Hot take, that's just an opinion…"],
+      scoop: ["Breaking, exclusive!", "You won't believe what we found…", "Straight to my stories…", "This needs its own video…"],
+    },
   },
-  voices: { ru: null, he: null },
+  voices: { ru: null, he: null, en: null },
   sounds: { entry: "error_on_red", exit: "click" },
   text_mode: "generated",
   extra_instructions: "",
@@ -189,7 +203,7 @@ export function rateFor(profile) {
   return RATE_BY_LEVEL[Number(profile?.speech_rate)] ?? RATE_BY_LEVEL[3];
 }
 
-/** Whether a persona speaks a run in `lang` ("ru" / "he"; "iw" is "he"). */
+/** Whether a persona speaks a run in `lang` ("ru" / "he" / "en"; "iw" is "he"). */
 export function supportsLang(profile, lang) {
   const base = String(lang ?? "").split(/[-_]/)[0].toLowerCase();
   const code = base === "iw" ? "he" : base;
@@ -256,8 +270,8 @@ export function emptyProfile() {
     intensity: { exaggeration: 0, humor: 0, slang: 0, drama: 0, crude: 0 },
     triggers: { flags: ["red", "yellow"], scoops: false, frequency: "all", top_n: 8, min_gap_sec: 0 },
     max_words: 25,
-    openers: { ru: { red: [], yellow: [], green: [], white: [], scoop: [] }, he: { red: [], yellow: [], green: [], white: [], scoop: [] } },
-    voices: { ru: null, he: null },
+    openers: Object.fromEntries(LANGS.map((lang) => [lang, { red: [], yellow: [], green: [], white: [], scoop: [] }])),
+    voices: Object.fromEntries(LANGS.map((lang) => [lang, null])),
     sounds: { entry: "click", exit: "click" },
     text_mode: "generated",
     extra_instructions: "",
