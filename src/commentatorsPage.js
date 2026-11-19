@@ -40,10 +40,10 @@ import {
   levelForSpeed,
   rateFor,
   SPEED_STEP,
-} from "./commentators.js?v=c1233d3052";
-import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=c1233d3052";
-import { labelLanguage, t } from "./i18n.js?v=c1233d3052";
-import { fillVars } from "./stringsCommentators.js?v=c1233d3052";
+} from "./commentators.js?v=39931ef4d0";
+import { ENGINE_IDS, fetchVoiceEngines, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=39931ef4d0";
+import { labelLanguage, t } from "./i18n.js?v=39931ef4d0";
+import { fillVars } from "./stringsCommentators.js?v=39931ef4d0";
 
 // Labels (src/stringsCommentators.js), read at draw time in the interface language.
 const L = (key, vars) => fillVars(t(`cmui.${key}`, "ru"), vars);
@@ -97,15 +97,33 @@ function el(doc, tag, attrs = {}, ...children) {
   return node;
 }
 
-/** The engines offered for a language: [{id, label}] ("" = as in the settings). */
-export function voiceChoices(lang, enginesBody = {}) {
+/**
+ * The engines offered for a language: [{id, label}] ("" = as in the settings).
+ * English: the sidecar's Kokoro / Pocket voices, the automatic browser voice,
+ * the best few browser voices of this browser (`synth`), and `current` (a
+ * saved browser voice this browser lacks) so the choice is never lost.
+ */
+export function voiceChoices(lang, enginesBody = {}, { synth = globalThis.speechSynthesis, current = null } = {}) {
   const asSettings = { id: "", label: L("voice.asSettings") };
   if (lang === "he") {
     return [asSettings, { id: "system", label: t("settings.voiceEngine.he.system", "ru") }, ...localEngines(enginesBody, "he").map((o) => ({ id: o.id, label: o.label ?? o.id }))];
   }
-  // English: the browser's voice, or a local engine the sidecar lists (none today).
   if (lang === "en") {
-    return [asSettings, { id: "system", label: t("settings.voiceEngine.en.system", "ru") }, ...localEngines(enginesBody, "en").map((o) => ({ id: o.id, label: o.label ?? o.id }))];
+    const browser = rankedSystemVoices("en", synth).map((v) => ({
+      id: v.id,
+      label: t("settings.voiceEngine.en.browser", "ru").replace("{name}", v.name).replace("{lang}", v.lang),
+    }));
+    const out = [
+      asSettings,
+      ...localEngines(enginesBody, "en").map((o) => ({ id: o.id, label: o.label ?? o.id })),
+      { id: "system", label: t("settings.voiceEngine.en.system", "ru") },
+      ...browser,
+    ];
+    if (isSystemVoiceId(current) && !out.some((o) => o.id === current)) {
+      const name = current.slice("system:".length);
+      out.push({ id: current, label: t("settings.voiceEngine.en.browser", "ru").replace("{name}", name).replace("{lang}", "en") });
+    }
+    return out;
   }
   return [asSettings, ...ENGINE_IDS.map((id) => ({ id, label: t(`settings.voiceEngine.${id}`, "ru") }))];
 }
@@ -405,7 +423,7 @@ export function mountCommentatorsPage(root, {
         ...OPENER_KEYS.map((key) => question(FLAG_LABEL(key), el(doc, "textarea", { name: `openers.${lang}.${key}`, rows: "3", dir: lang === "he" ? "rtl" : "auto", text: (p.openers[lang][key] ?? []).join("\n") }), "", `openers.${lang}.${key}`)))
     ));
     const voiceSelect = (lang) =>
-      el(doc, "select", { name: `voices.${lang}` }, ...voiceChoices(lang, state.engines).map((o) => el(doc, "option", { value: o.id, text: o.label, selected: (p.voices[lang] ?? "") === o.id })));
+      el(doc, "select", { name: `voices.${lang}` }, ...voiceChoices(lang, state.engines, { current: p.voices[lang] }).map((o) => el(doc, "option", { value: o.id, text: o.label, selected: (p.voices[lang] ?? "") === o.id })));
     const sound = fieldset(
       L("group.sound"),
       question(L("q.openers"), openerTabs, L("q.openersHint"), "openers"),
@@ -632,15 +650,16 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=c1233d3052");
-    const engines = await import("./voiceEngines.js?v=c1233d3052");
-    const settings = await import("./settings.js?v=c1233d3052");
+    const voice = await import("./voice.js?v=39931ef4d0");
+    const engines = await import("./voiceEngines.js?v=39931ef4d0");
+    const settings = await import("./settings.js?v=39931ef4d0");
     const text = String(result?.text ?? "");
     if (!text) return;
-    const flags = lang === "he" || lang === "en"
-      ? { system: engines.systemSupported() && Boolean(engines.findSystemVoice(lang)), local: settings.localVoiceIds(lang) }
-      : { piper: engines.piperSupported(), system: engines.systemSupported(), silero: await voice.checkVoiceHealth(fetchImpl) };
+    // First: the local engines decide the flags and the English default.
     settings.setLocalVoices(state.engines);
+    const flags = lang === "he" || lang === "en"
+      ? { system: engines.systemSupported() && Boolean(engines.findSystemVoice(lang)), local: settings.localVoiceIds(lang), systemVoices: engines.systemVoiceIds(lang) }
+      : { piper: engines.piperSupported(), system: engines.systemSupported(), silero: await voice.checkVoiceHealth(fetchImpl) };
     const own = draft.voices?.[lang];
     const id = own && engines.resolveEngineId(own, flags, lang) === own ? own : engines.resolveEngineId(settings.voiceEngine(lang), flags, lang);
     if (!id) {
@@ -653,7 +672,7 @@ export function mountCommentatorsPage(root, {
     let wait = 0;
     if (entry === "error" || (entry === "error_on_red" && result?.flag === "red")) wait = voice.playErrorSound(1);
     if (!wait && entry !== "none") wait = voice.playKeyClick(1);
-    const engine = id === "system" ? engines.createSystemEngine({ lang }) : engines.createEngine(id, { fetchImpl, lang });
+    const engine = engines.createEngine(id, { fetchImpl, lang });
     await new Promise((resolve) => setTimeout(resolve, wait));
     if (engine.kind === "speech") {
       engine.speak(text, { rate });

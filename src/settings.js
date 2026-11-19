@@ -28,9 +28,11 @@
 //     public page) or a local engine "local:he:say" (Carmit), "local:he:pocket:<voice>"
 //     -- offered only when GET /voice/engines lists it available. Unset, the
 //     local app uses Carmit when available, else the system voice.
-//   "voiceEngine.en": "system" (the browser's en-US voice; the default) or a
-//     local engine "local:en:<engine>" -- offered only when GET /voice/engines
-//     lists one (the sidecar has none today).
+//   "voiceEngine.en": a local engine "local:en:kokoro:<voice>" (Kokoro v1.0) or
+//     "local:en:pocket:<voice>" -- offered only when GET /voice/engines lists
+//     it available --, "system" (the browser's English voice, automatic) or
+//     one concrete browser voice "system:<name>" (the best few this browser
+//     has). Unset: Kokoro Heart when the sidecar lists it, else "system".
 // Applies without a reload.
 //
 // commentator: the narrator's persona id (src/commentators.js; default
@@ -39,10 +41,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=c1233d3052";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=c1233d3052";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=c1233d3052";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=c1233d3052";
+import { t } from "./i18n.js?v=39931ef4d0";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=39931ef4d0";
+import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=39931ef4d0";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=39931ef4d0";
 
 const KEY = "nobs.settings";
 
@@ -135,9 +137,13 @@ export function hebrewEngineOptions() {
   return ["system", ...localVoiceIds("he")];
 }
 
-/** The English choices offered here: the system voice, then the available local engines. */
-export function englishEngineOptions() {
-  return ["system", ...localVoiceIds("en")];
+/**
+ * The English choices offered here: the available local engines (Kokoro,
+ * Pocket; the best voices), the automatic browser voice, then the best few
+ * concrete browser voices (src/voiceEngines.js rankedSystemVoices).
+ */
+export function englishEngineOptions(synth = globalThis.speechSynthesis) {
+  return [...localVoiceIds("en"), "system", ...rankedSystemVoices("en", synth).map((v) => v.id)];
 }
 
 /**
@@ -149,8 +155,8 @@ export function voiceEngine(lang = "ru") {
   const base = voiceBaseOf(lang);
   const value = read()[voiceEngineKey(base)];
   if (base === "en") {
-    if (value === "system" || (typeof value === "string" && value.startsWith("local:en:"))) return value;
-    return "system";
+    if (value === "system" || isSystemVoiceId(value) || (typeof value === "string" && value.startsWith("local:en:"))) return value;
+    return defaultEnglishEngine(localVoiceIds("en"));
   }
   if (base === "he") {
     if (value === "system" || (typeof value === "string" && value.startsWith("local:he:"))) return value;
@@ -317,9 +323,14 @@ export function hebrewEngineLabel(id, lang = "en") {
   return engine;
 }
 
-/** An English engine's label: "Browser system voice", "<label> (local)". */
-export function englishEngineLabel(id, lang = "en") {
+/** An English engine's label: "Browser voice (automatic)", "Browser — Samantha (en-US)", "<label> (local)". */
+export function englishEngineLabel(id, lang = "en", synth = globalThis.speechSynthesis) {
   if (id === "system") return t("settings.voiceEngine.en.system", lang);
+  if (isSystemVoiceId(id)) {
+    const name = id.slice("system:".length);
+    const voice = rankedSystemVoices("en", synth, Infinity).find((v) => v.name === name);
+    return t("settings.voiceEngine.en.browser", lang).replace("{name}", name).replace("{lang}", voice?.lang ?? "en");
+  }
   const engine = String(id).replace(/^local:en:/, "");
   const option = localEngines(localVoices, "en").find((o) => o.engine === engine);
   return t("settings.voiceEngine.en.local", lang).replace("{name}", option?.label ?? engine);

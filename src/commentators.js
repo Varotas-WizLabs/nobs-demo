@@ -15,8 +15,8 @@
 // (never taken from the form), crude humour is capped at 2, and nothing in
 // this module turns a guardrail off.
 
-import { labelLanguage, t as tr } from "./i18n.js?v=c1233d3052";
-import { fillVars } from "./stringsCommentators.js?v=c1233d3052";
+import { labelLanguage, t as tr } from "./i18n.js?v=39931ef4d0";
+import { fillVars } from "./stringsCommentators.js?v=39931ef4d0";
 
 /** A label of src/stringsCommentators.js with {placeholders} filled. */
 const msg = (key, vars) => fillVars(tr(`cmui.${key}`, "ru"), vars);
@@ -379,7 +379,7 @@ export function validateProfile(profile, { isNew = false, takenIds = [] } = {}) 
   }
   for (const lang of LANGS) {
     const v = p.voices?.[lang];
-    if (v != null && v !== "" && !/^(piper:[a-z]+|silero|system|local:[a-z]+:[a-z0-9:_-]+)$/.test(String(v))) errors[`voices.${lang}`] = msg("v.unknownVoice");
+    if (v != null && v !== "" && !/^(piper:[a-z]+|silero|system|system:[\p{L}\p{N}_ .,()'+-]{1,100}|local:[a-z]+:[a-z0-9:_-]+)$/u.test(String(v))) errors[`voices.${lang}`] = msg("v.unknownVoice");
   }
   if (!ENTRY_SOUNDS.includes(p.sounds?.entry)) errors["sounds.entry"] = msg("v.unknownSound");
   if (!EXIT_SOUNDS.includes(p.sounds?.exit)) errors["sounds.exit"] = msg("v.unknownSound");
