@@ -9,7 +9,7 @@
 // whether this run is published there and says so if not yet. Inside the
 // demo itself the link is the current page's own address.
 
-import { t } from "./i18n.js?v=46dead620e";
+import { t } from "./i18n.js?v=2a52d7b88c";
 
 export const PUBLIC_PLAYER = "https://varotas-wizlabs.github.io/nobs-demo/player.html";
 

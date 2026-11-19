@@ -5417,3 +5417,19 @@ html.nobs-pseudo-fs-open body {
 }
 .nobs-account-dropdown a:hover,
 .nobs-account-dropdown button:hover { background: var(--nobs-border); }
+
+/* «For nerds» (src/nerdToggle.js): a quiet link-like button that shows the
+   finished run's processing log. */
+.nobs-nerd-toggle {
+  align-self: flex-start;
+  margin: 8px 0 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--nobs-text);
+  opacity: 0.4;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.nobs-nerd-toggle:hover { opacity: 0.8; text-decoration: underline; }

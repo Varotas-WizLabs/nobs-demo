@@ -1,9 +1,9 @@
 // web/src/main.js
-import { withFrames } from "./frames.js?v=46dead620e";
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=46dead620e";
-import { wireFlagIconClick } from "./popup.js?v=46dead620e";
-import { t } from "./i18n.js?v=46dead620e";
-import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=46dead620e";
+import { withFrames } from "./frames.js?v=2a52d7b88c";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=2a52d7b88c";
+import { wireFlagIconClick } from "./popup.js?v=2a52d7b88c";
+import { t } from "./i18n.js?v=2a52d7b88c";
+import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=2a52d7b88c";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 
