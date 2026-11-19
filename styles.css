@@ -5293,3 +5293,17 @@ html.nobs-pseudo-fs-open body {
     height: 40px;
   }
 }
+
+/* Site footer (home page): product name and the privacy policy link. */
+.nobs-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: center;
+  padding: 24px 16px 32px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+.nobs-footer a { color: inherit; }
+.nobs-privacy { max-width: 760px; line-height: 1.55; }
+.nobs-privacy h2 { margin-top: 28px; font-size: 18px; }

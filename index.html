@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=af6df1c5e6"></script>
+    <script src="src/demoShim.js?v=e1e4378fd1"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -16,7 +16,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>душнила AI — разобрать видео</title>
-    <link rel="stylesheet" href="styles.css?v=af6df1c5e6" />
+    <link rel="stylesheet" href="styles.css?v=e1e4378fd1" />
   </head>
   <body>
     <header class="nobs-topbar">
@@ -59,11 +59,15 @@
         <nav id="request-recent" class="nobs-request-recent" hidden></nav>
       </section>
     </main>
+    <footer class="nobs-footer">
+      <span>NobsAI («душнила AI») by WizLabs</span>
+      <a href="privacy.html">Privacy Policy / Политика конфиденциальности</a>
+    </footer>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=af6df1c5e6";
-      import { mountRequestPage, pickLang, renderRecent } from "./src/publicRequest.js?v=af6df1c5e6";
-      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=af6df1c5e6";
+      import { t } from "./src/i18n.js?v=e1e4378fd1";
+      import { mountRequestPage, pickLang, renderRecent } from "./src/publicRequest.js?v=e1e4378fd1";
+      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=e1e4378fd1";
 
       const lang = pickLang(location);
       document.documentElement.lang = lang;

@@ -8,7 +8,7 @@
 // publishable key are ever accepted; anything that does not look like them
 // (a secret key above all) is treated as "no config".
 
-import { ACCOUNTS_CONFIG } from "./config.js?v=af6df1c5e6";
+import { ACCOUNTS_CONFIG } from "./config.js?v=e1e4378fd1";
 
 const URL_RE = /^https:\/\/[a-z0-9]{10,40}\.supabase\.co$/;
 const KEY_RE = /^sb_publishable_[A-Za-z0-9_-]{8,200}$/;
