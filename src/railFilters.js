@@ -10,8 +10,14 @@
 //
 // Top to bottom: green, not checked, not supported, (being checked, failed),
 // yellow, red -- the most serious flag sits at the bottom.
+//
+// `filters` (src/uiConfig.js, the admin's «Фильтры находок»): a verdict the
+// owner turned off gets no circle; its claims are unaffected. "All selected"
+// is then judged over the circles shown, and a hidden verdict is never kept
+// in the selection.
 
-import { t } from "./i18n.js?v=71d330228d";
+import { t } from "./i18n.js?v=0fb3c8f93f";
+import { allowedFlags, filterShown } from "./uiConfig.js?v=0fb3c8f93f";
 
 export const RAIL_ORDER = ["green", "white", "insufficient", "pending", "failed", "yellow", "red"];
 
@@ -20,15 +26,15 @@ export const RAIL_ORDER = ["green", "white", "insufficient", "pending", "failed"
  * `onChange(flags)` gets the new selection (array, empty = all).
  * Returns { root, update(selected) }.
  */
-export function buildRailFilters(doc, { counts = {}, selected = [], lang = "en", onChange = () => {} } = {}) {
+export function buildRailFilters(doc, { counts = {}, selected = [], lang = "en", filters = null, onChange = () => {} } = {}) {
   const root = doc.createElement("div");
   root.className = "nobs-rail-filters";
   root.setAttribute("role", "group");
   root.setAttribute("aria-label", t("rail.filters", lang));
-  let current = new Set(selected);
+  let current = new Set(allowedFlags(filters, selected));
   const buttons = [];
   for (const flag of RAIL_ORDER) {
-    if (!counts[flag]) continue;
+    if (!counts[flag] || !filterShown(filters, flag)) continue;
     const button = doc.createElement("button");
     button.type = "button";
     button.className = "nobs-rail-flag";
@@ -59,7 +65,7 @@ export function buildRailFilters(doc, { counts = {}, selected = [], lang = "en",
   return {
     root,
     update(next) {
-      current = new Set(next ?? []);
+      current = new Set(allowedFlags(filters, next));
       render();
     },
   };

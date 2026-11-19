@@ -13,12 +13,13 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=71d330228d";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=71d330228d";
-import { t } from "./i18n.js?v=71d330228d";
-import { claimState, isUnchecked } from "./progress.js?v=71d330228d";
-import { frameLabels, isScreenClaim, safeThumb, screenLine } from "./frames.js?v=71d330228d";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=71d330228d";
+import { formatTimecode } from "./claimSync.js?v=0fb3c8f93f";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=0fb3c8f93f";
+import { t } from "./i18n.js?v=0fb3c8f93f";
+import { claimState, isUnchecked } from "./progress.js?v=0fb3c8f93f";
+import { frameLabels, isScreenClaim, safeThumb, screenLine } from "./frames.js?v=0fb3c8f93f";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=0fb3c8f93f";
+import { allowedFlags, filterShown } from "./uiConfig.js?v=0fb3c8f93f";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
@@ -48,14 +49,16 @@ function el(doc, tag, className, text) {
  *   onFilterChange gets the claims the filters leave visible (so the
  *   timeline can show only their markers) after every filter change.
  */
-export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting, showTagFilter = () => true, initialFlags = [] }) {
+export function renderClaimList(root, run, { onSelect, onFilterChange, followPlayback: followPlaybackSetting, showTagFilter = () => true, initialFlags = [], filters = null }) {
   const doc = root.ownerDocument;
   const lang = run.caption_language ?? "en";
   const byStart = (a, b) => a.start_sec - b.start_sec || a.end_sec - b.end_sec || (a.id ?? 0) - (b.id ?? 0);
   let claims = [...(run.claims ?? [])].sort(byStart);
   let currentRun = run;
+  // `filters` (src/uiConfig.js, the admin's «Фильтры находок»): a category
+  // the owner turned off has no chip (or no tag row); its claims still show.
   // Verdict filter: several flags at once; empty = all.
-  const flags = new Set(initialFlags);
+  const flags = new Set(allowedFlags(filters, initialFlags));
   let tagFilter = "all";
   // "References to videos": only claims about a discussed video (a toggle,
   // combined with the other filters; shown only when the run has any).
@@ -104,9 +107,9 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     for (const f of [...flags]) if (!counts[f]) flags.delete(f);
     chips.replaceChildren(chipFor("all", t("list.all", lang), claims.length));
     for (const flag of FLAG_ORDER) {
-      if (counts[flag]) chips.appendChild(chipFor(flag, t(`verdict.${flag}`, lang), counts[flag]));
+      if (counts[flag] && filterShown(filters, flag)) chips.appendChild(chipFor(flag, t(`verdict.${flag}`, lang), counts[flag]));
     }
-    refCount = claims.filter(isRef).length;
+    refCount = filterShown(filters, "refs") ? claims.filter(isRef).length : 0;
     if (!refCount) refFilter = false;
     if (refCount) {
       const refChip = el(doc, "button", "nobs-claims-chip nobs-ref-filter", `${t("ref.filter", lang)} ${refCount}`);
@@ -120,7 +123,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
       });
       chips.appendChild(refChip);
     }
-    screenCount = claims.filter(isScreenClaim).length;
+    screenCount = filterShown(filters, "screen") ? claims.filter(isScreenClaim).length : 0;
     if (!screenCount) screenFilter = false;
     if (screenCount) {
       const screenChip = el(doc, "button", "nobs-claims-chip nobs-screen-filter", `${FL.fromScreen} ${screenCount}`);
@@ -144,7 +147,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
   function renderTagRow() {
     const tagOptions = tagFilterOptions(currentRun);
     // The "Подача" (tag) filter row is optional (setting "showTagFilter").
-    if (!(tagOptions.length && showTagFilter())) {
+    if (!(tagOptions.length && showTagFilter() && filterShown(filters, "tags"))) {
       tagChips.remove();
       tagFilter = "all";
     } else {
@@ -506,7 +509,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     /** Select these verdicts (empty = all), as if their chips were pressed. */
     setFlags(list) {
       flags.clear();
-      for (const f of list ?? []) if (FLAG_ORDER.includes(f)) flags.add(f);
+      for (const f of allowedFlags(filters, list)) if (FLAG_ORDER.includes(f)) flags.add(f);
       applyFilter();
     },
     highlight(timeSec) {

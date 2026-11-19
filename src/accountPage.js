@@ -9,13 +9,13 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=71d330228d";
-import { pickLang } from "./publicRequest.js?v=71d330228d";
-import { youtubeVideoId } from "./youtubeId.js?v=71d330228d";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=71d330228d";
-import { loadAccountsConfig } from "./accountsConfig.js?v=71d330228d";
-import { createAccountsClient } from "./accountsClient.js?v=71d330228d";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=71d330228d";
+import { t } from "./i18n.js?v=0fb3c8f93f";
+import { pickLang } from "./publicRequest.js?v=0fb3c8f93f";
+import { youtubeVideoId } from "./youtubeId.js?v=0fb3c8f93f";
+import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=0fb3c8f93f";
+import { loadAccountsConfig } from "./accountsConfig.js?v=0fb3c8f93f";
+import { createAccountsClient } from "./accountsClient.js?v=0fb3c8f93f";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=0fb3c8f93f";
 
 export const DEMO_BASE = "https://varotas-wizlabs.github.io/nobs-demo/";
 export const POLL_ACTIVE_MS = 10000;

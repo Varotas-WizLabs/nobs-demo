@@ -132,6 +132,8 @@
     // No local engines either (Carmit, Pocket): Hebrew uses the browser's voice.
     if (url === "/voice/engines") return Promise.resolve(json({}));
     if (url === "/runs") return dataFetch("data/runs.json");
+    // Which finding filters the player offers, as the owner set them at build time.
+    if (url === "/ui-config") return dataFetch("data/ui-config.json");
     // Every demo run is complete: its status carries the progressive-delivery
     // fields as a finished run has them (files exported before they existed
     // lack them), and its delta never has anything new.
