@@ -14,10 +14,10 @@
 // hypotheses and the audience / agenda / persona map (collapsed), and a
 // totals line (passes, time, cost, models). DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=39931ef4d0";
-import { labelLanguage, t } from "./i18n.js?v=39931ef4d0";
-import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=39931ef4d0";
-import { seekTarget } from "./settings.js?v=39931ef4d0";
+import { formatTimecode } from "./claimSync.js?v=71d330228d";
+import { labelLanguage, t } from "./i18n.js?v=71d330228d";
+import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=71d330228d";
+import { seekTarget } from "./settings.js?v=71d330228d";
 
 /**
  * Play `player` from a scoop anchor at `sec`, the seek lead-in earlier

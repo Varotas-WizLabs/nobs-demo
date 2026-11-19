@@ -4,11 +4,16 @@
 // circle per verdict present in the run. Several can be selected at once,
 // like the chips in the open list (they share one selection). A selected
 // circle is filled with its colour; an unselected one shows only a coloured
-// outline over a muted fill. No selection means "all flags".
+// outline over a muted fill. No selection means "all flags", and then every
+// circle shows as selected: clicking one hides that verdict (the others stay
+// selected); deselecting the last one, or reselecting all, goes back to "all".
+//
+// Top to bottom: green, not checked, not supported, (being checked, failed),
+// yellow, red -- the most serious flag sits at the bottom.
 
-import { t } from "./i18n.js?v=39931ef4d0";
+import { t } from "./i18n.js?v=71d330228d";
 
-export const RAIL_ORDER = ["green", "yellow", "red", "insufficient", "white", "pending", "failed"];
+export const RAIL_ORDER = ["green", "white", "insufficient", "pending", "failed", "yellow", "red"];
 
 /**
  * Build the rail filters. `counts` maps verdict -> number of claims;
@@ -34,8 +39,13 @@ export function buildRailFilters(doc, { counts = {}, selected = [], lang = "en",
     button.title = label;
     button.setAttribute("aria-label", label);
     button.addEventListener("click", () => {
-      if (current.has(flag)) current.delete(flag);
-      else current.add(flag);
+      const present = buttons.map((b) => b.dataset.verdict);
+      // "All" (empty) is shown as every circle selected: start from that.
+      const next = current.size ? new Set(current) : new Set(present);
+      if (next.has(flag)) next.delete(flag);
+      else next.add(flag);
+      const all = next.size === 0 || present.every((f) => next.has(f));
+      current = all ? new Set() : next;
       render();
       onChange([...current]);
     });
@@ -43,7 +53,7 @@ export function buildRailFilters(doc, { counts = {}, selected = [], lang = "en",
     root.appendChild(button);
   }
   function render() {
-    for (const b of buttons) b.setAttribute("aria-pressed", String(current.has(b.dataset.verdict)));
+    for (const b of buttons) b.setAttribute("aria-pressed", String(current.size === 0 || current.has(b.dataset.verdict)));
   }
   render();
   return {
