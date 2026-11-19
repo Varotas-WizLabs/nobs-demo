@@ -2457,9 +2457,15 @@ button.nobs-scoop-verdict:hover {
   letter-spacing: 0.04em;
   transform: translateY(-2px);
 }
+/* The brand word is struck through (a sceptic's mark); hover adds an underline. */
+.nobs-logo-word {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
 .nobs-logo:hover .nobs-logo-word,
 .nobs-logo:focus-visible .nobs-logo-word {
-  text-decoration: underline;
+  text-decoration: line-through underline;
+  text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 
