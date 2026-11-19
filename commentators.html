@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=11dec613b4"></script>
+    <script src="src/demoShim.js?v=6b72ee8b93"></script>
 
+    <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
       try {
@@ -15,23 +16,36 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Skepticum — комментаторы</title>
-    <link rel="stylesheet" href="styles.css?v=11dec613b4" />
+    <title data-i18n="cmui.pageTitle">NOBS — Комментаторы</title>
+    <link rel="stylesheet" href="styles.css?v=6b72ee8b93" />
   </head>
   <body class="nobs-cm-page">
     <header class="nobs-cm-header">
       <a class="nobs-cm-back" href="index.html">← NOBS</a>
-      <h1>Комментаторы</h1>
-      <p class="nobs-cm-lead">
+      <h1 data-i18n="cmui.heading">Комментаторы</h1>
+      <p class="nobs-cm-lead" data-i18n="cmui.lead">
         Кто комментирует флажки в плеере. «Душнила» спокойно пересказывает итог проверки, «Яблогер» — открыто помеченная пародия на хайп-блогера.
         Выбрать комментатора в плеере: двойной клик (или долгое нажатие) по кнопке голоса рядом с громкостью.
       </p>
     </header>
     <main id="commentators"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=11dec613b4";
-      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=11dec613b4";
+      import { applyTheme } from "./src/settings.js?v=6b72ee8b93";
+      import { initUiLang, renderLangSwitch, reloadWithout, translatePage } from "./src/uiLang.js?v=6b72ee8b93";
+      import { t } from "./src/i18n.js?v=6b72ee8b93";
+      import "./src/stringsCommentators.js?v=6b72ee8b93";
+      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=6b72ee8b93";
       applyTheme(document);
+      const lang = initUiLang();
+      translatePage(document, lang);
+      document.title = t("cmui.pageTitle", lang);
+      let store = null;
+      try {
+        store = localStorage;
+      } catch {
+        store = null;
+      }
+      renderLangSwitch(document, document.querySelector(".nobs-cm-header"), { lang, storage: store, reload: () => reloadWithout() });
       mountCommentatorsPage(document.getElementById("commentators"), { fetchImpl: fetch });
     </script>
   </body>

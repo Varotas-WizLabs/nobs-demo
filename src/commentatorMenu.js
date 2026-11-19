@@ -11,8 +11,8 @@
 // menuitemradio entries; arrow keys move, Enter / Space pick, Escape or a
 // click outside closes and gives the focus back to the button.
 
-import { isParody, parodyWord, supportsLang } from "./commentators.js?v=11dec613b4";
-import { t } from "./i18n.js?v=11dec613b4";
+import { isParody, parodyWord, personaName, supportsLang } from "./commentators.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=6b72ee8b93";
 
 export const MANAGE_HREF = "commentators.html";
 
@@ -92,7 +92,7 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
       emoji.textContent = profile.emoji ?? "";
       const name = doc.createElement("span");
       name.className = "nobs-commentator-name";
-      name.textContent = profile.name || profile.id;
+      name.textContent = personaName(profile);
       item.append(mark, emoji, name);
       if (profile.parody || isParody(profile)) {
         const badge = doc.createElement("span");

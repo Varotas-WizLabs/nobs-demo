@@ -351,3 +351,11 @@ a.nobs-trust-name {
 .nobs-trust-chips .nobs-trust-chip {
   white-space: normal;
 }
+
+/* The header's first line: back links on the left, the RU / EN switch on the right. */
+.nobs-src-topline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}

@@ -9,19 +9,28 @@
 // player -- so it works while the video is still loading, or if it never
 // loads. All server-provided text is inserted with textContent.
 
-import { progressLine } from "./progress.js?v=11dec613b4";
-import { formatUsage } from "./runStats.js?v=11dec613b4";
+import { progressLine } from "./progress.js?v=6b72ee8b93";
+import { formatUsage } from "./runStats.js?v=6b72ee8b93";
+import { labelLanguage, t } from "./i18n.js?v=6b72ee8b93";
+import "./stringsPlayer.js?v=6b72ee8b93";
 
-const STAGE_LABELS = {
-  run: "starting",
-  captions: "fetching captions",
-  topics: "segmenting topics",
-  claims: "extracting claims",
-  dedupe: "removing duplicate claims",
-  relations: "checking claims against each other",
-  verify: "verifying claims",
-  save: "saving results",
-};
+// The log's own labels: English, or the interface language when one is chosen.
+const LOG_LANG = "en";
+const STAGES = new Set(["run", "captions", "topics", "claims", "dedupe", "relations", "verify", "save"]);
+
+function stageLabel(stage) {
+  return STAGES.has(stage) ? t(`plr.log.stage.${stage}`, LOG_LANG) : stage;
+}
+
+function completeLabel(n) {
+  let form = n === 1 ? "one" : "many";
+  if (typeof n === "number" && String(labelLanguage(LOG_LANG)).startsWith("ru")) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    form = mod10 === 1 && mod100 !== 11 ? "one" : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "few" : "many";
+  }
+  return t(`plr.log.complete.${form}`, LOG_LANG).replace("{n}", String(n));
+}
 
 const TERMINAL = new Set(["complete", "failed"]);
 
@@ -72,8 +81,8 @@ export function startProcessingLog({ runId, fetchImpl, pollIntervalMs, root, sta
   const summary = el("summary", "nobs-log-summary");
   // The usage line (time, cost, models) stays visible with the panel closed.
   summary.append(
-    el("span", "nobs-log-title", "Processing log"),
-    el("span", "nobs-log-status", "Processing — connecting…"),
+    el("span", "nobs-log-title", t("plr.log.title", LOG_LANG)),
+    el("span", "nobs-log-status", t("plr.log.processing", LOG_LANG).replace("{stage}", t("plr.log.stage.connecting", LOG_LANG))),
     el("span", "nobs-log-usage", ""),
   );
   const list = el("ol", "nobs-log-list");
@@ -125,26 +134,26 @@ export function startProcessingLog({ runId, fetchImpl, pollIntervalMs, root, sta
     usageLine.textContent = formatUsage(status && status.stats);
     if (state === "complete") {
       const n = typeof status.claim_count === "number" ? status.claim_count : "?";
-      statusLine.textContent = `Complete — ${n} claim${n === 1 ? "" : "s"}`;
+      statusLine.textContent = completeLabel(n);
       panel.dataset.state = "complete";
       setOpen(false);
       return;
     }
     if (state === "failed") {
-      statusLine.textContent = `Failed: ${status.error || "unknown error"}`;
+      statusLine.textContent = t("plr.log.failed", LOG_LANG).replace("{error}", status.error || t("plr.log.unknownError", LOG_LANG));
       panel.dataset.state = "failed";
       setOpen(true);
       return;
     }
     panel.dataset.state = state || "pending";
     let label;
-    if (lastStage) label = STAGE_LABELS[lastStage] || lastStage;
-    else label = state === "running" ? "starting" : "queued";
-    let text = `Processing — ${label}`;
+    if (lastStage) label = stageLabel(lastStage) || lastStage;
+    else label = t(state === "running" ? "plr.log.stage.run" : "plr.log.stage.queued", LOG_LANG);
+    let text = t("plr.log.processing", LOG_LANG).replace("{stage}", label);
     const live = progressLine(status, (typeof lang === "function" ? lang() : lang) || "en");
     if (live) text = live;
     const idle = Date.now() - lastEventAt;
-    if (idle >= stallAfterMs) text += ` (no new activity for ${formatAge(idle)})`;
+    if (idle >= stallAfterMs) text += t("plr.log.idle", LOG_LANG).replace("{age}", formatAge(idle));
     statusLine.textContent = text;
   }
 

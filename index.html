@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=11dec613b4"></script>
+    <script src="src/demoShim.js?v=6b72ee8b93"></script>
 
+    <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
       try {
@@ -16,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skepticum — разобрать видео</title>
-    <link rel="stylesheet" href="styles.css?v=11dec613b4" />
+    <link rel="stylesheet" href="styles.css?v=6b72ee8b93" />
   </head>
   <body>
     <header class="nobs-topbar">
@@ -65,10 +66,10 @@
     </footer>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=11dec613b4";
-      import { initUiLang } from "./src/uiLang.js?v=11dec613b4";
-      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=11dec613b4";
-      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=11dec613b4";
+      import { t } from "./src/i18n.js?v=6b72ee8b93";
+      import { initUiLang } from "./src/uiLang.js?v=6b72ee8b93";
+      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=6b72ee8b93";
+      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=6b72ee8b93";
 
       const lang = initUiLang();
       document.title = t("request.pageTitle", lang);

@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=11dec613b4"></script>
+    <script src="src/demoShim.js?v=6b72ee8b93"></script>
 
+    <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
       try {
@@ -17,7 +18,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skepticum</title>
-    <link rel="stylesheet" href="styles.css?v=11dec613b4" />
+    <link rel="stylesheet" href="styles.css?v=6b72ee8b93" />
   </head>
   <body>
     <!-- Brand bar: the «Skepticum» logo, top left. -->
@@ -31,7 +32,7 @@
     </header>
     <div class="nobs-layout">
     <!-- Library (src/library.js): every completed analysis; click to switch. -->
-    <aside id="library" class="nobs-library" aria-label="Analyses"></aside>
+    <aside id="library" class="nobs-library" aria-label="Analyses" data-i18n-aria="plr.aria.library"></aside>
     <main>
       <div id="player-container">
         <div id="player"></div>
@@ -43,10 +44,10 @@
              in styles.css, so it sits over the video and stays visible and
              clickable in fullscreen too. -->
         <div id="overlay-container" class="nobs-overlay" data-mode="processing" data-flag="">
-          <span id="processing-indicator" class="nobs-processing">Processing…</span>
-          <span id="failed-indicator" class="nobs-failed">Analysis failed.</span>
-          <button id="chain-icon" type="button" class="nobs-icon nobs-chain-icon" aria-label="Related claims" style="display: none;"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg></button>
-          <button id="flag-icon" type="button" class="nobs-icon nobs-flag-icon" aria-label="Claim fact-check"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M6 3h2v18H6zm3 1h9l-2 4 2 4H9z"/></svg></button>
+          <span id="processing-indicator" class="nobs-processing" data-i18n="plr.processing">Processing…</span>
+          <span id="failed-indicator" class="nobs-failed" data-i18n="plr.failed">Analysis failed.</span>
+          <button id="chain-icon" type="button" class="nobs-icon nobs-chain-icon" aria-label="Related claims" data-i18n-aria="plr.aria.relatedClaims" style="display: none;"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg></button>
+          <button id="flag-icon" type="button" class="nobs-icon nobs-flag-icon" aria-label="Claim fact-check" data-i18n-aria="plr.aria.flag"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M6 3h2v18H6zm3 1h9l-2 4 2 4H9z"/></svg></button>
         </div>
 
         <div id="popup-container" class="nobs-popup-container"></div>
@@ -54,13 +55,13 @@
 
       <!-- Processing log (src/processingLog.js): outside #player-container so
            it never depends on, or is replaced by, the YouTube player. -->
-      <section id="processing-log" aria-label="Processing log"></section>
+      <section id="processing-log" aria-label="Processing log" data-i18n-aria="plr.aria.log"></section>
     </main>
     <!-- Claim list (src/claimList.js) in a collapsible right-hand panel:
          outside #player-container, so it is hidden in fullscreen; click a row
          to jump there and play. A second tab, «Скупы» (src/scoopList.js),
          appears when the run has a scoop generation. -->
-    <aside id="claims-panel" class="nobs-claims-panel" aria-label="Claims">
+    <aside id="claims-panel" class="nobs-claims-panel" aria-label="Claims" data-i18n-aria="plr.aria.claims">
       <div class="nobs-claims-panel-bar">
         <div class="nobs-panel-tabs" role="tablist" hidden>
           <button type="button" class="nobs-panel-tab" role="tab" id="tab-claims" data-tab="claims" aria-controls="claim-list" aria-selected="true"></button>
@@ -76,35 +77,39 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { initUiLang } from "./src/uiLang.js?v=11dec613b4";
-      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=11dec613b4";
-      import { bootstrapPlayerPage } from "./src/main.js?v=11dec613b4";
-      import { startProcessingLog } from "./src/processingLog.js?v=11dec613b4";
-      import { mountNerdToggle } from "./src/nerdToggle.js?v=11dec613b4";
-      import { startLibrary } from "./src/library.js?v=11dec613b4";
-      import { buildShareControl, isSolo, watchShareUrl } from "./src/share.js?v=11dec613b4";
-      import { renderClaimList } from "./src/claimList.js?v=11dec613b4";
-      import { buildRailFilters } from "./src/railFilters.js?v=11dec613b4";
-      import { verdictKey } from "./src/popup.js?v=11dec613b4";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=11dec613b4";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=11dec613b4";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=11dec613b4";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=11dec613b4";
-      import { t } from "./src/i18n.js?v=11dec613b4";
-      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=11dec613b4";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=11dec613b4";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=11dec613b4";
-      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=11dec613b4";
-      import { createHoldIcon } from "./src/holdIcon.js?v=11dec613b4";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=11dec613b4";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=11dec613b4";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=11dec613b4";
-      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=11dec613b4";
-      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=11dec613b4";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=11dec613b4";
+      import { initUiLang, translatePage } from "./src/uiLang.js?v=6b72ee8b93";
+      import "./src/stringsPlayer.js?v=6b72ee8b93";
+      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=6b72ee8b93";
+      import { bootstrapPlayerPage } from "./src/main.js?v=6b72ee8b93";
+      import { startProcessingLog } from "./src/processingLog.js?v=6b72ee8b93";
+      import { mountNerdToggle } from "./src/nerdToggle.js?v=6b72ee8b93";
+      import { startLibrary } from "./src/library.js?v=6b72ee8b93";
+      import { buildShareControl, isSolo, watchShareUrl } from "./src/share.js?v=6b72ee8b93";
+      import { renderClaimList } from "./src/claimList.js?v=6b72ee8b93";
+      import { buildRailFilters } from "./src/railFilters.js?v=6b72ee8b93";
+      import { verdictKey } from "./src/popup.js?v=6b72ee8b93";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=6b72ee8b93";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=6b72ee8b93";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=6b72ee8b93";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=6b72ee8b93";
+      import { t } from "./src/i18n.js?v=6b72ee8b93";
+      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=6b72ee8b93";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=6b72ee8b93";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=6b72ee8b93";
+      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=6b72ee8b93";
+      import { createHoldIcon } from "./src/holdIcon.js?v=6b72ee8b93";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=6b72ee8b93";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=6b72ee8b93";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=6b72ee8b93";
+      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=6b72ee8b93";
+      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=6b72ee8b93";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=6b72ee8b93";
       // Interface language (RU / EN switch in the top bar): every label follows it;
       // claims and spoken lines stay in the video's language.
-      initUiLang();
+      const uiLang = initUiLang();
+      document.title = t("plr.pageTitle", uiLang);
+      translatePage(document, uiLang);
+      for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", t(el.dataset.i18nAria, uiLang));
       applyTheme(document);
       // A phone or tablet (src/mobile.js): the system voice by default, a
       // longer Piper lead, touch hints; CSS keys the layout on the screen size.
@@ -116,8 +121,8 @@
         const toggle = makePanelToggle(panel, {
           contentId: "claims-panel-content",
           makeIcon: listIcon,
-          showLabel: "Show claims",
-          hideLabel: "Hide claims",
+          showLabel: t("plr.showClaims", uiLang),
+          hideLabel: t("plr.hideClaims", uiLang),
         });
         panel.querySelector(".nobs-claims-panel-bar").appendChild(toggle);
         setCollapsed(panel, true);
@@ -1075,7 +1080,7 @@
         .catch((err) => {
           console.error(err);
           const container = document.getElementById("player-container");
-          container.textContent = "Could not load this video: " + err.message;
+          container.textContent = t("plr.loadFailed", uiLang).replace("{error}", err.message);
         });
     </script>
   <script type="module" src="src/accountMenuBoot.js"></script>

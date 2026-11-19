@@ -10,8 +10,8 @@
 // page; account.html, which does load it, refreshes the session. «Выход»
 // revokes the session on Supabase (best effort) and forgets it locally.
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=11dec613b4";
-import { t } from "./i18n.js?v=11dec613b4";
+import { loadAccountsConfig } from "./accountsConfig.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=6b72ee8b93";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {
@@ -111,7 +111,17 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
   if (session.email) menu.append(el(doc, "div", { class: "nobs-account-dropdown-who" }, session.email));
   const settings = el(doc, "a", { role: "menuitem", href: accountHref }, t("menu.settings", "ru"));
   const exit = el(doc, "button", { type: "button", role: "menuitem" }, t("menu.signOut", "ru"));
-  menu.append(settings, exit);
+  menu.append(settings);
+  // The player's settings dialog (src/settings.js enableMenuSettings).
+  if (doc.documentElement?.dataset.settings === "1") {
+    const prefs = el(doc, "button", { type: "button", role: "menuitem", class: "nobs-account-prefs" }, t("menu.playerSettings", "ru"));
+    prefs.addEventListener("click", () => {
+      close();
+      (doc.defaultView ?? globalThis).dispatchEvent(new Event("nobs:open-settings"));
+    });
+    menu.append(prefs);
+  }
+  menu.append(exit);
 
   const close = () => {
     menu.hidden = true;
@@ -163,5 +173,7 @@ export async function mountAccountMenu({
     if (e.key === storageKeyFor(config.url)) draw();
   });
   globalThis.addEventListener?.("nobs:auth-changed", () => draw());
+  // The page gained its settings entry (src/settings.js enableMenuSettings).
+  globalThis.addEventListener?.("nobs:menu-changed", () => draw());
   return root;
 }

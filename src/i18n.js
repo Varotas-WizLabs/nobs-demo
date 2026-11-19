@@ -372,6 +372,22 @@ const STRINGS = {
     "playlists.linkTitle": "Playlists: videos from a channel or a list of links, a Light / Deep batch queue",
     "menu.settings": "Account settings",
     "menu.signOut": "Sign out",
+    "lib.inFolder": "in the playlist «{title}»",
+    "lib.analysedOf": "{n} of {total} analysed",
+    "lib.show": "Show analyses",
+    "lib.hide": "Hide analyses",
+    "lib.label": "Analyses",
+    "lib.new": "+ New",
+    "lib.request": "+ Analyse a video",
+    "lib.requestTitle": "Analyse a new video (with an invite code)",
+    "lib.playlists": "Playlists",
+    "lib.listLabel": "Completed analyses",
+    "lib.back": "← All analyses",
+    "lib.manage": "Manage the playlist",
+    "lib.folderEmpty": "No finished analyses in this playlist yet",
+    "lib.empty": "No completed analyses yet.",
+    "lib.untitled": "Analysis #{id}",
+    "menu.playerSettings": "Player settings",
     "menu.account": "Account",
     "menu.language": "Interface language",
     "banner.ai": "Analyses are made automatically (AI) and may contain errors; check the sources.",
@@ -848,6 +864,22 @@ const STRINGS = {
     "playlists.linkTitle": "Плейлисты: видео с канала или списком ссылок, пакетная очередь Light / Deep",
     "menu.settings": "Настройки аккаунта",
     "menu.signOut": "Выход",
+    "lib.inFolder": "в папке «{title}»",
+    "lib.analysedOf": "разобрано {n} из {total}",
+    "lib.show": "Показать разборы",
+    "lib.hide": "Скрыть разборы",
+    "lib.label": "Разборы",
+    "lib.new": "+ Новый",
+    "lib.request": "+ Разобрать видео",
+    "lib.requestTitle": "Разобрать новое видео (по коду приглашения)",
+    "lib.playlists": "Плейлисты",
+    "lib.listLabel": "Готовые разборы",
+    "lib.back": "← Все разборы",
+    "lib.manage": "Управлять плейлистом",
+    "lib.folderEmpty": "В этой папке пока нет готовых разборов",
+    "lib.empty": "Разборов пока нет.",
+    "lib.untitled": "Разбор #{id}",
+    "menu.playerSettings": "Настройки плеера",
     "menu.account": "Аккаунт",
     "menu.language": "Язык интерфейса",
     "banner.ai": "Разборы сделаны автоматически (AI) и могут содержать ошибки; проверяйте источники.",
@@ -986,6 +1018,11 @@ function baseLanguage(lang) {
 export const UI_LANGUAGES = ["ru", "en"];
 const SPOKEN = new Set(["voice.notReady"]);
 let interfaceLanguage = null;
+// Chosen before any module ran (src/uiLangEarly.js in <head>).
+{
+  const early = globalThis.document?.documentElement?.dataset?.uiLang;
+  if (UI_LANGUAGES.includes(early)) interfaceLanguage = early;
+}
 
 /** Use `lang` ("ru" / "en") for every label; null goes back to per-call languages. */
 export function setInterfaceLanguage(lang) {
@@ -998,6 +1035,21 @@ export function labelLanguage(lang) {
 }
 
 /** The chosen interface language, or null when none was set. */
+/** Add a page's own labels ({ru: {...}, en: {...}}) to the dictionaries, so
+ * t() and [data-i18n] reach them (src/strings*.js call this on import). */
+export function registerStrings(tables) {
+  for (const [lang, entries] of Object.entries(tables ?? {})) {
+    STRINGS[lang] = { ...(STRINGS[lang] ?? {}), ...entries };
+  }
+}
+
+/** `dict[lang][key]` for a module's own {ru: {...}, en: {...}} labels, in the
+ * interface language when one was chosen; Russian, then the key, as fallback. */
+export function pickLabel(dict, key, lang = "ru") {
+  const base = String(labelLanguage(lang) ?? "ru").split(/[-_]/)[0].toLowerCase();
+  return (dict[base] ?? dict.en ?? dict.ru)?.[key] ?? dict.ru?.[key] ?? key;
+}
+
 export function interfaceLanguageOf() {
   return interfaceLanguage;
 }

@@ -7,8 +7,10 @@
 //
 // The score is shown for reading only: it never decides a verdict.
 
-import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=11dec613b4";
-import { renderTrustRow } from "./trustPage.js?v=11dec613b4";
+import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=6b72ee8b93";
+import { renderTrustRow } from "./trustPage.js?v=6b72ee8b93";
+import { tf, tl, topicLabel } from "./stringsSources.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=6b72ee8b93";
 
 // The weight of a corroboration / contradiction by the evidence behind it
 // (claims about research only; backend nobs.sources.evidence).
@@ -28,31 +30,20 @@ export const EVIDENCE_WEIGHTS = {
   other: 0.8,
 };
 
-export const KIND_LABELS = {
-  primary_document: "первоисточник",
-  official_data: "офиц. данные",
-  peer_reviewed: "научная статья",
-  news: "СМИ",
-  reference: "справочник",
-  other: "прочее",
-  low: "низкое качество",
-};
+export const KINDS = ["primary_document", "official_data", "peer_reviewed", "news", "reference", "other", "low"];
 
-export const CONFIDENCE_LABELS = {
-  insufficient: "мало данных",
-  low: "низкая",
-  medium: "средняя",
-  high: "высокая",
-};
-
-export const ROLE_LABELS = { supports: "подтверждает", refutes: "опровергает", context: "контекст" };
-
-export const STANCE_LABELS = { ...ROLE_LABELS, speaker_source: "источник спикера" };
+// Labels of data values, in the interface language at draw time.
+export const kindLabel = (k) => tl(`srcui.kind.${k}`, k);
+export const confidenceLabel = (k) => tl(`srcui.conf.${k}`, k);
+export const roleLabel = (k) => tl(`srcui.role.${k}`, undefined);
+export const outcomeLabel = (k) => tl(`srcui.outcome.${k}`, k);
+export const flagLabel = (k) => tl(`srcui.flag.${k}`, undefined);
+export const evidenceLabel = (k) => tl(`srcui.evidence.${k}`, EVIDENCE_LABELS[k] ?? k);
 
 function levelsText(counts) {
   const entries = Object.entries(counts ?? {});
   if (!entries.length) return "—";
-  return entries.map(([k, n]) => `${EVIDENCE_LABELS[k] ?? k} ${n}`).join(", ");
+  return entries.map(([k, n]) => `${evidenceLabel(k)} ${n}`).join(", ");
 }
 
 /** The evidence breakdown of a card (nobs.sources.scorecard). */
@@ -60,41 +51,33 @@ export function renderEvidence(doc, card) {
   const bd = card?.evidence_breakdown;
   if (!bd || typeof bd !== "object") return null;
   const box = el(doc, "div", { class: "nobs-src-evidence" });
-  box.append(el(doc, "h3", { text: "Уровень доказательств" }));
+  box.append(el(doc, "h3", { text: t("srcui.ev.title", "ru") }));
   const dl = el(doc, "dl", { class: "nobs-src-counts" });
   const pairs = [
-    ["Сам источник (по использованиям)", levelsText(bd.own)],
-    ["Чем подтверждался", levelsText(bd.corroborated_by)],
-    ["Чем опровергался / искажения", levelsText(bd.contradicted_by)],
-    ["Вес подтверждений / опровержений", `${bd.weight_corroborated ?? 0} / ${bd.weight_contradicted ?? 0}`],
-    ["Живые записи / восстановленные", `${bd.live_uses ?? 0} / ${bd.reconstructed_uses ?? 0}`],
-    ["Использований в научных утверждениях", bd.research_uses ?? 0],
+    [t("srcui.ev.own", "ru"), levelsText(bd.own)],
+    [t("srcui.ev.corroboratedBy", "ru"), levelsText(bd.corroborated_by)],
+    [t("srcui.ev.contradictedBy", "ru"), levelsText(bd.contradicted_by)],
+    [t("srcui.ev.weights", "ru"), `${bd.weight_corroborated ?? 0} / ${bd.weight_contradicted ?? 0}`],
+    [t("srcui.ev.liveReconstructed", "ru"), `${bd.live_uses ?? 0} / ${bd.reconstructed_uses ?? 0}`],
+    [t("srcui.ev.researchUses", "ru"), bd.research_uses ?? 0],
   ];
   for (const [k, v] of pairs) dl.append(el(doc, "dt", { text: k }), el(doc, "dd", { text: String(v) }));
   box.append(dl);
   return box;
 }
 
-export const OUTCOME_LABELS = {
-  corroborated: "подтвердилось",
-  contradicted: "опровергнуто",
-  distorted_original: "искажённый оригинал",
-  corrected_later: "исправлено позже",
-  unchecked: "не проверено",
-};
-
-export const FLAG_LABELS = { green: "верно", yellow: "неточно", red: "неверно", white: "не проверить" };
-
 export const COLUMNS = [
-  { key: "domain", label: "Источник", numeric: false },
-  { key: "kind", label: "Тип", numeric: false },
-  { key: "tier", label: "Уровень", numeric: true },
-  { key: "uses", label: "Использований", numeric: true },
-  { key: "videos", label: "Видео", numeric: true },
-  { key: "score", label: "Оценка", numeric: true },
-  { key: "confidence", label: "Уверенность", numeric: false },
-  { key: "top_topics", label: "Темы", numeric: false, sortable: false },
+  { key: "domain", numeric: false },
+  { key: "kind", numeric: false },
+  { key: "tier", numeric: true },
+  { key: "uses", numeric: true },
+  { key: "videos", numeric: true },
+  { key: "score", numeric: true },
+  { key: "confidence", numeric: false },
+  { key: "top_topics", numeric: false, sortable: false },
 ];
+
+const columnLabel = (col) => t(`srcui.col.${col.key}`, "ru");
 
 const CONFIDENCE_ORDER = { insufficient: 0, low: 1, medium: 2, high: 3 };
 
@@ -144,12 +127,12 @@ function scoreCell(doc, row) {
   fill.style.width = `${Math.max(0, Math.min(100, row.score))}%`;
   bar.append(fill);
   wrap.append(bar);
-  wrap.title = `90% интервал ${Math.round(row.low)}–${Math.round(row.high)}; доказательность ${row.evidence}`;
+  wrap.title = tf("srcui.scoreTitle", { low: Math.round(row.low), high: Math.round(row.high), evidence: row.evidence });
   return wrap;
 }
 
 function topicsText(row) {
-  return (row.top_topics ?? []).map((t) => `${t.label || t.topic} (${t.uses})`).join(", ");
+  return (row.top_topics ?? []).map((tp) => `${topicLabel(tp.topic, tp.label)} (${tp.uses})`).join(", ");
 }
 
 export function renderTable(doc, rows, { sortKey, sortDir, onSort, onPick }) {
@@ -158,12 +141,12 @@ export function renderTable(doc, rows, { sortKey, sortDir, onSort, onPick }) {
   for (const col of COLUMNS) {
     const th = el(doc, "th", { scope: "col", class: col.numeric ? "is-num" : "" });
     if (col.sortable === false) {
-      th.textContent = col.label;
+      th.textContent = columnLabel(col);
     } else {
-      const btn = el(doc, "button", { type: "button", class: "nobs-src-sort", "data-key": col.key, text: col.label });
+      const btn = el(doc, "button", { type: "button", class: "nobs-src-sort", "data-key": col.key, text: columnLabel(col) });
       if (col.key === sortKey) {
         th.setAttribute("aria-sort", sortDir === "asc" ? "ascending" : "descending");
-        btn.textContent = `${col.label} ${sortDir === "asc" ? "↑" : "↓"}`;
+        btn.textContent = `${columnLabel(col)} ${sortDir === "asc" ? "↑" : "↓"}`;
       }
       btn.addEventListener("click", () => onSort(col.key));
       th.append(btn);
@@ -181,12 +164,12 @@ export function renderTable(doc, rows, { sortKey, sortDir, onSort, onPick }) {
     });
     tr.append(
       el(doc, "td", {}, link),
-      el(doc, "td", { text: KIND_LABELS[row.kind] ?? row.kind }),
+      el(doc, "td", { text: kindLabel(row.kind) }),
       el(doc, "td", { class: "is-num", text: row.tier }),
       el(doc, "td", { class: "is-num", text: row.uses }),
       el(doc, "td", { class: "is-num", text: row.videos }),
       el(doc, "td", { class: "is-num" }, scoreCell(doc, row)),
-      el(doc, "td", { class: `nobs-src-conf is-${row.confidence}`, text: CONFIDENCE_LABELS[row.confidence] ?? row.confidence }),
+      el(doc, "td", { class: `nobs-src-conf is-${row.confidence}`, text: confidenceLabel(row.confidence) }),
       el(doc, "td", { class: "nobs-src-topics", text: topicsText(row) }),
     );
     body.append(tr);
@@ -198,35 +181,35 @@ export function renderTable(doc, rows, { sortKey, sortDir, onSort, onPick }) {
 function counts(doc, card) {
   const dl = el(doc, "dl", { class: "nobs-src-counts" });
   const pairs = [
-    ["Использований", card.uses],
-    ["Видео", card.videos],
-    ["Подтверждает / опровергает / контекст", `${card.supports} / ${card.refutes} / ${card.context}`],
-    ["Подтвердилось", card.corroborated],
-    ["Опровергнуто", card.contradicted],
-    ["Искажённый оригинал", card.distorted],
-    ["Исправлено позже", card.corrected],
-    ["Не проверено", card.unchecked],
-    ["Оценка (90% интервал)", `${Math.round(card.score)} (${Math.round(card.low)}–${Math.round(card.high)})`],
-    ["Уверенность", `${CONFIDENCE_LABELS[card.confidence] ?? card.confidence} (доказательность ${card.evidence})`],
-    ["Тренд (последние 10 проверок)", `${card.trend > 0 ? "+" : ""}${card.trend}`],
+    [t("srcui.c.uses", "ru"), card.uses],
+    [t("srcui.c.videos", "ru"), card.videos],
+    [t("srcui.c.roles", "ru"), `${card.supports} / ${card.refutes} / ${card.context}`],
+    [t("srcui.c.corroborated", "ru"), card.corroborated],
+    [t("srcui.c.contradicted", "ru"), card.contradicted],
+    [t("srcui.c.distorted", "ru"), card.distorted],
+    [t("srcui.c.corrected", "ru"), card.corrected],
+    [t("srcui.c.unchecked", "ru"), card.unchecked],
+    [t("srcui.c.score", "ru"), `${Math.round(card.score)} (${Math.round(card.low)}–${Math.round(card.high)})`],
+    [t("srcui.c.confidence", "ru"), tf("srcui.c.confidenceValue", { conf: confidenceLabel(card.confidence), evidence: card.evidence })],
+    [t("srcui.c.trend", "ru"), `${card.trend > 0 ? "+" : ""}${card.trend}`],
   ];
   for (const [k, v] of pairs) dl.append(el(doc, "dt", { text: k }), el(doc, "dd", { text: String(v) }));
   return dl;
 }
 
 export function renderDetail(doc, detail) {
-  const box = el(doc, "section", { class: "nobs-src-detail", "aria-label": `Источник ${detail.source.domain}` });
+  const box = el(doc, "section", { class: "nobs-src-detail", "aria-label": tf("srcui.detail.aria", { domain: detail.source.domain }) });
   const s = detail.source;
   box.append(
     el(doc, "h2", { text: s.domain }),
     el(doc, "p", {
       class: "nobs-src-meta",
       text: [
-        KIND_LABELS[s.kind] ?? s.kind,
-        `уровень ${s.tier}`,
-        s.owner_group ? `владелец: ${s.owner_group}` : null,
-        s.country ? `страна: ${s.country}` : null,
-        s.language ? `язык: ${s.language}` : null,
+        kindLabel(s.kind),
+        tf("srcui.detail.tier", { tier: s.tier }),
+        s.owner_group ? tf("srcui.detail.owner", { v: s.owner_group }) : null,
+        s.country ? tf("srcui.detail.country", { v: s.country }) : null,
+        s.language ? tf("srcui.detail.language", { v: s.language }) : null,
       ]
         .filter(Boolean)
         .join(" · "),
@@ -238,14 +221,14 @@ export function renderDetail(doc, detail) {
     if (ev) box.append(ev);
   }
   if (detail.topics?.length) {
-    box.append(el(doc, "h3", { text: "По темам" }));
-    const t = el(doc, "table", { class: "nobs-src-table nobs-src-topic-table" });
-    t.append(
+    box.append(el(doc, "h3", { text: t("srcui.detail.byTopic", "ru") }));
+    const topicTable = el(doc, "table", { class: "nobs-src-table nobs-src-topic-table" });
+    topicTable.append(
       el(
         doc,
         "thead",
         {},
-        el(doc, "tr", {}, ...["Тема", "Исп.", "Подтв.", "Опров.", "Оценка", "Уверенность"].map((h) => el(doc, "th", { text: h }))),
+        el(doc, "tr", {}, ...["topic", "uses", "corroborated", "contradicted", "score", "confidence"].map((h) => el(doc, "th", { text: t(`srcui.th.${h}`, "ru") }))),
       ),
     );
     const tb = el(doc, "tbody");
@@ -255,19 +238,19 @@ export function renderDetail(doc, detail) {
           doc,
           "tr",
           {},
-          el(doc, "td", { text: c.label || c.topic }),
+          el(doc, "td", { text: topicLabel(c.topic, c.label) }),
           el(doc, "td", { class: "is-num", text: c.uses }),
           el(doc, "td", { class: "is-num", text: c.corroborated }),
           el(doc, "td", { class: "is-num", text: c.contradicted + c.distorted }),
           el(doc, "td", { class: "is-num", text: Math.round(c.score) }),
-          el(doc, "td", { text: CONFIDENCE_LABELS[c.confidence] ?? c.confidence }),
+          el(doc, "td", { text: confidenceLabel(c.confidence) }),
         ),
       );
     }
-    t.append(tb);
-    box.append(t);
+    topicTable.append(tb);
+    box.append(topicTable);
   }
-  box.append(el(doc, "h3", { text: "Что сильнее всего меняло оценку" }));
+  box.append(el(doc, "h3", { text: t("srcui.detail.events", "ru") }));
   if (detail.events?.length) {
     const ul = el(doc, "ul", { class: "nobs-src-events" });
     for (const e of detail.events) {
@@ -275,9 +258,9 @@ export function renderDetail(doc, detail) {
     }
     box.append(ul);
   } else {
-    box.append(el(doc, "p", { class: "nobs-src-muted", text: "Пока ни одной проверенной ссылки: оценка равна исходной для уровня." }));
+    box.append(el(doc, "p", { class: "nobs-src-muted", text: t("srcui.detail.noEvents", "ru") }));
   }
-  box.append(el(doc, "h3", { text: "Последние использования" }));
+  box.append(el(doc, "h3", { text: t("srcui.detail.recentUses", "ru") }));
   const ul = el(doc, "ul", { class: "nobs-src-uses" });
   for (const u of detail.uses ?? []) {
     const li = el(doc, "li", { class: `is-${u.outcome}` });
@@ -288,18 +271,18 @@ export function renderDetail(doc, detail) {
       text: u.claim_text,
     });
     li.append(
-      el(doc, "span", { class: `nobs-src-flag is-${u.flag}`, text: FLAG_LABELS[u.flag] ?? u.flag ?? "" }),
+      el(doc, "span", { class: `nobs-src-flag is-${u.flag}`, text: flagLabel(u.flag) ?? u.flag ?? "" }),
       " ",
       claim,
       el(doc, "div", {
         class: "nobs-src-use-meta",
         text: [
-          `${STANCE_LABELS[u.stance] ?? ROLE_LABELS[u.role] ?? u.role}${u.role_from === "verdict" ? " (по вердикту)" : ""}`,
-          `${OUTCOME_LABELS[u.outcome] ?? u.outcome}${u.support_level ? ` (${EVIDENCE_LABELS[u.support_level] ?? u.support_level})` : ""}`,
-          u.evidence_level ? EVIDENCE_LABELS[u.evidence_level] ?? u.evidence_level : null,
-          u.topic || null,
-          u.reconstructed === 0 ? (u.via === "specialist" ? "запись специалиста" : "живая запись") : null,
-          `прогон ${u.run_id}`,
+          `${roleLabel(u.stance) ?? roleLabel(u.role) ?? u.role}${u.role_from === "verdict" ? t("srcui.use.byVerdict", "ru") : ""}`,
+          `${outcomeLabel(u.outcome)}${u.support_level ? ` (${evidenceLabel(u.support_level)})` : ""}`,
+          u.evidence_level ? evidenceLabel(u.evidence_level) : null,
+          u.topic ? topicLabel(u.topic, u.topic) : null,
+          u.reconstructed === 0 ? (u.via === "specialist" ? t("srcui.use.specialist", "ru") : t("srcui.use.live", "ru")) : null,
+          tf("srcui.use.run", { id: u.run_id }),
         ]
           .filter(Boolean)
           .join(" · "),
@@ -312,15 +295,6 @@ export function renderDetail(doc, detail) {
   box.append(ul);
   return box;
 }
-
-const NOTE =
-  "Оценка — апостериорное Beta-распределение с исходной оценкой по уровню источника (1: 90, 2: 75, 3: 50, 4: 33). " +
-  "Новые проверки записывают все открытые источники с позицией (подтверждает / опровергает / контекст / источник спикера): " +
-  "источник «подтвердился», если то же говорит независимый источник другого владельца; «опровергнут», если более сильный " +
-  "или равный независимый источник говорит обратное; «искажённый оригинал» — если он неверно пересказывает исследование, на которое ссылается. " +
-  "Исходы старых проверок восстановлены эвристикой по итоговому вердикту, поэтому их оценки завышены. " +
-  "В научных утверждениях подтверждение весит по уровню доказательств: обзор/метаанализ 1.5, РКИ 1.3, когортное 1.0, " +
-  "описание случая 0.7, пересказ в СМИ или мнение 0.5, препринт 0.4. Оценка никогда не решает вердикт.";
 
 /**
  * Mount the page. `fetchImpl` answers /sources, /sources/{id} and
@@ -366,17 +340,17 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   };
 
   root.textContent = "";
-  const status = el(doc, "p", { class: "nobs-src-muted", text: "Загрузка…" });
+  const status = el(doc, "p", { class: "nobs-src-muted", text: t("srcui.loading", "ru") });
   root.append(status);
   let data;
   try {
     data = await getJson("/sources?limit=5000");
   } catch (err) {
-    status.textContent = `Не удалось загрузить индекс: ${err?.message ?? err}`;
+    status.textContent = tf("srcui.loadFailed", { err: err?.message ?? err });
     return { state: null };
   }
   if (!data || !Array.isArray(data.sources)) {
-    status.textContent = "Индекс источников пока пуст.";
+    status.textContent = t("srcui.empty", "ru");
     return { state: null };
   }
   status.remove();
@@ -385,18 +359,28 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   root.append(
     el(doc, "p", {
       class: "nobs-src-summary",
-      text: `Источников: ${summary.sources ?? data.sources.length}; использований: ${summary.uses ?? "—"}; с оценкой (достаточно данных): ${summary.scored ?? "—"}${summary.live_uses ? `; живых записей: ${summary.live_uses} (подтвердилось ${summary.live_outcomes?.corroborated ?? 0}, опровергнуто ${summary.live_outcomes?.contradicted ?? 0}, искажений ${summary.live_outcomes?.distorted_original ?? 0})` : ""}${isDemo ? " · снимок для демо" : ""}`,
+      text:
+        tf("srcui.summary", { sources: summary.sources ?? data.sources.length, uses: summary.uses ?? "—", scored: summary.scored ?? "—" }) +
+        (summary.live_uses
+          ? tf("srcui.summaryLive", {
+              live: summary.live_uses,
+              corroborated: summary.live_outcomes?.corroborated ?? 0,
+              contradicted: summary.live_outcomes?.contradicted ?? 0,
+              distorted: summary.live_outcomes?.distorted_original ?? 0,
+            })
+          : "") +
+        (isDemo ? t("srcui.demoSnapshot", "ru") : ""),
     }),
-    el(doc, "p", { class: "nobs-src-note", text: NOTE }),
+    el(doc, "p", { class: "nobs-src-note", text: t("srcui.note", "ru") }),
   );
   const controls = el(doc, "div", { class: "nobs-src-controls" });
-  const search = el(doc, "input", { type: "search", placeholder: "Поиск по домену", "aria-label": "Поиск по домену" });
-  const kind = el(doc, "select", { "aria-label": "Тип" }, el(doc, "option", { value: "", text: "Все типы" }));
-  for (const [k, v] of Object.entries(KIND_LABELS)) kind.append(el(doc, "option", { value: k, text: v }));
-  const tier = el(doc, "select", { "aria-label": "Уровень" }, el(doc, "option", { value: "", text: "Все уровни" }));
-  for (const t of [1, 2, 3, 4]) tier.append(el(doc, "option", { value: String(t), text: `Уровень ${t}` }));
+  const search = el(doc, "input", { type: "search", placeholder: t("srcui.search", "ru"), "aria-label": t("srcui.search", "ru") });
+  const kind = el(doc, "select", { "aria-label": t("srcui.col.kind", "ru") }, el(doc, "option", { value: "", text: t("srcui.allKinds", "ru") }));
+  for (const k of KINDS) kind.append(el(doc, "option", { value: k, text: kindLabel(k) }));
+  const tier = el(doc, "select", { "aria-label": t("srcui.col.tier", "ru") }, el(doc, "option", { value: "", text: t("srcui.allTiers", "ru") }));
+  for (const n of [1, 2, 3, 4]) tier.append(el(doc, "option", { value: String(n), text: tf("srcui.tierN", { n }) }));
   const scored = el(doc, "input", { type: "checkbox", id: "nobs-src-scored" });
-  const scoredLabel = el(doc, "label", { for: "nobs-src-scored" }, scored, " только с оценкой");
+  const scoredLabel = el(doc, "label", { for: "nobs-src-scored" }, scored, t("srcui.scoredOnly", "ru"));
   controls.append(search, kind, tier, scoredLabel);
   const tableWrap = el(doc, "div", { class: "nobs-src-table-wrap" });
   const count = el(doc, "p", { class: "nobs-src-muted" });
@@ -406,12 +390,12 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   const pick = async (id) => {
     state.picked = id;
     detailWrap.textContent = "";
-    detailWrap.append(el(doc, "p", { class: "nobs-src-muted", text: "Загрузка…" }));
+    detailWrap.append(el(doc, "p", { class: "nobs-src-muted", text: t("srcui.loading", "ru") }));
     try {
       const detail = await getJson(`/sources/${id}`);
       detailWrap.textContent = "";
       if (!detail) {
-        detailWrap.append(el(doc, "p", { class: "nobs-src-muted", text: "Подробностей нет в этом снимке." }));
+        detailWrap.append(el(doc, "p", { class: "nobs-src-muted", text: t("srcui.noDetail", "ru") }));
         return;
       }
       const view = renderDetail(doc, detail);
@@ -424,12 +408,12 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
         // the trust signals are optional
       }
     } catch (err) {
-      detailWrap.textContent = `Не удалось загрузить: ${err?.message ?? err}`;
+      detailWrap.textContent = tf("srcui.failed", { err: err?.message ?? err });
     }
   };
   const draw = () => {
     const rows = sortRows(filterRows(data.sources, state), state.sortKey, state.sortDir);
-    count.textContent = `Показано: ${Math.min(rows.length, 1000)} из ${rows.length}`;
+    count.textContent = tf("srcui.shown", { shown: Math.min(rows.length, 1000), total: rows.length });
     tableWrap.textContent = "";
     tableWrap.append(
       renderTable(doc, rows.slice(0, 1000), {
@@ -471,14 +455,14 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
     if (routes?.topics?.length) {
       const sec = el(doc, "section", { class: "nobs-src-routes" });
       sec.append(
-        el(doc, "h2", { text: "Темы утверждений (маршрутизация, теневой режим)" }),
+        el(doc, "h2", { text: t("srcui.routes.title", "ru") }),
         el(doc, "p", {
           class: "nobs-src-muted",
-          text: `Классифицировано утверждений: ${routes.claims}; Jev: $${routes.jev_cost_usd}, в среднем ${routes.jev_latency_ms_avg} мс на утверждение. Проверка пока не использует темы.`,
+          text: tf("srcui.routes.text", { claims: routes.claims, cost: routes.jev_cost_usd, ms: routes.jev_latency_ms_avg }),
         }),
       );
       const ul = el(doc, "ul", { class: "nobs-src-topic-list" });
-      for (const t of routes.topics) ul.append(el(doc, "li", { text: `${t.label}: ${t.claims}` }));
+      for (const tp of routes.topics) ul.append(el(doc, "li", { text: `${topicLabel(tp.id, tp.label)}: ${tp.claims}` }));
       sec.append(ul);
       root.append(sec);
     }

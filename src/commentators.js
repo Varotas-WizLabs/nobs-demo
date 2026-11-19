@@ -15,6 +15,12 @@
 // (never taken from the form), crude humour is capped at 2, and nothing in
 // this module turns a guardrail off.
 
+import { labelLanguage, t as tr } from "./i18n.js?v=6b72ee8b93";
+import { fillVars } from "./stringsCommentators.js?v=6b72ee8b93";
+
+/** A label of src/stringsCommentators.js with {placeholders} filled. */
+const msg = (key, vars) => fillVars(tr(`cmui.${key}`, "ru"), vars);
+
 export const DEFAULT_COMMENTATOR = "dushnila";
 
 // speech_rate 1..5 -> audio playbackRate (pitch preserved). 3 is the old
@@ -191,16 +197,38 @@ export function supportsLang(profile, lang) {
   return langs.includes(code);
 }
 
+// A built-in persona's name / description, shown in the interface language
+// while the owner has not renamed or rewritten it (then theirs is shown).
+function builtinText(profile, field) {
+  const builtin = BUILTINS.find((b) => b.id === profile?.id);
+  if (!builtin || profile[field] !== builtin[field] || labelLanguage("ru") === "ru") return profile?.[field];
+  const key = `cmui.persona.${builtin.id}.${field}`;
+  const text = tr(key, "ru");
+  return text === key ? profile[field] : text;
+}
+
+/** The name shown for a persona (a built-in one in the interface language). */
+export function personaName(profile) {
+  if (!profile) return "";
+  return builtinText(profile, "name") || profile.id || "";
+}
+
+/** The description shown for a persona (a built-in one in the interface language). */
+export function personaDescription(profile) {
+  if (!profile) return "";
+  return builtinText(profile, "description") ?? "";
+}
+
 /** Label of a persona: "📱 Яблогер". */
 export function personaLabel(profile) {
   if (!profile) return "";
-  return [profile.emoji, profile.name || profile.id].filter(Boolean).join(" ");
+  return [profile.emoji, personaName(profile)].filter(Boolean).join(" ");
 }
 
 const PARODY_WORD = { ru: "пародия", he: "פרודיה", en: "parody" };
 /** The word «пародия» in the UI language (ru / he / en). */
 export function parodyWord(lang = "ru") {
-  const base = String(lang ?? "").split(/[-_]/)[0].toLowerCase();
+  const base = String(labelLanguage(lang) ?? "").split(/[-_]/)[0].toLowerCase();
   return PARODY_WORD[base === "iw" ? "he" : base] ?? PARODY_WORD.en;
 }
 
@@ -273,7 +301,7 @@ export function duplicateProfile(profile, takenIds = []) {
   let id = `${stem}-copy`;
   for (let i = 2; taken.has(id); i += 1) id = `${stem}-copy${i}`;
   copy.id = /^[a-z]/.test(id) ? id : `c-${id}`.slice(0, 32);
-  copy.name = `${copy.name || profile?.id || ""} (копия)`.slice(0, LIMITS.name);
+  copy.name = `${copy.name || profile?.id || ""}${msg("copySuffix")}`.slice(0, LIMITS.name);
   copy.built_in = false;
   delete copy.customized;
   return copy;
@@ -290,7 +318,8 @@ function graphemes(text) {
 const inRange = (value, [lo, hi]) => Number.isInteger(Number(value)) && Number(value) >= lo && Number(value) <= hi;
 
 /**
- * Validate a profile as the server does. Returns {field: message} (Russian),
+ * Validate a profile as the server does. Returns {field: message} (in the
+ * interface language, Russian by default),
  * empty when valid. `isNew`: the id is being created (format, reserved and
  * taken ids checked); `takenIds`: ids that exist already.
  */
@@ -298,50 +327,50 @@ export function validateProfile(profile, { isNew = false, takenIds = [] } = {}) 
   const errors = {};
   const p = profile ?? {};
   if (isNew) {
-    if (!ID_PATTERN.test(String(p.id ?? ""))) errors.id = "Латиница в нижнем регистре, цифры и дефис, 2–32 символа, начинается с буквы.";
-    else if (RESERVED_IDS.includes(p.id)) errors.id = "Этот id зарезервирован.";
-    else if (takenIds.includes(p.id)) errors.id = "Такой id уже есть.";
+    if (!ID_PATTERN.test(String(p.id ?? ""))) errors.id = msg("v.idFormat");
+    else if (RESERVED_IDS.includes(p.id)) errors.id = msg("v.idReserved");
+    else if (takenIds.includes(p.id)) errors.id = msg("v.idTaken");
   }
   const name = String(p.name ?? "").trim();
-  if (!name) errors.name = "Нужно имя.";
-  else if (name.length > LIMITS.name) errors.name = `Не длиннее ${LIMITS.name} символов.`;
-  if (graphemes(String(p.emoji ?? "").trim()) !== 1) errors.emoji = "Ровно один эмодзи.";
-  if (!/^#[0-9a-fA-F]{6}$/.test(String(p.color ?? ""))) errors.color = "Цвет в виде #rrggbb.";
-  if (String(p.description ?? "").length > LIMITS.description) errors.description = `Не длиннее ${LIMITS.description} символов.`;
+  if (!name) errors.name = msg("v.nameRequired");
+  else if (name.length > LIMITS.name) errors.name = msg("v.maxChars", { n: LIMITS.name });
+  if (graphemes(String(p.emoji ?? "").trim()) !== 1) errors.emoji = msg("v.emoji");
+  if (!/^#[0-9a-fA-F]{6}$/.test(String(p.color ?? ""))) errors.color = msg("v.color");
+  if (String(p.description ?? "").length > LIMITS.description) errors.description = msg("v.maxChars", { n: LIMITS.description });
   const langs = Array.isArray(p.languages) ? p.languages : [];
-  if (!langs.length || langs.some((l) => !LANGS.includes(l))) errors.languages = "Выберите хотя бы один язык: ru или he.";
-  if (!inRange(p.speech_rate, LIMITS.speech_rate)) errors.speech_rate = "От 1 до 5.";
+  if (!langs.length || langs.some((l) => !LANGS.includes(l))) errors.languages = msg("v.languages");
+  if (!inRange(p.speech_rate, LIMITS.speech_rate)) errors.speech_rate = msg("v.range", { lo: 1, hi: 5 });
   const speed = Number(p.speech_speed);
-  if (p.speech_speed != null && !(Number.isFinite(speed) && speed >= LIMITS.speech_speed[0] && speed <= LIMITS.speech_speed[1])) errors.speech_speed = "От ×0,70 до ×1,60.";
-  if (!inRange(p.complexity, LIMITS.complexity)) errors.complexity = "От 1 до 5.";
+  if (p.speech_speed != null && !(Number.isFinite(speed) && speed >= LIMITS.speech_speed[0] && speed <= LIMITS.speech_speed[1])) errors.speech_speed = msg("v.speed");
+  if (!inRange(p.complexity, LIMITS.complexity)) errors.complexity = msg("v.range", { lo: 1, hi: 5 });
   for (const knob of INTENSITY_KNOBS) {
     const range = knob === "crude" ? LIMITS.crude : LIMITS.intensity;
-    if (!inRange(p.intensity?.[knob], range)) errors[`intensity.${knob}`] = `От ${range[0]} до ${range[1]}.`;
+    if (!inRange(p.intensity?.[knob], range)) errors[`intensity.${knob}`] = msg("v.range", { lo: range[0], hi: range[1] });
   }
   const t = p.triggers ?? {};
   const flags = Array.isArray(t.flags) ? t.flags : [];
-  if (flags.some((f) => !FLAGS.includes(f))) errors["triggers.flags"] = "Неизвестный цвет.";
-  else if (!flags.length && !t.scoops) errors["triggers.flags"] = "Выберите хотя бы один цвет или скупы.";
-  if (!["all", "top_n"].includes(t.frequency)) errors["triggers.frequency"] = "«на каждой метке» или «только N».";
-  if (t.frequency === "top_n" && !inRange(t.top_n, LIMITS.top_n)) errors["triggers.top_n"] = `От ${LIMITS.top_n[0]} до ${LIMITS.top_n[1]}.`;
-  if (!inRange(t.min_gap_sec, LIMITS.min_gap_sec)) errors["triggers.min_gap_sec"] = `От ${LIMITS.min_gap_sec[0]} до ${LIMITS.min_gap_sec[1]} секунд.`;
-  if (!inRange(p.max_words, LIMITS.max_words)) errors.max_words = `От ${LIMITS.max_words[0]} до ${LIMITS.max_words[1]}.`;
+  if (flags.some((f) => !FLAGS.includes(f))) errors["triggers.flags"] = msg("v.unknownFlag");
+  else if (!flags.length && !t.scoops) errors["triggers.flags"] = msg("v.flagsRequired");
+  if (!["all", "top_n"].includes(t.frequency)) errors["triggers.frequency"] = msg("v.frequency");
+  if (t.frequency === "top_n" && !inRange(t.top_n, LIMITS.top_n)) errors["triggers.top_n"] = msg("v.range", { lo: LIMITS.top_n[0], hi: LIMITS.top_n[1] });
+  if (!inRange(t.min_gap_sec, LIMITS.min_gap_sec)) errors["triggers.min_gap_sec"] = msg("v.rangeSeconds", { lo: LIMITS.min_gap_sec[0], hi: LIMITS.min_gap_sec[1] });
+  if (!inRange(p.max_words, LIMITS.max_words)) errors.max_words = msg("v.range", { lo: LIMITS.max_words[0], hi: LIMITS.max_words[1] });
   for (const lang of LANGS) {
     for (const key of OPENER_KEYS) {
       const list = p.openers?.[lang]?.[key] ?? [];
       if (!Array.isArray(list)) continue;
-      if (list.length > LIMITS.openers_per_key) errors[`openers.${lang}.${key}`] = `Не больше ${LIMITS.openers_per_key} фраз.`;
-      else if (list.some((o) => String(o).length > LIMITS.opener)) errors[`openers.${lang}.${key}`] = `Каждая фраза не длиннее ${LIMITS.opener} символов.`;
+      if (list.length > LIMITS.openers_per_key) errors[`openers.${lang}.${key}`] = msg("v.maxOpeners", { n: LIMITS.openers_per_key });
+      else if (list.some((o) => String(o).length > LIMITS.opener)) errors[`openers.${lang}.${key}`] = msg("v.openerLength", { n: LIMITS.opener });
     }
   }
   for (const lang of LANGS) {
     const v = p.voices?.[lang];
-    if (v != null && v !== "" && !/^(piper:[a-z]+|silero|system|local:[a-z]+:[a-z0-9:_-]+)$/.test(String(v))) errors[`voices.${lang}`] = "Неизвестный голос.";
+    if (v != null && v !== "" && !/^(piper:[a-z]+|silero|system|local:[a-z]+:[a-z0-9:_-]+)$/.test(String(v))) errors[`voices.${lang}`] = msg("v.unknownVoice");
   }
-  if (!ENTRY_SOUNDS.includes(p.sounds?.entry)) errors["sounds.entry"] = "Неизвестный звук.";
-  if (!EXIT_SOUNDS.includes(p.sounds?.exit)) errors["sounds.exit"] = "Неизвестный звук.";
-  if (!["generated", "summary"].includes(p.text_mode ?? "generated")) errors.text_mode = "generated или summary.";
-  if (String(p.extra_instructions ?? "").length > LIMITS.extra_instructions) errors.extra_instructions = `Не длиннее ${LIMITS.extra_instructions} символов.`;
+  if (!ENTRY_SOUNDS.includes(p.sounds?.entry)) errors["sounds.entry"] = msg("v.unknownSound");
+  if (!EXIT_SOUNDS.includes(p.sounds?.exit)) errors["sounds.exit"] = msg("v.unknownSound");
+  if (!["generated", "summary"].includes(p.text_mode ?? "generated")) errors.text_mode = msg("v.textMode");
+  if (String(p.extra_instructions ?? "").length > LIMITS.extra_instructions) errors.extra_instructions = msg("v.maxChars", { n: LIMITS.extra_instructions });
   return errors;
 }
 

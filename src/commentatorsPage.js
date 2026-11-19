@@ -30,50 +30,57 @@ import {
   emptyProfile,
   fetchCommentators,
   isParody,
+  parodyWord,
   normalizeProfile,
+  personaDescription,
+  personaName,
   profilePayload,
   validateProfile,
   snapSpeed,
   levelForSpeed,
   rateFor,
   SPEED_STEP,
-} from "./commentators.js?v=11dec613b4";
-import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=11dec613b4";
-import { t } from "./i18n.js?v=11dec613b4";
+} from "./commentators.js?v=6b72ee8b93";
+import { ENGINE_IDS, fetchVoiceEngines, localEngines } from "./voiceEngines.js?v=6b72ee8b93";
+import { labelLanguage, t } from "./i18n.js?v=6b72ee8b93";
+import { fillVars } from "./stringsCommentators.js?v=6b72ee8b93";
 
-const FLAG_LABEL = { red: "🔴 красный (неверно)", yellow: "🟡 жёлтый (неточно)", green: "🟢 зелёный (верно)", white: "⚪ белый (не проверить)", scoop: "🕵️ скуп" };
-const KNOB_LABEL = {
-  exaggeration: "Преувеличивает",
-  humor: "Шутит",
-  slang: "Сыплет сленгом",
-  drama: "Драматизирует",
-  crude: "Грубоват в шутках",
-};
-const COMPLEXITY_HINT = { 1: "совсем просто", 2: "просто", 3: "обычная речь", 4: "с терминами", 5: "академично" };
-const RATE_HINT = { 1: "медленно", 2: "спокойно", 3: "обычно", 4: "быстро", 5: "очень быстро" };
-/** "×1,25 · +25% · быстро" for a speed slider value. */
+// Labels (src/stringsCommentators.js), read at draw time in the interface language.
+const L = (key, vars) => fillVars(t(`cmui.${key}`, "ru"), vars);
+const FLAG_LABEL = (flag) => L(`flag.${flag}`);
+const KNOB_LABEL = (knob) => L(`knob.${knob}`);
+const COMPLEXITY_HINT = (v) => L(`complexity.${v}`);
+const RATE_HINT = (v) => L(`rate.${v}`);
+const LANG_LABEL = (lang) => L(`lang.${lang}`);
+const ENTRY_SOUNDS = ["click", "error_on_red", "error", "none"];
+const EXIT_SOUNDS = ["click", "none"];
+const isEnglish = () => labelLanguage("ru") === "en";
+/** "×1,25 · +25% · быстро" (×1.25 in English) for a speed slider value. */
 function speedLabel(v) {
   const pct = Math.round((v - 1) * 100);
-  const word = RATE_HINT[levelForSpeed(v)];
-  return `×${v.toFixed(2).replace(".", ",")} · ${pct > 0 ? "+" : ""}${pct}% · ${word}`;
+  const word = RATE_HINT(levelForSpeed(v));
+  const num = isEnglish() ? v.toFixed(2) : v.toFixed(2).replace(".", ",");
+  return `×${num} · ${pct > 0 ? "+" : ""}${pct}% · ${word}`;
 }
-const ENTRY_LABEL = { click: "клик пробела", error_on_red: "звук ошибки на красном, иначе клик", error: "звук ошибки всегда", none: "без звука" };
-const EXIT_LABEL = { click: "клик пробела", none: "без звука" };
+/** A manner's name: the server's Russian label, or the English one. */
+function mannerLabel(m) {
+  if (isEnglish()) {
+    const key = `cmui.manner.${m.key}`;
+    const en = t(key, "en");
+    if (en !== key) return en;
+  }
+  return m.label_ru ?? m.key;
+}
+/** "3 комментатора." with the Russian plural. */
+function countLabel(n) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  const form = mod10 === 1 && mod100 !== 11 ? "one" : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "few" : "many";
+  return L(`say.count.${isEnglish() ? (n === 1 ? "one" : "many") : form}`, { n });
+}
 const EMOJI_CHOICES = ["🤓", "📱", "🎙️", "🧐", "😎", "🤡", "📰", "🎓", "🔥", "🦉"];
-const LANG_LABEL = { ru: "русский", he: "иврит" };
 
 export const DEMO_NOTE = "Это публичное демо: профили только для просмотра. Создавать и менять комментаторов можно в локальном приложении.";
-
-const GUARDRAILS_FALLBACK = [
-  "Персона-пародия всегда помечена «пародия» в меню, на кнопке и под знаком паузы.",
-  "Реплики строятся только из материалов этого разбора: утверждение, итог проверки, скупы. Профили спикеров не подаются.",
-  "Нельзя: новые обвинения о реальных людях (преступления, болезни, личная жизнь), мотивы как факт сверх найденного проверкой.",
-  "Нельзя: выпады по этничности, религии, полу, ориентации, инвалидности, национальности, возрасту.",
-  "Нельзя: сексуальные шутки о спикерах. Предел «грубости» — 2: бытовой юмор о ситуации.",
-  "Нельзя: призывы травить, писать, искать кого-либо; адреса, телефоны, аккаунты. К спикеру не обращаются по имени.",
-  "Зелёный флажок нельзя называть ложью; белый — нельзя называть неправдой.",
-  "Пожелания профиля работают только внутри этих правил; спорные строки отсеивает проверка (guard), без замены.",
-].join("\n");
 
 function el(doc, tag, attrs = {}, ...children) {
   const node = doc.createElement(tag);
@@ -91,7 +98,7 @@ function el(doc, tag, attrs = {}, ...children) {
 
 /** The engines offered for a language: [{id, label}] ("" = as in the settings). */
 export function voiceChoices(lang, enginesBody = {}) {
-  const asSettings = { id: "", label: "как в настройках" };
+  const asSettings = { id: "", label: L("voice.asSettings") };
   if (lang === "he") {
     return [asSettings, { id: "system", label: t("settings.voiceEngine.he.system", "ru") }, ...localEngines(enginesBody, "he").map((o) => ({ id: o.id, label: o.label ?? o.id }))];
   }
@@ -157,11 +164,11 @@ export function mountCommentatorsPage(root, {
   const state = { list: [], meta: null, runs: [], engines: {}, editing: null, isNew: false, dirty: false, base: null, preview: null };
   const win = doc.defaultView ?? globalThis;
 
-  const listBox = el(doc, "section", { class: "nobs-cm-list", "aria-label": "Комментаторы" });
+  const listBox = el(doc, "section", { class: "nobs-cm-list", "aria-label": L("listLabel") });
   const formBox = el(doc, "section", { class: "nobs-cm-editor", "aria-live": "polite" });
   const status = el(doc, "p", { class: "nobs-cm-status", role: "status" });
   root.replaceChildren(
-    ...(demo ? [el(doc, "p", { class: "nobs-cm-demo", role: "note", text: DEMO_NOTE })] : []),
+    ...(demo ? [el(doc, "p", { class: "nobs-cm-demo", role: "note", text: L("demoNote") })] : []),
     status,
     el(doc, "div", { class: "nobs-cm-layout" }, listBox, formBox)
   );
@@ -209,21 +216,21 @@ export function mountCommentatorsPage(root, {
   function renderList() {
     const cards = state.list.map((profile) => {
       const badges = el(doc, "span", { class: "nobs-cm-badges" });
-      if (profile.built_in) badges.append(el(doc, "span", { class: "nobs-cm-badge", text: "встроенный" }));
-      if (profile.parody || isParody(profile)) badges.append(el(doc, "span", { class: "nobs-parody-badge", text: "пародия" }));
-      if (profile.customized) badges.append(el(doc, "span", { class: "nobs-cm-badge", text: "изменён" }));
-      if (profile.enabled === false) badges.append(el(doc, "span", { class: "nobs-cm-badge", text: "выключен" }));
+      if (profile.built_in) badges.append(el(doc, "span", { class: "nobs-cm-badge", text: L("badge.builtIn") }));
+      if (profile.parody || isParody(profile)) badges.append(el(doc, "span", { class: "nobs-parody-badge", text: parodyWord("ru") }));
+      if (profile.customized) badges.append(el(doc, "span", { class: "nobs-cm-badge", text: L("badge.customized") }));
+      if (profile.enabled === false) badges.append(el(doc, "span", { class: "nobs-cm-badge", text: L("badge.off") }));
       const actions = el(doc, "div", { class: "nobs-cm-actions" });
       const button = (label, action, cls = "") =>
         el(doc, "button", { type: "button", class: `nobs-cm-button ${cls}`.trim(), text: label, dataset: { action } });
-      actions.append(button(demo ? "Открыть" : "Изменить", "edit"));
+      actions.append(button(demo ? L("open") : L("edit"), "edit"));
       if (!demo) {
-        actions.append(button("Дублировать", "duplicate"));
+        actions.append(button(L("duplicate"), "duplicate"));
         if (profile.built_in) {
-          const reset = button("Сбросить к умолчанию", "reset");
+          const reset = button(L("reset"), "reset");
           reset.disabled = !profile.customized;
           actions.append(reset);
-        } else actions.append(button("Удалить", "delete", "is-danger"));
+        } else actions.append(button(L("delete"), "delete", "is-danger"));
       }
       actions.addEventListener("click", (event) => {
         const action = event.target?.dataset?.action;
@@ -238,8 +245,8 @@ export function mountCommentatorsPage(root, {
       if (!demo) {
         const on = profile.enabled !== false;
         const input = el(doc, "input", { type: "checkbox", role: "switch", checked: on, dataset: { action: "toggle" } });
-        input.setAttribute("aria-label", `${profile.name || profile.id}: ${on ? "включён" : "выключен"}`);
-        toggle = el(doc, "label", { class: "nobs-cm-switch", title: on ? "Включён — выключить" : "Выключен — включить" }, input, el(doc, "span", { class: "nobs-cm-switch-track", "aria-hidden": "true" }), el(doc, "span", { text: on ? "вкл" : "выкл" }));
+        input.setAttribute("aria-label", `${personaName(profile)}: ${on ? L("switch.on") : L("switch.off")}`);
+        toggle = el(doc, "label", { class: "nobs-cm-switch", title: on ? L("switch.onTitle") : L("switch.offTitle") }, input, el(doc, "span", { class: "nobs-cm-switch-track", "aria-hidden": "true" }), el(doc, "span", { text: on ? L("switch.onShort") : L("switch.offShort") }));
         input.addEventListener("change", () => setEnabled(profile, input.checked, input));
       }
       const card = el(
@@ -247,7 +254,7 @@ export function mountCommentatorsPage(root, {
         "article",
         { class: `nobs-cm-card${profile.enabled === false ? " is-off" : ""}`, dataset: { id: profile.id } },
         el(doc, "span", { class: "nobs-cm-emoji", "aria-hidden": "true", text: profile.emoji }),
-        el(doc, "div", { class: "nobs-cm-card-text" }, el(doc, "strong", { text: profile.name || profile.id }), el(doc, "code", { text: profile.id }), badges, profile.description ? el(doc, "small", { text: profile.description }) : null),
+        el(doc, "div", { class: "nobs-cm-card-text" }, el(doc, "strong", { text: personaName(profile) }), el(doc, "code", { text: profile.id }), badges, profile.description ? el(doc, "small", { text: personaDescription(profile) }) : null),
         toggle,
         actions
       );
@@ -255,9 +262,9 @@ export function mountCommentatorsPage(root, {
       if (state.editing && state.editing.id === profile.id && !state.isNew) card.setAttribute("aria-current", "true");
       return card;
     });
-    const header = el(doc, "div", { class: "nobs-cm-list-head" }, el(doc, "h2", { text: "Профили" }));
+    const header = el(doc, "div", { class: "nobs-cm-list-head" }, el(doc, "h2", { text: L("profiles") }));
     if (!demo) {
-      const add = el(doc, "button", { type: "button", class: "nobs-cm-button is-primary nobs-cm-new", text: "+ Новый комментатор" });
+      const add = el(doc, "button", { type: "button", class: "nobs-cm-button is-primary nobs-cm-new", text: L("new") });
       add.addEventListener("click", () => guard(() => edit(emptyProfile(), { isNew: true })));
       header.append(add);
     }
@@ -266,7 +273,7 @@ export function mountCommentatorsPage(root, {
 
   // Leaving unsaved changes asks first.
   function guard(fn) {
-    if (state.dirty && !confirmImpl("Есть несохранённые изменения. Отбросить их?")) return;
+    if (state.dirty && !confirmImpl(L("confirm.discard"))) return;
     state.dirty = false;
     fn();
   }
@@ -307,21 +314,21 @@ export function mountCommentatorsPage(root, {
   function renderForm() {
     const p = state.editing;
     if (!p) {
-      formBox.replaceChildren(el(doc, "p", { class: "nobs-cm-empty", text: demo ? "Выберите комментатора слева, чтобы посмотреть его профиль." : "Выберите комментатора слева или создайте нового." }));
+      formBox.replaceChildren(el(doc, "p", { class: "nobs-cm-empty", text: demo ? L("empty.demo") : L("empty") }));
       return;
     }
     const form = el(doc, "form", { class: "nobs-cm-form", novalidate: true });
-    const title = state.isNew ? "Новый комментатор" : `${p.emoji} ${p.name || p.id}`;
-    const parodyNote = el(doc, "p", { class: "nobs-cm-parody-note", role: "note" }, el(doc, "span", { class: "nobs-parody-badge", text: "пародия" }), " Эта персона будет помечена как пародия: в меню, на кнопке и под знаком паузы, пока она говорит.");
+    const title = state.isNew ? L("newTitle") : `${p.emoji} ${p.name || p.id}`;
+    const parodyNote = el(doc, "p", { class: "nobs-cm-parody-note", role: "note" }, el(doc, "span", { class: "nobs-parody-badge", text: parodyWord("ru") }), L("parodyNote"));
 
     // Who
     const idInput = el(doc, "input", { type: "text", name: "id", value: p.id, maxlength: "32", autocomplete: "off", spellcheck: "false", pattern: "[a-z][a-z0-9-]{1,31}" });
     const idQuestion = state.isNew
-      ? question("Как к нему обращаться в коде?", idInput, "Латиница, цифры и дефис; потом не меняется.")
+      ? question(L("q.id"), idInput, L("q.idHint"))
       : el(doc, "p", { class: "nobs-cm-q" }, el(doc, "span", { class: "nobs-cm-q-label", text: "id" }), el(doc, "code", { text: p.id }));
     const emojiInput = el(doc, "input", { type: "text", name: "emoji", value: p.emoji, maxlength: "16", class: "nobs-cm-emoji-input" });
     const quick = el(doc, "span", { class: "nobs-cm-emoji-quick" }, ...EMOJI_CHOICES.map((e) => {
-      const b = el(doc, "button", { type: "button", class: "nobs-cm-chip", text: e, "aria-label": `значок ${e}` });
+      const b = el(doc, "button", { type: "button", class: "nobs-cm-chip", text: e, "aria-label": L("emojiChip", { emoji: e }) });
       b.addEventListener("click", () => {
         emojiInput.value = e;
         form.dispatchEvent(new win.Event("input", { bubbles: true }));
@@ -329,59 +336,59 @@ export function mountCommentatorsPage(root, {
       return b;
     }));
     const who = fieldset(
-      "Кто он",
+      L("group.who"),
       idQuestion,
-      question("Как его зовут?", el(doc, "input", { type: "text", name: "name", value: p.name, maxlength: String(LIMITS.name) })),
-      question("Его значок?", el(doc, "span", { class: "nobs-cm-row" }, emojiInput, quick), "Один эмодзи.", "emoji"),
-      question("Его цвет в меню?", el(doc, "input", { type: "color", name: "color", value: /^#[0-9a-fA-F]{6}$/.test(p.color) ? p.color : "#8ab4ff" })),
-      question("Кто он, в двух словах?", el(doc, "textarea", { name: "description", rows: "2", maxlength: String(LIMITS.description), text: p.description }), `До ${LIMITS.description} символов; модель видит это как описание роли.`),
+      question(L("q.name"), el(doc, "input", { type: "text", name: "name", value: p.name, maxlength: String(LIMITS.name) })),
+      question(L("q.emoji"), el(doc, "span", { class: "nobs-cm-row" }, emojiInput, quick), L("q.emojiHint"), "emoji"),
+      question(L("q.color"), el(doc, "input", { type: "color", name: "color", value: /^#[0-9a-fA-F]{6}$/.test(p.color) ? p.color : "#8ab4ff" })),
+      question(L("q.description"), el(doc, "textarea", { name: "description", rows: "2", maxlength: String(LIMITS.description), text: p.description }), L("q.descriptionHint", { n: LIMITS.description })),
       question(
-        "На каких языках говорит?",
-        el(doc, "span", { class: "nobs-cm-row" }, ...LANGS.map((lang) => el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: `lang.${lang}`, checked: p.languages.includes(lang) }), ` ${LANG_LABEL[lang]}`))),
-        "На других языках прогона он недоступен (в меню — серым).",
+        L("q.languages"),
+        el(doc, "span", { class: "nobs-cm-row" }, ...LANGS.map((lang) => el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: `lang.${lang}`, checked: p.languages.includes(lang) }), ` ${LANG_LABEL(lang)}`))),
+        L("q.languagesHint"),
         "languages"
       )
     );
 
     // How he speaks
-    const mannerCards = el(doc, "div", { class: "nobs-cm-manners", role: "radiogroup", "aria-label": "Манера речи" }, ...manners().map((m) =>
+    const mannerCards = el(doc, "div", { class: "nobs-cm-manners", role: "radiogroup", "aria-label": L("mannerLabel") }, ...manners().map((m) =>
       el(doc, "label", { class: "nobs-cm-manner" },
         el(doc, "input", { type: "radio", name: "manner", value: m.key, checked: m.key === p.manner }),
-        el(doc, "span", { text: m.label_ru ?? m.key }),
-        m.parody ? el(doc, "span", { class: "nobs-parody-badge", text: "пародия" }) : null)
+        el(doc, "span", { text: mannerLabel(m) }),
+        m.parody ? el(doc, "span", { class: "nobs-parody-badge", text: parodyWord("ru") }) : null)
     ));
     const knobs = INTENSITY_KNOBS.map((knob) => {
       const max = knob === "crude" ? LIMITS.crude[1] : LIMITS.intensity[1];
-      const hint = knob === "crude" ? "Максимум 2: бытовой юмор о ситуации, без пошлостей о людях." : "";
-      return question(`${KNOB_LABEL[knob]}?`, range(`intensity.${knob}`, 0, max, Math.min(p.intensity[knob] ?? 0, max)), hint, `intensity.${knob}`);
+      const hint = knob === "crude" ? L("crudeHint") : "";
+      return question(`${KNOB_LABEL(knob)}?`, range(`intensity.${knob}`, 0, max, Math.min(p.intensity[knob] ?? 0, max)), hint, `intensity.${knob}`);
     });
     const speech = fieldset(
-      "Как говорит",
-      question("Как быстро говорит? (шаг 5%: ×0,70 — медленно … ×1,60 — очень быстро)", range("speech_speed", LIMITS.speech_speed[0], LIMITS.speech_speed[1], rateFor(p), speedLabel, SPEED_STEP), "", "speech_speed"),
-      question("Насколько сложно говорит? (1 — совсем просто … 5 — академично)", range("complexity", 1, 5, p.complexity, (v) => `${v} · ${COMPLEXITY_HINT[v]}`), "", "complexity"),
-      el(doc, "div", { class: "nobs-cm-q" }, el(doc, "span", { class: "nobs-cm-q-label", text: "Какая у него манера речи?" }), mannerCards, el(doc, "small", { class: "nobs-cm-error", dataset: { error: "manner" } })),
-      el(doc, "p", { class: "nobs-cm-sub", text: "Насколько он преувеличивает / шутит / сыплет сленгом / драматизирует (0 — нет, 5 — максимум)?" }),
+      L("group.speech"),
+      question(L("q.speed"), range("speech_speed", LIMITS.speech_speed[0], LIMITS.speech_speed[1], rateFor(p), speedLabel, SPEED_STEP), "", "speech_speed"),
+      question(L("q.complexity"), range("complexity", 1, 5, p.complexity, (v) => `${v} · ${COMPLEXITY_HINT(v)}`), "", "complexity"),
+      el(doc, "div", { class: "nobs-cm-q" }, el(doc, "span", { class: "nobs-cm-q-label", text: L("q.manner") }), mannerCards, el(doc, "small", { class: "nobs-cm-error", dataset: { error: "manner" } })),
+      el(doc, "p", { class: "nobs-cm-sub", text: L("knobsIntro") }),
       ...knobs,
-      question("Сколько слов максимум в реплике?", el(doc, "input", { type: "number", name: "max_words", min: String(LIMITS.max_words[0]), max: String(LIMITS.max_words[1]), value: String(p.max_words) }), `${LIMITS.max_words[0]}–${LIMITS.max_words[1]}.`)
+      question(L("q.maxWords"), el(doc, "input", { type: "number", name: "max_words", min: String(LIMITS.max_words[0]), max: String(LIMITS.max_words[1]), value: String(p.max_words) }), `${LIMITS.max_words[0]}–${LIMITS.max_words[1]}.`)
     );
     if (p.id === DEFAULT_COMMENTATOR) {
-      speech.append(question("Что зачитывает?", el(doc, "select", { name: "text_mode" },
-        el(doc, "option", { value: "generated", text: "сгенерированный текст (фривольный)", selected: p.text_mode !== "summary" }),
-        el(doc, "option", { value: "summary", text: "итог проверки как есть", selected: p.text_mode === "summary" })), "У душнилы это же переключается в настройках плеера."));
+      speech.append(question(L("q.textMode"), el(doc, "select", { name: "text_mode" },
+        el(doc, "option", { value: "generated", text: L("textMode.generated"), selected: p.text_mode !== "summary" }),
+        el(doc, "option", { value: "summary", text: L("textMode.summary"), selected: p.text_mode === "summary" })), L("textModeHint")));
     }
 
     // When he stops
     const freq = p.triggers.frequency === "top_n" ? "top_n" : "all";
     const when = fieldset(
-      "Когда вмешивается",
-      question("Где он останавливает видео?", el(doc, "span", { class: "nobs-cm-row" }, ...FLAGS.map((flag) => el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: `flag.${flag}`, checked: p.triggers.flags.includes(flag) }), ` ${FLAG_LABEL[flag]}`))), "", "triggers.flags"),
-      question("Читает ли он скупы?", el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: "scoops", checked: Boolean(p.triggers.scoops) }), " да, останавливается на показанных скупах"), "Скуп — гипотеза анализа; при низкой уверенности звучит как подозрение.", "scoops"),
+      L("group.when"),
+      question(L("q.flags"), el(doc, "span", { class: "nobs-cm-row" }, ...FLAGS.map((flag) => el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: `flag.${flag}`, checked: p.triggers.flags.includes(flag) }), ` ${FLAG_LABEL(flag)}`))), "", "triggers.flags"),
+      question(L("q.scoops"), el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: "scoops", checked: Boolean(p.triggers.scoops) }), L("scoopsCheck")), L("scoopsHint"), "scoops"),
       el(doc, "div", { class: "nobs-cm-q" },
-        el(doc, "span", { class: "nobs-cm-q-label", text: "Как часто вмешивается?" }),
-        el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "radio", name: "frequency", value: "all", checked: freq === "all" }), " на каждой метке"),
-        el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "radio", name: "frequency", value: "top_n", checked: freq === "top_n" }), " только ", el(doc, "input", { type: "number", name: "top_n", min: "1", max: "50", value: String(p.triggers.top_n ?? 8), class: "nobs-cm-small", "aria-label": "сколько самых важных" }), " самых важных за видео"),
-        el(doc, "label", { class: "nobs-cm-check" }, "не чаще раза в ", el(doc, "input", { type: "number", name: "min_gap_sec", min: "0", max: "600", value: String(p.triggers.min_gap_sec ?? 0), class: "nobs-cm-small", "aria-label": "секунд между остановками" }), " секунд"),
-        el(doc, "small", { class: "nobs-cm-hint", text: "Важность: красный, скуп, жёлтый, белый, зелёный." }),
+        el(doc, "span", { class: "nobs-cm-q-label", text: L("q.frequency") }),
+        el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "radio", name: "frequency", value: "all", checked: freq === "all" }), L("freq.all")),
+        el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "radio", name: "frequency", value: "top_n", checked: freq === "top_n" }), L("freq.onlyBefore"), el(doc, "input", { type: "number", name: "top_n", min: "1", max: "50", value: String(p.triggers.top_n ?? 8), class: "nobs-cm-small", "aria-label": L("freq.topNLabel") }), L("freq.onlyAfter")),
+        el(doc, "label", { class: "nobs-cm-check" }, L("gap.before"), el(doc, "input", { type: "number", name: "min_gap_sec", min: "0", max: "600", value: String(p.triggers.min_gap_sec ?? 0), class: "nobs-cm-small", "aria-label": L("gap.label") }), L("gap.after")),
+        el(doc, "small", { class: "nobs-cm-hint", text: L("priorityHint") }),
         el(doc, "small", { class: "nobs-cm-error", dataset: { error: "triggers.top_n" } }),
         el(doc, "small", { class: "nobs-cm-error", dataset: { error: "triggers.min_gap_sec" } }))
     );
@@ -389,34 +396,34 @@ export function mountCommentatorsPage(root, {
     // Openers, per language and colour
     const openerTabs = el(doc, "div", { class: "nobs-cm-openers" }, ...LANGS.map((lang) =>
       el(doc, "details", { class: "nobs-cm-opener-lang", open: lang === "ru" },
-        el(doc, "summary", { text: LANG_LABEL[lang] }),
-        ...OPENER_KEYS.map((key) => question(FLAG_LABEL[key], el(doc, "textarea", { name: `openers.${lang}.${key}`, rows: "3", dir: lang === "he" ? "rtl" : "auto", text: (p.openers[lang][key] ?? []).join("\n") }), "", `openers.${lang}.${key}`)))
+        el(doc, "summary", { text: LANG_LABEL(lang) }),
+        ...OPENER_KEYS.map((key) => question(FLAG_LABEL(key), el(doc, "textarea", { name: `openers.${lang}.${key}`, rows: "3", dir: lang === "he" ? "rtl" : "auto", text: (p.openers[lang][key] ?? []).join("\n") }), "", `openers.${lang}.${key}`)))
     ));
     const voiceSelect = (lang) =>
       el(doc, "select", { name: `voices.${lang}` }, ...voiceChoices(lang, state.engines).map((o) => el(doc, "option", { value: o.id, text: o.label, selected: (p.voices[lang] ?? "") === o.id })));
     const sound = fieldset(
-      "Голос и звук",
-      question("Его коронные фразы для начала (по одной в строке, по цветам)", openerTabs, "Образцы начала реплики; модель обязана их варьировать. До 8 фраз по 80 символов.", "openers"),
-      ...LANGS.map((lang) => question(`Каким голосом говорит (${LANG_LABEL[lang]})?`, voiceSelect(lang))),
-      question("Какой звук перед репликой?", el(doc, "select", { name: "sounds.entry" }, ...Object.entries(ENTRY_LABEL).map(([v, label]) => el(doc, "option", { value: v, text: label, selected: p.sounds.entry === v })))),
-      question("Какой звук после?", el(doc, "select", { name: "sounds.exit" }, ...Object.entries(EXIT_LABEL).map(([v, label]) => el(doc, "option", { value: v, text: label, selected: p.sounds.exit === v }))))
+      L("group.sound"),
+      question(L("q.openers"), openerTabs, L("q.openersHint"), "openers"),
+      ...LANGS.map((lang) => question(L("q.voice", { lang: LANG_LABEL(lang) }), voiceSelect(lang))),
+      question(L("q.entry"), el(doc, "select", { name: "sounds.entry" }, ...ENTRY_SOUNDS.map((v) => el(doc, "option", { value: v, text: L(`entry.${v}`), selected: p.sounds.entry === v })))),
+      question(L("q.exit"), el(doc, "select", { name: "sounds.exit" }, ...EXIT_SOUNDS.map((v) => el(doc, "option", { value: v, text: L(`exit.${v}`), selected: p.sounds.exit === v }))))
     );
 
     const extra = fieldset(
-      "Ещё",
-      question("Что ещё ему сказать? (работает только внутри правил безопасности ниже)", el(doc, "textarea", { name: "extra_instructions", rows: "3", maxlength: String(LIMITS.extra_instructions), text: p.extra_instructions }), `До ${LIMITS.extra_instructions} символов.`),
-      question("Включён?", el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: "enabled", checked: p.enabled !== false }), " показывать в меню плеера"), "", "enabled")
+      L("group.extra"),
+      question(L("q.extra"), el(doc, "textarea", { name: "extra_instructions", rows: "3", maxlength: String(LIMITS.extra_instructions), text: p.extra_instructions }), L("maxChars", { n: LIMITS.extra_instructions })),
+      question(L("q.enabled"), el(doc, "label", { class: "nobs-cm-check" }, el(doc, "input", { type: "checkbox", name: "enabled", checked: p.enabled !== false }), L("enabledCheck")), "", "enabled")
     );
 
-    const rules = el(doc, "section", { class: "nobs-cm-rules", "aria-label": "Правила безопасности" },
-      el(doc, "h3", { text: "Правила безопасности (не настраиваются)" }),
-      el(doc, "pre", { class: "nobs-cm-rules-text", text: state.meta?.guardrails_text_ru || GUARDRAILS_FALLBACK }));
+    const rules = el(doc, "section", { class: "nobs-cm-rules", "aria-label": L("rulesLabel") },
+      el(doc, "h3", { text: L("rulesTitle") }),
+      el(doc, "pre", { class: "nobs-cm-rules-text", text: isEnglish() ? L("guardrails") : state.meta?.guardrails_text_ru || L("guardrails") }));
 
     const buttons = el(doc, "div", { class: "nobs-cm-form-actions" });
     if (!demo) {
       buttons.append(
-        el(doc, "button", { type: "submit", class: "nobs-cm-button is-primary", text: state.isNew ? "Создать" : "Сохранить" }),
-        el(doc, "button", { type: "button", class: "nobs-cm-button", text: "Отмена", dataset: { action: "cancel" } })
+        el(doc, "button", { type: "submit", class: "nobs-cm-button is-primary", text: state.isNew ? L("create") : L("save") }),
+        el(doc, "button", { type: "button", class: "nobs-cm-button", text: L("cancel"), dataset: { action: "cancel" } })
       );
     }
 
@@ -466,7 +473,7 @@ export function mountCommentatorsPage(root, {
     const draft = readForm(form, state.base);
     const errors = validateProfile(draft, { isNew: state.isNew, takenIds: state.list.map((p) => p.id) });
     if (!showErrors(form, errors)) {
-      say("Проверьте поля, отмеченные красным.", "error");
+      say(L("say.fixFields"), "error");
       form.querySelector(".nobs-cm-error:not(:empty)")?.closest(".nobs-cm-q")?.querySelector("input, textarea, select")?.focus?.();
       return null;
     }
@@ -476,14 +483,14 @@ export function mountCommentatorsPage(root, {
         ? await send("POST", "/commentators", body)
         : await send("PUT", `/commentators/${encodeURIComponent(draft.id)}`, body);
       state.dirty = false;
-      say(state.isNew ? `Создан «${draft.name}».` : `Сохранено: «${draft.name}».`);
+      say(L(state.isNew ? "say.created" : "say.saved", { name: draft.name }));
       await reload();
       const fresh = state.list.find((p) => p.id === draft.id) ?? normalizeProfile(saved ?? draft);
       edit(fresh);
       return fresh;
     } catch (err) {
-      if (err.status === 409) showErrors(form, { id: "Такой id уже есть или зарезервирован." });
-      say(`Не сохранено: ${err.message}`, "error");
+      if (err.status === 409) showErrors(form, { id: L("err.idTaken") });
+      say(L("say.notSaved", { error: err.message }), "error");
       return null;
     }
   }
@@ -493,11 +500,11 @@ export function mountCommentatorsPage(root, {
   async function setEnabled(profile, enabled, input) {
     if (!enabled && !state.list.some((p) => p.id !== profile.id && p.enabled !== false)) {
       if (input) input.checked = true;
-      say("Нельзя выключить всех: хотя бы один комментатор должен остаться включённым.", "error");
+      say(L("say.keepOne"), "error");
       return;
     }
     if (state.dirty && state.editing?.id === profile.id && !state.isNew) {
-      if (!confirmImpl("В форме этого комментатора есть несохранённые изменения. Отбросить их?")) {
+      if (!confirmImpl(L("confirm.discardThis"))) {
         if (input) input.checked = !enabled;
         return;
       }
@@ -506,7 +513,7 @@ export function mountCommentatorsPage(root, {
     if (input) input.disabled = true;
     try {
       await send("PUT", `/commentators/${encodeURIComponent(profile.id)}`, profilePayload({ ...profile, enabled }));
-      say(enabled ? `«${profile.name}» включён.` : `«${profile.name}» выключен: в меню плеера его не будет.`);
+      say(L(enabled ? "say.enabled" : "say.disabled", { name: personaName(profile) }));
       await reload();
       if (state.editing?.id === profile.id && !state.isNew) edit(state.list.find((p) => p.id === profile.id) ?? { ...profile, enabled });
     } catch (err) {
@@ -514,25 +521,25 @@ export function mountCommentatorsPage(root, {
         input.checked = !enabled;
         input.disabled = false;
       }
-      say(`Не сохранено: ${err.message}`, "error");
+      say(L("say.notSaved", { error: err.message }), "error");
     }
   }
 
   async function reset(profile) {
-    if (!confirmImpl(`Вернуть «${profile.name}» к настройкам по умолчанию? Ваши изменения пропадут.`)) return;
+    if (!confirmImpl(L("confirm.reset", { name: personaName(profile) }))) return;
     try {
       await send("POST", `/commentators/${encodeURIComponent(profile.id)}/reset`);
-      say(`«${profile.name}» сброшен к умолчанию.`);
+      say(L("say.reset", { name: personaName(profile) }));
       state.dirty = false;
       await reload();
       if (state.editing?.id === profile.id) edit(state.list.find((p) => p.id === profile.id) ?? profile);
     } catch (err) {
-      say(`Не сброшено: ${err.message}`, "error");
+      say(L("say.notReset", { error: err.message }), "error");
     }
   }
 
   async function remove(profile) {
-    if (!confirmImpl(`Удалить комментатора «${profile.name}»? Его реплики во всех разборах тоже удалятся.`)) return;
+    if (!confirmImpl(L("confirm.delete", { name: personaName(profile) }))) return;
     try {
       await send("DELETE", `/commentators/${encodeURIComponent(profile.id)}`);
       // The player's choice falls back to душнила.
@@ -546,7 +553,7 @@ export function mountCommentatorsPage(root, {
       } catch {
         // storage blocked: the player falls back by itself
       }
-      say(`«${profile.name}» удалён.`);
+      say(L("say.deleted", { name: personaName(profile) }));
       if (state.editing?.id === profile.id) {
         state.editing = null;
         state.dirty = false;
@@ -554,22 +561,22 @@ export function mountCommentatorsPage(root, {
       await reload();
       renderForm();
     } catch (err) {
-      say(`Не удалено: ${err.message}`, "error");
+      say(L("say.notDeleted", { error: err.message }), "error");
     }
   }
 
   // ---- Preview ----
   function previewSection() {
-    const runSelect = el(doc, "select", { name: "preview.run", "aria-label": "Разбор для примера" },
+    const runSelect = el(doc, "select", { name: "preview.run", "aria-label": L("preview.runLabel") },
       ...state.runs.map((run) => el(doc, "option", { value: String(run.run_id), text: `#${run.run_id} · ${run.title || run.video_id || ""} (${run.caption_language ?? "?"})` })));
-    const itemInput = el(doc, "input", { type: "text", name: "preview.item", placeholder: "c:123 или s:9 — необязательно", class: "nobs-cm-small-wide", "aria-label": "Утверждение или скуп" });
-    const go = el(doc, "button", { type: "button", class: "nobs-cm-button", text: "Сгенерировать пример", dataset: { action: "preview" } });
+    const itemInput = el(doc, "input", { type: "text", name: "preview.item", placeholder: L("preview.itemPlaceholder"), class: "nobs-cm-small-wide", "aria-label": L("preview.itemLabel") });
+    const go = el(doc, "button", { type: "button", class: "nobs-cm-button", text: L("preview.go"), dataset: { action: "preview" } });
     const out = el(doc, "div", { class: "nobs-cm-preview-out", "aria-live": "polite" });
     go.disabled = !state.runs.length;
     go.addEventListener("click", () => preview(runSelect.value, itemInput.value, out, go));
-    return el(doc, "section", { class: "nobs-cm-preview", "aria-label": "Превью" },
-      el(doc, "h3", { text: "Превью" }),
-      el(doc, "p", { class: "nobs-cm-hint", text: "Одна реплика текущего черновика для готового разбора. Ничего не сохраняется; занимает 10–30 секунд." }),
+    return el(doc, "section", { class: "nobs-cm-preview", "aria-label": L("preview.label") },
+      el(doc, "h3", { text: L("preview.label") }),
+      el(doc, "p", { class: "nobs-cm-hint", text: L("preview.hint") }),
       el(doc, "div", { class: "nobs-cm-row" }, runSelect, itemInput, go),
       out);
   }
@@ -580,32 +587,32 @@ export function mountCommentatorsPage(root, {
     const errors = validateProfile(draft, { isNew: false });
     delete errors.id;
     if (!showErrors(form, errors)) {
-      say("Сначала исправьте поля, отмеченные красным.", "error");
+      say(L("say.fixFirst"), "error");
       return null;
     }
     const body = { run_id: Number(runId), profile: profilePayload({ ...draft, id: draft.id || "draft" }) };
     const ref = String(itemRef ?? "").trim().match(/^([cs]):(\d+)$/);
     if (ref) body[ref[1] === "c" ? "claim_id" : "scoop_id"] = Number(ref[2]);
     go.disabled = true;
-    out.replaceChildren(el(doc, "p", { class: "nobs-cm-spinner", text: "Генерируем пример…" }));
+    out.replaceChildren(el(doc, "p", { class: "nobs-cm-spinner", text: L("preview.generating") }));
     const id = state.isNew || !draft.id ? encodeURIComponent(draft.id || "draft") : encodeURIComponent(draft.id);
     try {
       const result = await send("POST", `/commentators/${id}/preview`, body);
       state.preview = result;
       const ok = result?.guard?.ok !== false;
-      const play = el(doc, "button", { type: "button", class: "nobs-cm-button", text: "▶ Прослушать" });
+      const play = el(doc, "button", { type: "button", class: "nobs-cm-button", text: L("preview.listen") });
       play.addEventListener("click", () => (listen ?? defaultListen)(result, draft, runLang(runId)));
       out.replaceChildren(
         el(doc, "p", { class: "nobs-cm-preview-meta" },
           el(doc, "span", { class: `nobs-cm-guard ${ok ? "is-ok" : "is-bad"}`, text: ok ? "guard ✓" : `guard ✗ ${result?.guard?.rule ?? ""}` }),
-          ` ${result?.kind === "scoop" ? `скуп ${result.scoop_id}` : `утверждение ${result?.claim_id ?? ""}`}`,
-          draft.parody ? el(doc, "span", { class: "nobs-parody-badge", text: "пародия" }) : null),
+          ` ${result?.kind === "scoop" ? L("preview.scoop", { id: result.scoop_id }) : L("preview.claim", { id: result?.claim_id ?? "" })}`,
+          draft.parody ? el(doc, "span", { class: "nobs-parody-badge", text: parodyWord("ru") }) : null),
         el(doc, "blockquote", { class: "nobs-cm-preview-text", text: result?.text ?? "" }),
         play
       );
       return result;
     } catch (err) {
-      const message = err.status === 422 ? `Проверка отклонила реплику: ${err.message}` : err.status === 409 ? "Уже идёт другой пример, подождите." : `Не получилось: ${err.message}`;
+      const message = err.status === 422 ? L("preview.rejected", { error: err.message }) : err.status === 409 ? L("preview.busy") : L("preview.failed", { error: err.message });
       out.replaceChildren(el(doc, "p", { class: "nobs-cm-guard is-bad", text: message }));
       return null;
     } finally {
@@ -620,9 +627,9 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=11dec613b4");
-    const engines = await import("./voiceEngines.js?v=11dec613b4");
-    const settings = await import("./settings.js?v=11dec613b4");
+    const voice = await import("./voice.js?v=6b72ee8b93");
+    const engines = await import("./voiceEngines.js?v=6b72ee8b93");
+    const settings = await import("./settings.js?v=6b72ee8b93");
     const text = String(result?.text ?? "");
     if (!text) return;
     const flags = lang === "he"
@@ -632,7 +639,7 @@ export function mountCommentatorsPage(root, {
     const own = draft.voices?.[lang];
     const id = own && engines.resolveEngineId(own, flags, lang) === own ? own : engines.resolveEngineId(settings.voiceEngine(lang), flags, lang);
     if (!id) {
-      say("Нет голоса для этого языка в браузере.", "error");
+      say(L("say.noVoice"), "error");
       return;
     }
     const rate = rateFor(draft);
@@ -669,7 +676,7 @@ export function mountCommentatorsPage(root, {
   });
 
   const ready = (async () => {
-    say("Загружаем…");
+    say(L("say.loading"));
     const [meta, runs, engines] = await Promise.all([
       getJson("/commentators/meta", null),
       demo ? Promise.resolve({ runs: [] }) : getJson("/runs", { runs: [] }),
@@ -680,7 +687,7 @@ export function mountCommentatorsPage(root, {
     state.engines = engines ?? {};
     await reload();
     renderForm();
-    say(demo ? "" : `${state.list.length} комментатор(ов).`);
+    say(demo ? "" : countLabel(state.list.length));
   })();
 
   return {

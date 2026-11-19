@@ -13,34 +13,13 @@
 // moves, capped; popularity never counts as reliability; disagreement is
 // flagged and widens the prior; verdicts are never touched.
 
-export const KIND_LABELS = {
-  internal: "Наши данные",
-  free_list: "Бесплатные списки",
-  free_api: "Бесплатные API (по запросу)",
-  keyed_api: "Нужен ключ",
-  paid: "Платные",
-};
+import { t } from "./i18n.js?v=6b72ee8b93";
+import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=6b72ee8b93";
 
-export const STATUS_LABELS = {
-  active: "активен",
-  needs_key: "нужен ключ",
-  candidate: "кандидат",
-  paid_not_subscribed: "платный — нет подписки",
-  disabled: "отключён",
-};
-
-export const MEASURE_LABELS = {
-  reliability: "надёжность",
-  misinformation_flag: "флаг дезинформации",
-  popularity: "популярность (не надёжность)",
-  domain_age: "возраст домена",
-  fact_checks: "фактчеки",
-  safety: "безопасность (фишинг, вредоносное ПО)",
-  scholarly_index: "научный индекс",
-  retraction: "отзыв статей",
-  bias: "политический крен (не надёжность)",
-  traffic_seo: "трафик / SEO (не надёжность)",
-};
+// Labels of data values, in the interface language at draw time.
+export const kindLabel = (k) => tl(`trustui.kind.${k}`, k);
+export const statusLabel = (k) => tl(`trustui.status.${k}`, k);
+export const measureLabel = (k) => tl(`trustui.measure.${k}`, k);
 
 // Short names for the compact chips of the sources page.
 export const SHORT_NAMES = {
@@ -56,17 +35,10 @@ export const SHORT_NAMES = {
 
 const KIND_ORDER = ["internal", "free_list", "free_api", "keyed_api", "paid"];
 
-export const RULES = [
-  "Каждый коннектор показан отдельной строкой; ничего не сливается молча.",
-  "Внешние коннекторы по умолчанию НЕ влияют на оценку — только после включения здесь.",
-  "Включённые коннекторы сдвигают только исходную оценку (приор) источника, но не вердикт утверждения.",
-  "Вклад ограничен: все внешние вместе — не больше силы исходной оценки уровня, одно суждение — не больше трети приора; наши собственные проверки быстро перевешивают.",
-  "Коннекторы, несущие одно и то же суждение (Iffy и Lin 2023 оба включают MBFC), делят одну треть на двоих — одно мнение не входит дважды.",
-  "Включённый коннектор действует, только пока он активен: если синхронизацию заблокировали или пропал ключ, он перестаёт влиять на оценку.",
-  "Популярность (Tranco) никогда не считается надёжностью: она может только ослабить приор для неизвестных доменов, не сдвигая среднее.",
-  "Если рейтинги внешних коннекторов расходятся (разброс ≥ 0.4), домен помечается, а их вклад уменьшается вдвое. Расхождение с нашей собственной оценкой только помечается и в приор не идёт.",
-  "Одинаковые правила для всех доменов; отсутствие в «чёрном списке» не считается плюсом; «нет данных» — это не середина.",
-];
+/** The anti-bias rules shown on the page. */
+export function rules() {
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => t(`trustui.rule.${n}`, "ru"));
+}
 
 function el(doc, tag, attrs = {}, ...children) {
   const node = doc.createElement(tag);
@@ -111,9 +83,9 @@ export function renderConnector(doc, c, { editable = false, onChange, onSync } =
   const head = el(doc, "div", { class: "nobs-trust-card-head" });
   const href = safeHref(c.url);
   head.append(
-    href ? el(doc, "a", { class: "nobs-trust-name", href, target: "_blank", rel: "noopener noreferrer", text: c.name }) : el(doc, "span", { class: "nobs-trust-name", text: c.name }),
-    el(doc, "span", { class: `nobs-trust-chip is-${c.status}`, text: STATUS_LABELS[c.status] ?? c.status }),
-    el(doc, "span", { class: `nobs-trust-chip is-measure${c.in_prior ? "" : " is-faint"}`, text: MEASURE_LABELS[c.measures] ?? c.measures }),
+    href ? el(doc, "a", { class: "nobs-trust-name", href, target: "_blank", rel: "noopener noreferrer", text: connText(c, "name") }) : el(doc, "span", { class: "nobs-trust-name", text: connText(c, "name") }),
+    el(doc, "span", { class: `nobs-trust-chip is-${c.status}`, text: statusLabel(c.status) }),
+    el(doc, "span", { class: `nobs-trust-chip is-measure${c.in_prior ? "" : " is-faint"}`, text: measureLabel(c.measures) }),
   );
   if (c.kind !== "internal") {
     const on = Boolean(c.enabled);
@@ -121,27 +93,37 @@ export function renderConnector(doc, c, { editable = false, onChange, onSync } =
     const counts = on && c.in_effect !== false;
     head.append(el(doc, "span", {
       class: `nobs-trust-chip ${counts ? "is-on" : "is-off"}`,
-      text: counts ? `влияет на приор, вес ${Number(c.weight).toFixed(2)}` : on ? "включён, но не действует: коннектор не активен" : "не влияет на оценку",
+      text: counts ? tf("trustui.inPrior", { w: Number(c.weight).toFixed(2) }) : on ? t("trustui.onNotInEffect", "ru") : t("trustui.notInScore", "ru"),
     }));
   }
   card.append(head);
   const dl = el(doc, "dl", { class: "nobs-src-counts nobs-trust-facts" });
   const sync = c.sync;
   const pairs = [
-    ["Покрытие", c.coverage],
-    ["Доменов в базе", c.kind === "internal" ? `${c.domains} источников с оценкой` : c.domains ? `${c.domains}${c.registry_hits != null ? ` (из них наших источников: ${c.registry_hits})` : ""}` : "—"],
-    ["Последняя синхронизация", sync ? `${fmtDate(sync.synced_at)}${sync.status && sync.status !== "ok" ? ` — ${sync.status}: ${sync.message ?? ""}` : ""}` : c.syncable ? "ещё не синхронизирован" : "—"],
-    ["Чьё суждение", c.judgement],
-    ["Известные перекосы", c.bias],
-    ["Лицензия", c.license],
-    ["Атрибуция", c.attribution],
-    ["Обновление", c.cadence],
+    [t("trustui.f.coverage", "ru"), connText(c, "coverage")],
+    [
+      t("trustui.f.domains", "ru"),
+      c.kind === "internal"
+        ? tf("trustui.f.domainsInternal", { n: c.domains })
+        : c.domains
+          ? `${c.domains}${c.registry_hits != null ? tf("trustui.f.registryHits", { n: c.registry_hits }) : ""}`
+          : "—",
+    ],
+    [t("trustui.f.lastSync", "ru"), sync ? `${fmtDate(sync.synced_at)}${sync.status && sync.status !== "ok" ? ` — ${sync.status}: ${sync.message ?? ""}` : ""}` : c.syncable ? t("trustui.f.neverSynced", "ru") : "—"],
+    [t("trustui.f.judgement", "ru"), connText(c, "judgement")],
+    [t("trustui.f.bias", "ru"), connText(c, "bias")],
+    [t("trustui.f.license", "ru"), connText(c, "license")],
+    [t("trustui.f.attribution", "ru"), connText(c, "attribution")],
+    [t("trustui.f.cadence", "ru"), connText(c, "cadence")],
   ];
   if (c.key_env?.length) {
-    pairs.push(["Ключ (.env)", `${c.key_env.join(" или ")}${c.key_present === true ? " — задан" : c.key_present === false ? " — не задан" : ""}`]);
+    pairs.push([
+      t("trustui.f.key", "ru"),
+      `${c.key_env.join(t("trustui.f.keyOr", "ru"))}${c.key_present === true ? t("trustui.f.keySet", "ru") : c.key_present === false ? t("trustui.f.keyUnset", "ru") : ""}`,
+    ]);
   }
-  if (c.would_add) pairs.push(["Что добавит", c.would_add]);
-  if (c.notes) pairs.push(["Заметка", c.notes]);
+  if (c.would_add) pairs.push([t("trustui.f.wouldAdd", "ru"), connText(c, "would_add")]);
+  if (c.notes) pairs.push([t("trustui.f.notes", "ru"), connText(c, "notes")]);
   for (const [k, v] of pairs) if (v) dl.append(el(doc, "dt", { text: k }), el(doc, "dd", { text: String(v) }));
   card.append(dl);
 
@@ -150,21 +132,21 @@ export function renderConnector(doc, c, { editable = false, onChange, onSync } =
     if (c.can_enable) {
       const id = `nobs-trust-en-${c.id}`;
       const box = el(doc, "input", { type: "checkbox", id, name: "enabled", checked: Boolean(c.enabled), disabled: !canToggle(c) });
-      const label = el(doc, "label", { for: id }, box, " влияет на оценку (приор)");
-      const range = el(doc, "input", { type: "range", min: "0", max: "1", step: "0.05", value: String(c.weight ?? 0.5), name: "weight", "aria-label": `Вес: ${c.name}` });
+      const label = el(doc, "label", { for: id }, box, t("trustui.toggle", "ru"));
+      const range = el(doc, "input", { type: "range", min: "0", max: "1", step: "0.05", value: String(c.weight ?? 0.5), name: "weight", "aria-label": tf("trustui.weightAria", { name: connText(c, "name") }) });
       const out = el(doc, "output", { text: Number(c.weight ?? 0.5).toFixed(2) });
       range.addEventListener("input", () => {
         out.textContent = Number(range.value).toFixed(2);
       });
       range.addEventListener("change", () => onChange?.(c.id, { weight: Number(range.value) }));
       box.addEventListener("change", () => onChange?.(c.id, { enabled: box.checked }));
-      controls.append(label, el(doc, "span", { class: "nobs-trust-weight" }, "вес ", range, " ", out));
-      if (!canToggle(c)) controls.append(el(doc, "small", { class: "nobs-src-muted", text: "Включить можно только активный коннектор." }));
+      controls.append(label, el(doc, "span", { class: "nobs-trust-weight" }, t("trustui.weight", "ru"), range, " ", out));
+      if (!canToggle(c)) controls.append(el(doc, "small", { class: "nobs-src-muted", text: t("trustui.onlyActive", "ru") }));
     } else {
-      controls.append(el(doc, "small", { class: "nobs-src-muted", text: c.in_prior ? "" : "Не влияет на оценку надёжности по своей природе — только показ." }));
+      controls.append(el(doc, "small", { class: "nobs-src-muted", text: c.in_prior ? "" : t("trustui.displayOnly", "ru") }));
     }
     if (c.syncable) {
-      const btn = el(doc, "button", { type: "button", class: "nobs-trust-sync", text: "Синхронизировать" });
+      const btn = el(doc, "button", { type: "button", class: "nobs-trust-sync", text: t("trustui.sync", "ru") });
       btn.addEventListener("click", () => onSync?.(c.id, btn));
       controls.append(btn);
     }
@@ -193,35 +175,43 @@ export function outliers(view) {
 
 /** The per-domain view: every connector side by side + the prior. */
 export function renderLookup(doc, view, { editable = false, onLazy } = {}) {
-  const box = el(doc, "section", { class: "nobs-trust-lookup-result", "aria-label": `Сигналы для ${view.domain}` });
+  const box = el(doc, "section", { class: "nobs-trust-lookup-result", "aria-label": tf("trustui.lookupAria", { domain: view.domain }) });
   box.append(el(doc, "h3", { text: view.domain }));
   if (view.disagreement) {
     // "halved": the external connectors that count disagree among
     // themselves; a split only against our own score is shown, never applied.
-    const tail = view.prior?.halved ? " Внешний вклад в приор уменьшен вдвое." : "";
-    box.append(el(doc, "p", { class: "nobs-trust-disagree", role: "note", text: `Рейтинги расходятся (разброс ${view.span}).${tail}` }));
+    const tail = view.prior?.halved ? t("trustui.halved", "ru") : "";
+    box.append(el(doc, "p", { class: "nobs-trust-disagree", role: "note", text: `${tf("trustui.disagree", { span: view.span })}${tail}` }));
   }
   const odd = outliers(view);
   const table = el(doc, "table", { class: "nobs-src-table nobs-trust-table" });
-  table.append(el(doc, "thead", {}, el(doc, "tr", {}, ...["Коннектор", "Что измеряет", "Значение", "Норм. 0–1", "В оценке", ""].map((h) => el(doc, "th", { text: h })))));
+  table.append(el(doc, "thead", {}, el(doc, "tr", {}, ...["connector", "measures", "value", "norm", "inScore", ""].map((h) => el(doc, "th", { text: h ? t(`trustui.th.${h}`, "ru") : "" })))));
   const tb = el(doc, "tbody");
   for (const r of view.rows ?? []) {
     const sig = r.signal;
     const tr = el(doc, "tr", { class: `${sig ? "" : "is-empty"}${odd.has(r.connector) ? " is-outlier" : ""}`.trim() || null, "data-connector": r.connector });
     const link = sig && safeHref(sig.url);
     const action = el(doc, "td");
-    if (link) action.append(el(doc, "a", { href: link, target: "_blank", rel: "noopener noreferrer", text: "источник" }));
+    if (link) action.append(el(doc, "a", { href: link, target: "_blank", rel: "noopener noreferrer", text: t("trustui.source", "ru") }));
     if (editable && r.connector === "wayback_age" && onLazy) {
-      const b = el(doc, "button", { type: "button", class: "nobs-trust-lazy", text: sig ? "обновить" : "проверить" });
+      const b = el(doc, "button", { type: "button", class: "nobs-trust-lazy", text: sig ? t("trustui.refresh", "ru") : t("trustui.check", "ru") });
       b.addEventListener("click", () => onLazy(r.connector, view.domain, b));
       action.append(" ", b);
     }
     tr.append(
-      el(doc, "td", { text: r.name }),
-      el(doc, "td", { text: MEASURE_LABELS[r.measures] ?? r.measures }),
-      el(doc, "td", { text: sig ? sig.label : r.status === "needs_key" ? "нужен ключ" : "нет данных" }),
+      el(doc, "td", { text: connText(r, "name") }),
+      el(doc, "td", { text: measureLabel(r.measures) }),
+      el(doc, "td", { text: sig ? signalLabel(sig.label) : r.status === "needs_key" ? t("trustui.needsKey", "ru") : t("trustui.noData", "ru") }),
       el(doc, "td", { class: "is-num", text: sig && typeof sig.norm === "number" ? sig.norm.toFixed(2) : "—" }),
-      el(doc, "td", { text: r.kind === "internal" ? "это и есть оценка" : !r.in_prior ? "нет (по природе)" : r.enabled ? `да, вес ${Number(r.weight).toFixed(2)}` : "нет (выключен)" }),
+      el(doc, "td", { text:
+          r.kind === "internal"
+            ? t("trustui.isTheScore", "ru")
+            : !r.in_prior
+              ? t("trustui.noByNature", "ru")
+              : r.enabled
+                ? tf("trustui.yesWeight", { w: Number(r.weight).toFixed(2) })
+                : t("trustui.noOff", "ru"),
+      }),
       action,
     );
     tb.append(tr);
@@ -231,12 +221,12 @@ export function renderLookup(doc, view, { editable = false, onLazy } = {}) {
   const p = view.prior;
   if (p) {
     const parts = (p.parts ?? []).filter((x) => x.pseudo > 0);
-    const lines = [`Исходная оценка уровня ${p.tier}: ${p.tier_mean} → с включёнными коннекторами: ${p.mean}${p.changed ? "" : " (без изменений)"}`];
-    for (const x of parts) lines.push(`${x.connector}: значение ${x.norm.toFixed(2)}, ${x.pseudo} псевдонаблюдений, доля приора ${Math.round(x.share * 100)}%`);
-    if (p.popularity_scaled) lines.push("Нет в Tranco top-1M: сила приора ×0.75 (среднее не меняется).");
+    const lines = [`${tf("trustui.prior.tier", { tier: p.tier, tierMean: p.tier_mean, mean: p.mean })}${p.changed ? "" : t("trustui.prior.unchanged", "ru")}`];
+    for (const x of parts) lines.push(tf("trustui.prior.part", { connector: x.connector, norm: x.norm.toFixed(2), pseudo: x.pseudo, share: Math.round(x.share * 100) }));
+    if (p.popularity_scaled) lines.push(t("trustui.prior.popularity", "ru"));
     const ul = el(doc, "ul", { class: "nobs-trust-prior" });
     for (const l of lines) ul.append(el(doc, "li", { text: l }));
-    box.append(el(doc, "h4", { text: "Приор оценки этого домена" }), ul);
+    box.append(el(doc, "h4", { text: t("trustui.prior.title", "ru") }), ul);
   }
   return box;
 }
@@ -245,20 +235,20 @@ export function renderLookup(doc, view, { editable = false, onLazy } = {}) {
 export function renderTrustRow(doc, entry) {
   if (!entry) return null;
   const box = el(doc, "div", { class: "nobs-trust-row" });
-  box.append(el(doc, "h3", {}, "Сигналы доверия ", el(doc, "a", { href: "trust.html", class: "nobs-trust-more", text: "(все коннекторы)" })));
+  box.append(el(doc, "h3", {}, t("trustui.row.title", "ru"), el(doc, "a", { href: "trust.html", class: "nobs-trust-more", text: t("trustui.row.more", "ru") })));
   const signals = (entry.signals ?? []).filter((s) => s.connector !== "nobs_registry");
   if (!signals.length) {
-    box.append(el(doc, "p", { class: "nobs-src-muted", text: "Внешних данных об этом домене нет (это не середина шкалы, а «не знаем»)." }));
+    box.append(el(doc, "p", { class: "nobs-src-muted", text: t("trustui.row.none", "ru") }));
     return box;
   }
   const ul = el(doc, "ul", { class: "nobs-trust-chips" });
   for (const s of signals) {
-    const li = el(doc, "li", { class: `nobs-trust-chip${s.enabled ? " is-on" : ""}`, title: `${MEASURE_LABELS[s.measures] ?? s.measures}${s.enabled ? " · влияет на приор" : " · не влияет на оценку"}` });
-    li.append(el(doc, "b", { text: SHORT_NAMES[s.connector] ?? s.name }), `: ${s.label}`);
+    const li = el(doc, "li", { class: `nobs-trust-chip${s.enabled ? " is-on" : ""}`, title: `${measureLabel(s.measures)}${s.enabled ? t("trustui.row.inPrior", "ru") : t("trustui.row.notInScore", "ru")}` });
+    li.append(el(doc, "b", { text: SHORT_NAMES[s.connector] ?? connText(s, "name") }), `: ${signalLabel(s.label)}`);
     ul.append(li);
   }
   box.append(ul);
-  if (entry.disagreement) box.append(el(doc, "p", { class: "nobs-trust-disagree", text: `Рейтинги расходятся (разброс ${entry.span}).` }));
+  if (entry.disagreement) box.append(el(doc, "p", { class: "nobs-trust-disagree", text: tf("trustui.disagree", { span: entry.span }) }));
   return box;
 }
 
@@ -299,59 +289,59 @@ export async function mountTrustPage(root, { fetchImpl = globalThis.fetch, demo 
   };
 
   root.textContent = "";
-  const status = el(doc, "p", { class: "nobs-src-muted", text: "Загрузка…" });
+  const status = el(doc, "p", { class: "nobs-src-muted", text: t("trustui.loading", "ru") });
   root.append(status);
   let data;
   try {
     data = await getJson("/trust/connectors");
   } catch (err) {
-    status.textContent = `Не удалось загрузить коннекторы: ${err?.message ?? err}`;
+    status.textContent = tf("trustui.loadFailed", { err: err?.message ?? err });
     return { state: null };
   }
   if (data?.unavailable) {
     // build_demo.py could not export the snapshot (server without /trust).
-    status.textContent = "В этой сборке демо снимка сигналов доверия нет.";
+    status.textContent = t("trustui.unavailable", "ru");
     return { state: null };
   }
   status.remove();
   const summaryEl = el(doc, "p", { class: "nobs-src-summary" });
   const message = el(doc, "p", { class: "nobs-trust-message", role: "status", "aria-live": "polite" });
-  const rules = el(doc, "ul", { class: "nobs-src-note nobs-trust-rules" });
-  for (const r of RULES) rules.append(el(doc, "li", { text: r }));
+  const rulesList = el(doc, "ul", { class: "nobs-src-note nobs-trust-rules" });
+  for (const r of rules()) rulesList.append(el(doc, "li", { text: r }));
 
   // The domain lookup box.
   const lookupSec = el(doc, "section", { class: "nobs-trust-lookup" });
   const form = el(doc, "form", { class: "nobs-src-controls", role: "search" });
-  const input = el(doc, "input", { type: "search", placeholder: "Домен, например meduza.io", "aria-label": "Домен", name: "domain", list: isDemo ? "nobs-trust-domains" : null });
-  const go = el(doc, "button", { type: "submit", text: "Показать сигналы" });
+  const input = el(doc, "input", { type: "search", placeholder: t("trustui.domainPlaceholder", "ru"), "aria-label": t("trustui.domainAria", "ru"), name: "domain", list: isDemo ? "nobs-trust-domains" : null });
+  const go = el(doc, "button", { type: "submit", text: t("trustui.show", "ru") });
   form.append(input, go);
   const result = el(doc, "div", { class: "nobs-trust-lookup-wrap" });
-  lookupSec.append(el(doc, "h2", { text: "Сигналы для домена" }), form);
+  lookupSec.append(el(doc, "h2", { text: t("trustui.lookupTitle", "ru") }), form);
   if (isDemo) {
     const dl = el(doc, "datalist", { id: "nobs-trust-domains" });
     for (const d of Object.keys((await loadSnapshot()).lookups ?? {}).sort()) dl.append(el(doc, "option", { value: d }));
-    lookupSec.append(dl, el(doc, "p", { class: "nobs-src-muted", text: "В демо — только домены из индекса источников этого снимка." }));
+    lookupSec.append(dl, el(doc, "p", { class: "nobs-src-muted", text: t("trustui.demoDomains", "ru") }));
   }
   lookupSec.append(result);
 
   const list = el(doc, "div", { class: "nobs-trust-list" });
-  root.append(summaryEl, el(doc, "h2", { text: "Правила против перекоса" }), rules, message, lookupSec, el(doc, "h2", { text: "Коннекторы" }), list);
+  root.append(summaryEl, el(doc, "h2", { text: t("trustui.rulesTitle", "ru") }), rulesList, message, lookupSec, el(doc, "h2", { text: t("trustui.connectors", "ru") }), list);
 
   const showLookup = async (domain) => {
     const d = String(domain ?? "").trim();
     if (!d) return;
     result.textContent = "";
-    result.append(el(doc, "p", { class: "nobs-src-muted", text: "Загрузка…" }));
+    result.append(el(doc, "p", { class: "nobs-src-muted", text: t("trustui.loading", "ru") }));
     try {
       const view = await getJson(`/trust/lookup?domain=${encodeURIComponent(d)}`);
       result.textContent = "";
       if (!view) {
-        result.append(el(doc, "p", { class: "nobs-src-muted", text: isDemo ? "Этого домена нет в снимке демо." : "Это не похоже на домен." }));
+        result.append(el(doc, "p", { class: "nobs-src-muted", text: isDemo ? t("trustui.notInDemo", "ru") : t("trustui.notDomain", "ru") }));
         return;
       }
       result.append(renderLookup(doc, view, { editable: !isDemo, onLazy: lazy }));
     } catch (err) {
-      result.textContent = `Не удалось: ${err?.message ?? err}`;
+      result.textContent = tf("trustui.failed", { err: err?.message ?? err });
     }
   };
   const lazy = async (cid, domain, btn) => {
@@ -360,7 +350,7 @@ export async function mountTrustPage(root, { fetchImpl = globalThis.fetch, demo 
       await send(`/trust/lookup/${encodeURIComponent(cid)}?domain=${encodeURIComponent(domain)}`, "POST");
       await showLookup(domain);
     } catch (err) {
-      message.textContent = `Запрос не удался: ${err?.message ?? err}`;
+      message.textContent = tf("trustui.requestFailed", { err: err?.message ?? err });
       btn.disabled = false;
     }
   };
@@ -373,13 +363,20 @@ export async function mountTrustPage(root, { fetchImpl = globalThis.fetch, demo 
     const s = data.summary ?? {};
     const by = s.by_status ?? {};
     summaryEl.textContent =
-      `Коннекторов: ${s.connectors ?? data.connectors?.length ?? 0} — активных ${by.active ?? 0}, нужен ключ ${by.needs_key ?? 0}, кандидатов ${by.candidate ?? 0}, платных без подписки ${by.paid_not_subscribed ?? 0}` +
-      `${by.disabled ? `, отключённых ${by.disabled}` : ""}; сигналов в базе: ${s.signals ?? "—"}; влияют на оценку: ${s.enabled?.length ? s.enabled.join(", ") : "ни один (по умолчанию)"}` +
-      `${isDemo ? " · снимок для демо, только чтение" : ""}`;
+      tf("trustui.summary", {
+        n: s.connectors ?? data.connectors?.length ?? 0,
+        active: by.active ?? 0,
+        needsKey: by.needs_key ?? 0,
+        candidate: by.candidate ?? 0,
+        paid: by.paid_not_subscribed ?? 0,
+      }) +
+      (by.disabled ? tf("trustui.summaryDisabled", { n: by.disabled }) : "") +
+      tf("trustui.summarySignals", { signals: s.signals ?? "—", enabled: s.enabled?.length ? s.enabled.join(", ") : t("trustui.noneDefault", "ru") }) +
+      (isDemo ? t("trustui.demoReadOnly", "ru") : "");
     list.textContent = "";
     for (const [kind, items] of groupByKind(data.connectors)) {
       const sec = el(doc, "section", { class: "nobs-trust-group" });
-      sec.append(el(doc, "h3", { text: KIND_LABELS[kind] ?? kind }));
+      sec.append(el(doc, "h3", { text: kindLabel(kind) }));
       for (const c of items) sec.append(renderConnector(doc, c, { editable: !isDemo, onChange: change, onSync: sync }));
       list.append(sec);
     }
@@ -389,23 +386,23 @@ export async function mountTrustPage(root, { fetchImpl = globalThis.fetch, demo 
     draw();
   };
   const change = async (cid, patch) => {
-    message.textContent = "Сохраняю и пересчитываю оценки…";
+    message.textContent = t("trustui.saving", "ru");
     try {
       const r = await send(`/trust/connectors/${encodeURIComponent(cid)}`, "PUT", patch);
-      message.textContent = `Сохранено. Пересчитано источников: ${r.rescored?.sources ?? "—"}, с изменённым приором: ${r.rescored?.external_priors ?? 0}.`;
+      message.textContent = tf("trustui.saved", { sources: r.rescored?.sources ?? "—", priors: r.rescored?.external_priors ?? 0 });
     } catch (err) {
-      message.textContent = `Не сохранено: ${err?.message ?? err}`;
+      message.textContent = tf("trustui.notSaved", { err: err?.message ?? err });
     }
     await reload().catch(() => {});
   };
   const sync = async (cid, btn) => {
     btn.disabled = true;
-    message.textContent = `Синхронизация ${cid}…`;
+    message.textContent = tf("trustui.syncing", { id: cid });
     try {
       const r = await send(`/trust/connectors/${encodeURIComponent(cid)}/sync`, "POST");
-      message.textContent = r.status === "ok" ? `Готово: ${r.domains} доменов.` : `Не удалось (${r.status}): ${r.message ?? ""}`;
+      message.textContent = r.status === "ok" ? tf("trustui.syncDone", { n: r.domains }) : tf("trustui.syncFailed", { status: r.status, message: r.message ?? "" });
     } catch (err) {
-      message.textContent = `Не удалось: ${err?.message ?? err}`;
+      message.textContent = tf("trustui.failed", { err: err?.message ?? err });
     }
     await reload().catch(() => {});
   };

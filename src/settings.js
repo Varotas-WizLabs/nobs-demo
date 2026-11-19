@@ -36,10 +36,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=11dec613b4";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=11dec613b4";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=11dec613b4";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=11dec613b4";
+import { t } from "./i18n.js?v=6b72ee8b93";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=6b72ee8b93";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=6b72ee8b93";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=6b72ee8b93";
 
 const KEY = "nobs.settings";
 
@@ -355,21 +355,26 @@ export function buildSettingsButton(doc, getLang = () => doc.body?.dataset.lang 
 }
 
 /**
- * A shared `?solo=1` page has no analyses panel (and so no gear there): put
- * the gear into the right panel's button bar, after share / download when
- * they are there, else before the panel toggle. Idempotent: call again after
- * share / download were (re)built to keep the gear next to them.
+ * Settings live in the account menu under the user's picture (src/accountMenu.js):
+ * signed in, it shows «Settings»; signed out there is no entry. This marks the
+ * page as having settings and opens the dialog on the menu's request
+ * (event nobs:open-settings). Idempotent.
  */
-export function mountPanelSettings(bar, doc = bar.ownerDocument, getLang) {
-  let gear = bar.querySelector(":scope > .nobs-settings-button");
-  if (!gear) gear = buildSettingsButton(doc, getLang);
-  const anchor = bar.querySelector(":scope > .nobs-share") ?? bar.querySelector(":scope > .nobs-export");
-  if (anchor) anchor.after(gear);
-  else {
-    const toggle = [...bar.children].reverse().find((el) => el !== gear && el.classList.contains("nobs-side-toggle"));
-    bar.insertBefore(gear, toggle ?? null);
+export function enableMenuSettings(doc = globalThis.document, getLang = () => doc.body?.dataset.lang || "en") {
+  const root = doc?.documentElement;
+  if (!root) return;
+  const win = doc.defaultView ?? globalThis;
+  if (root.dataset.settings !== "1") {
+    root.dataset.settings = "1";
+    win.addEventListener?.("nobs:open-settings", () => openSettingsDialog(doc, getLang()));
   }
-  return gear;
+  win.dispatchEvent?.(new Event("nobs:menu-changed"));
+}
+
+/** Former gear of the right panel bar: settings are in the account menu now. */
+export function mountPanelSettings(bar, doc = bar?.ownerDocument, getLang) {
+  enableMenuSettings(doc ?? globalThis.document, getLang);
+  return null;
 }
 
 /**

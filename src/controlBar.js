@@ -1,10 +1,11 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=11dec613b4";
-import { t } from "./i18n.js?v=11dec613b4";
-import { claimState, isUnchecked } from "./progress.js?v=11dec613b4";
-import { canFullscreen } from "./mobile.js?v=11dec613b4";
+import { seekTarget } from "./settings.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=6b72ee8b93";
+import "./stringsPlayer.js?v=6b72ee8b93";
+import { claimState, isUnchecked } from "./progress.js?v=6b72ee8b93";
+import { canFullscreen } from "./mobile.js?v=6b72ee8b93";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -93,7 +94,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
   function setPlayerState(state) {
     const active = state === PLAYER_STATE.PLAYING || state === PLAYER_STATE.BUFFERING;
     playPause.innerHTML = active ? ICONS.pause : ICONS.play;
-    playPause.setAttribute("aria-label", active ? "Pause" : "Play");
+    playPause.setAttribute("aria-label", t(active ? "plr.ctl.pause" : "plr.ctl.play", "en"));
     updateProgress();
   }
   playPause.addEventListener("click", () => {
@@ -111,7 +112,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
   seekBar.step = "1";
   seekBar.value = "0";
   seekBar.className = "nobs-seek-bar";
-  seekBar.setAttribute("aria-label", "Seek");
+  seekBar.setAttribute("aria-label", t("plr.ctl.seek", "en"));
 
   // Playback time next to the timeline: "12:34 / 41:20".
   const time = document.createElement("span");
@@ -361,7 +362,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
   volume.value = String(player.getVolume());
   volume.className = "nobs-volume";
   volume.setAttribute("orient", "vertical");
-  volume.setAttribute("aria-label", "Volume");
+  volume.setAttribute("aria-label", t("plr.ctl.volume", "en"));
   volume.setAttribute("aria-orientation", "vertical");
   const volumeWrap = document.createElement("div");
   volumeWrap.className = "nobs-volume-wrap";
@@ -373,7 +374,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
     mutedNow = muted;
     const silent = muted || Number(volume.value) === 0;
     mute.innerHTML = silent ? ICONS.muted : ICONS.volume;
-    mute.setAttribute("aria-label", silent ? "Volume (muted)" : "Volume");
+    mute.setAttribute("aria-label", t(silent ? "plr.ctl.volumeMuted" : "plr.ctl.volume", "en"));
   }
   function setPopOpen(open) {
     volumePop.hidden = !open;
@@ -513,7 +514,7 @@ export function buildControlBar(player, container, { onVoiceToggle, onVoiceMenu,
 
   const fullscreen = makeButton("nobs-fullscreen");
   fullscreen.innerHTML = ICONS.fullscreen;
-  fullscreen.setAttribute("aria-label", "Fullscreen");
+  fullscreen.setAttribute("aria-label", t("plr.ctl.fullscreen", "en"));
   // No Fullscreen API for a div (iPhone Safari): the container fills the
   // window instead ("nobs-pseudo-fs", styles.css); the same button or
   // Escape leaves it.

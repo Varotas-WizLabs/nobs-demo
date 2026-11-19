@@ -11,7 +11,8 @@
 //   shows: engine chosen / used, Piper model state, browser voices, autoplay,
 //   commentator and its lines, last error.
 
-import { DEFAULT_COMMENTATOR, isParody, resolvePersona } from "./commentators.js?v=11dec613b4";
+import { DEFAULT_COMMENTATOR, isParody, resolvePersona } from "./commentators.js?v=6b72ee8b93";
+import { labelLanguage } from "./i18n.js?v=6b72ee8b93";
 
 /** A persona that speaks only generated lines (a parody). */
 export function needsLines(profile) {
@@ -55,7 +56,9 @@ function pct(x) {
  * persona, chosenPersona, lines (number|null), personaFallback, lang}.
  */
 export function voiceStatusLines(info, lang = "ru") {
-  const ru = lang !== "en" && lang !== "he";
+  // Shown on screen: the interface language when one is chosen.
+  const shown = labelLanguage(lang);
+  const ru = shown !== "en" && shown !== "he";
   const L = (r, e) => (ru ? r : e);
   const d = info?.diag ?? {};
   const yes = (v) => (v == null ? "?" : v ? L("да", "yes") : L("нет", "no"));

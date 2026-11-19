@@ -16,11 +16,12 @@
 // is flat. This module knows only the source and the parameter; the
 // management links come from the source (pageHref, manage_href).
 
-import { formatCost, formatDuration } from "./runStats.js?v=11dec613b4";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=11dec613b4";
-import { buildSettingsButton } from "./settings.js?v=11dec613b4";
-import { buildEffortBadge } from "./effort.js?v=11dec613b4";
-import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=11dec613b4";
+import { formatCost, formatDuration } from "./runStats.js?v=6b72ee8b93";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=6b72ee8b93";
+import { enableMenuSettings } from "./settings.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=6b72ee8b93";
+import { buildEffortBadge } from "./effort.js?v=6b72ee8b93";
+import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=6b72ee8b93";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -149,12 +150,12 @@ function renderItem(doc, run, currentRunId, { playlistId = null, inFolder = null
 
   const title = doc.createElement("div");
   title.className = "nobs-library-title";
-  title.textContent = run.title || run.video_id || `Analysis #${runId}`;
+  title.textContent = run.title || run.video_id || t("lib.untitled", "en").replace("{id}", String(runId));
   body.appendChild(title);
   if (inFolder) {
     const where = doc.createElement("div");
     where.className = "nobs-library-in-folder";
-    where.textContent = `в папке «${inFolder.title ?? ""}»`;
+    where.textContent = t("lib.inFolder", "ru").replace("{title}", inFolder.title ?? "");
     body.appendChild(where);
   }
 
@@ -201,7 +202,7 @@ function renderFolder(doc, folder, currentRunId, onEnter) {
   const meta = doc.createElement("div");
   meta.className = "nobs-library-meta";
   const total = Number(folder.item_count ?? folder.video_ids?.length ?? 0);
-  meta.textContent = `разобрано ${Number(folder.analysed_count ?? 0)} из ${total}`;
+  meta.textContent = t("lib.analysedOf", "ru").replace("{n}", String(Number(folder.analysed_count ?? 0))).replace("{total}", String(total));
   body.append(title, meta);
   link.appendChild(body);
   link.addEventListener("click", (event) => {
@@ -254,8 +255,8 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
   const toggle = makePanelToggle(root, {
     contentId: "nobs-library-list",
     makeIcon: libraryIcon,
-    showLabel: "Show analyses",
-    hideLabel: "Hide analyses",
+    showLabel: t("lib.show", "en"),
+    hideLabel: t("lib.hide", "en"),
   });
   toggle.classList.add("nobs-library-toggle");
   toggle.addEventListener("click", () => {
@@ -263,13 +264,13 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
   });
   const label = doc.createElement("span");
   label.className = "nobs-library-label";
-  label.textContent = "Analyses";
+  label.textContent = t("lib.label", "en");
   const newLink = doc.createElement("a");
   newLink.href = "index.html";
   newLink.className = "nobs-library-new";
-  newLink.textContent = "+ New";
-  // Settings (gear): a dialog in the loaded run's language.
-  const settings = buildSettingsButton(doc, () => doc.body?.dataset.lang || "en");
+  newLink.textContent = t("lib.new", "en");
+  // Settings: an entry of the account menu (signed in only), not a gear here.
+  enableMenuSettings(doc, () => doc.body?.dataset.lang || "en");
   // The public demo has no local submit page; its index is the invite-only
   // request page (request.html, src/publicRequest.js) instead.
   const demo = doc.documentElement?.dataset.demo === "1";
@@ -278,29 +279,29 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
     requestLink = doc.createElement("a");
     requestLink.href = "index.html";
     requestLink.className = "nobs-library-request";
-    requestLink.textContent = "+ Разобрать видео";
-    requestLink.title = "Разобрать новое видео (по коду приглашения)";
+    requestLink.textContent = t("lib.request", "ru");
+    requestLink.title = t("lib.requestTitle", "ru");
   }
   let foldersLink = null;
   if (!demo && pageHref && Array.isArray(folders)) {
     foldersLink = doc.createElement("a");
     foldersLink.href = pageHref;
     foldersLink.className = "nobs-library-folders-link";
-    foldersLink.textContent = "Плейлисты";
+    foldersLink.textContent = t("lib.playlists", "ru");
   }
-  heading.append(...[toggle, label, foldersLink, demo ? requestLink : newLink, settings].filter(Boolean));
+  heading.append(...[toggle, label, foldersLink, demo ? requestLink : newLink].filter(Boolean));
 
   const list = doc.createElement("nav");
   list.className = "nobs-library-list";
   list.id = "nobs-library-list";
-  list.setAttribute("aria-label", "Completed analyses");
+  list.setAttribute("aria-label", t("lib.listLabel", "en"));
   const model = libraryModel(runs, currentRunId, { folders, playlistId });
   if (model.folder) {
     const folder = model.folder;
     const back = doc.createElement("button");
     back.type = "button";
     back.className = "nobs-library-back";
-    back.textContent = "← Все разборы";
+    back.textContent = t("lib.back", "ru");
     back.addEventListener("click", () => goTo(null));
     const sub = doc.createElement("div");
     sub.className = "nobs-library-subheading";
@@ -312,21 +313,21 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
       const manage = doc.createElement("a");
       manage.className = "nobs-library-manage";
       manage.href = folder.manage_href;
-      manage.textContent = "Управлять плейлистом";
+      manage.textContent = t("lib.manage", "ru");
       sub.appendChild(manage);
     }
     list.append(back, sub);
     if (!model.runs.length) {
       const empty = doc.createElement("p");
       empty.className = "nobs-library-empty";
-      empty.textContent = "В этой папке пока нет готовых разборов";
+      empty.textContent = t("lib.folderEmpty", "ru");
       list.appendChild(empty);
     }
     for (const run of model.runs) list.appendChild(renderItem(doc, run, currentRunId, { playlistId: folder.id }));
   } else if (!model.runs.length && !model.folders.length && !model.pinned) {
     const empty = doc.createElement("p");
     empty.className = "nobs-library-empty";
-    empty.textContent = "No completed analyses yet.";
+    empty.textContent = t("lib.empty", "en");
     list.appendChild(empty);
   } else {
     // The open video never disappears: when it sits in a folder it is also

@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=11dec613b4"></script>
+    <script src="src/demoShim.js?v=6b72ee8b93"></script>
 
+    <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
       try {
@@ -16,24 +17,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skepticum — индекс источников</title>
-    <link rel="stylesheet" href="styles.css?v=11dec613b4" />
+    <link rel="stylesheet" href="styles.css?v=6b72ee8b93" />
     <link rel="stylesheet" href="sources.css" />
   </head>
   <body class="nobs-cm-page nobs-src-page">
     <header class="nobs-cm-header">
-      <a class="nobs-cm-back" href="index.html">← NOBS</a>
-      <h1>Индекс источников</h1>
-      <p class="nobs-src-header-links"><a class="nobs-settings-link" href="trust.html">Сигналы доверия: все коннекторы →</a></p>
-      <p class="nobs-cm-lead">
+      <div class="nobs-src-topline"><a class="nobs-cm-back" href="index.html">← NOBS</a></div>
+      <h1 data-i18n="srcui.title">Индекс источников</h1>
+      <p class="nobs-src-header-links"><a class="nobs-settings-link" href="trust.html" data-i18n="srcui.trustLink">Сигналы доверия: все коннекторы →</a></p>
+      <p class="nobs-cm-lead" data-i18n="srcui.lead">
         Все сайты, на которые опирались проверки: сколько раз использованы, в какой роли, как часто сказанное ими подтвердилось,
         и оценка надёжности 0–100. Нажмите на источник, чтобы увидеть оценки по темам, использования и что меняло оценку.
       </p>
     </header>
     <main id="sources"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=11dec613b4";
-      import { mountSourcesPage } from "./src/sourcesPage.js?v=11dec613b4";
+      import { applyTheme } from "./src/settings.js?v=6b72ee8b93";
+      import { t } from "./src/i18n.js?v=6b72ee8b93";
+      import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./src/uiLang.js?v=6b72ee8b93";
+      import "./src/stringsSources.js?v=6b72ee8b93";
+      import { mountSourcesPage } from "./src/sourcesPage.js?v=6b72ee8b93";
       applyTheme(document);
+      const lang = initUiLang();
+      translatePage(document, lang);
+      document.title = t("srcui.docTitle", lang);
+      renderLangSwitch(document, document.querySelector(".nobs-src-topline"), { lang, storage: localStorage, reload: () => reloadWithout() });
       mountSourcesPage(document.getElementById("sources"), { fetchImpl: fetch });
     </script>
   </body>
