@@ -11,8 +11,8 @@
 // menuitemradio entries; arrow keys move, Enter / Space pick, Escape or a
 // click outside closes and gives the focus back to the button.
 
-import { isParody, parodyWord, supportsLang } from "./commentators.js?v=0126c7d901";
-import { t } from "./i18n.js?v=0126c7d901";
+import { isParody, parodyWord, supportsLang } from "./commentators.js?v=46dead620e";
+import { t } from "./i18n.js?v=46dead620e";
 
 export const MANAGE_HREF = "commentators.html";
 
