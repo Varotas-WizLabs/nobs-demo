@@ -1,12 +1,12 @@
 // web/src/popup.js
-import { screenBlockHtml } from "./frames.js?v=86fe2f8bff";
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=86fe2f8bff";
-import { isPlayerActive } from "./controlBar.js?v=86fe2f8bff";
-import { t } from "./i18n.js?v=86fe2f8bff";
-import { claimState, isUnchecked } from "./progress.js?v=86fe2f8bff";
-import { seekTarget } from "./settings.js?v=86fe2f8bff";
-import { specialistBlockHtml } from "./specialist.js?v=86fe2f8bff";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=86fe2f8bff";
+import { screenBlockHtml } from "./frames.js?v=04a8d84c10";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=04a8d84c10";
+import { isPlayerActive } from "./controlBar.js?v=04a8d84c10";
+import { t } from "./i18n.js?v=04a8d84c10";
+import { claimState, isUnchecked } from "./progress.js?v=04a8d84c10";
+import { seekTarget } from "./settings.js?v=04a8d84c10";
+import { specialistBlockHtml } from "./specialist.js?v=04a8d84c10";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=04a8d84c10";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;

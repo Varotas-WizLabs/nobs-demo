@@ -31,12 +31,13 @@
 //
 // Pure helpers first (tested on their own), then the controller.
 
-import { formatTimecode } from "./claimSync.js?v=86fe2f8bff";
-import { labelLanguage, t } from "./i18n.js?v=86fe2f8bff";
-import { isUnchecked } from "./progress.js?v=86fe2f8bff";
+import { formatTimecode } from "./claimSync.js?v=04a8d84c10";
+import { labelLanguage, t } from "./i18n.js?v=04a8d84c10";
+import { isUnchecked } from "./progress.js?v=04a8d84c10";
 
 export const TICK_MS = 500;
 // The start gate opens when the checks reach this far (or after the wait).
+// Mirrored by the backend's fast start (nobs.pipeline.stream.GATE_READY_SEC).
 export const GATE_READY_SEC = 90;
 export const GATE_MAX_WAIT_SEC = 150;
 // Auto-pause this long before the checked part ends; resume once the checks
