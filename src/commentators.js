@@ -15,8 +15,8 @@
 // (never taken from the form), crude humour is capped at 2, and nothing in
 // this module turns a guardrail off.
 
-import { labelLanguage, t as tr } from "./i18n.js?v=4d95c3d228";
-import { fillVars } from "./stringsCommentators.js?v=4d95c3d228";
+import { labelLanguage, t as tr } from "./i18n.js?v=cbdb3cd407";
+import { fillVars } from "./stringsCommentators.js?v=cbdb3cd407";
 
 /** A label of src/stringsCommentators.js with {placeholders} filled. */
 const msg = (key, vars) => fillVars(tr(`cmui.${key}`, "ru"), vars);

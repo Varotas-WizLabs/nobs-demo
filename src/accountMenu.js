@@ -10,8 +10,8 @@
 // page; account.html, which does load it, refreshes the session. «Выход»
 // revokes the session on Supabase (best effort) and forgets it locally.
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=4d95c3d228";
-import { t } from "./i18n.js?v=4d95c3d228";
+import { loadAccountsConfig } from "./accountsConfig.js?v=cbdb3cd407";
+import { t } from "./i18n.js?v=cbdb3cd407";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {
@@ -120,6 +120,11 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
       (doc.defaultView ?? globalThis).dispatchEvent(new Event("nobs:open-settings"));
     });
     menu.append(prefs);
+  }
+  // The local app's admin entry: present only when the local-only module set the href (never in the demo).
+  const adminHref = doc.documentElement?.dataset.adminHref;
+  if (adminHref && doc.documentElement?.dataset.demo !== "1") {
+    menu.append(el(doc, "a", { role: "menuitem", href: adminHref, class: "nobs-account-admin" }, t("menu.adminSettings", "ru")));
   }
   menu.append(exit);
 

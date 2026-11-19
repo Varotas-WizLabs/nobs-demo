@@ -11,8 +11,8 @@
 //   shows: engine chosen / used, Piper model state, browser voices, autoplay,
 //   commentator and its lines, last error.
 
-import { DEFAULT_COMMENTATOR, isParody, resolvePersona } from "./commentators.js?v=4d95c3d228";
-import { labelLanguage } from "./i18n.js?v=4d95c3d228";
+import { DEFAULT_COMMENTATOR, isParody, resolvePersona } from "./commentators.js?v=cbdb3cd407";
+import { labelLanguage } from "./i18n.js?v=cbdb3cd407";
 
 /** A persona that speaks only generated lines (a parody). */
 export function needsLines(profile) {
