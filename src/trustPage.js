@@ -13,8 +13,8 @@
 // moves, capped; popularity never counts as reliability; disagreement is
 // flagged and widens the prior; verdicts are never touched.
 
-import { t } from "./i18n.js?v=6b72ee8b93";
-import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=078ff1187e";
+import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=078ff1187e";
 
 // Labels of data values, in the interface language at draw time.
 export const kindLabel = (k) => tl(`trustui.kind.${k}`, k);

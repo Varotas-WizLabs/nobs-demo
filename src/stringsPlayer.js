@@ -3,7 +3,7 @@
 // modules they use) in Russian and English, reached through t() from i18n.js.
 // Content (claims, titles, server log lines, spoken lines) is never here.
 
-import { registerStrings } from "./i18n.js?v=6b72ee8b93";
+import { registerStrings } from "./i18n.js?v=078ff1187e";
 
 registerStrings({
   en: {
@@ -75,7 +75,7 @@ registerStrings({
     "plr.evidence.other": "other",
     "plr.evidence.unknown": "not stated",
     // Local submit page (index.html, src/submit.js)
-    "plr.home.pageTitle": "NOBS — No Bullshit fact-checker",
+    "plr.home.pageTitle": "Skepticum — No Bullshit fact-checker",
     "plr.home.tagline": "Paste a YouTube URL to get a claim-by-claim fact-check.",
     "plr.home.analyze": "Analyze",
     "plr.home.upload": "Use a caption file instead of YouTube (.vtt / .srt)",
@@ -153,7 +153,7 @@ registerStrings({
     "plr.evidence.preprint": "препринт",
     "plr.evidence.other": "прочее",
     "plr.evidence.unknown": "не указан",
-    "plr.home.pageTitle": "NOBS — фактчекер без чуши",
+    "plr.home.pageTitle": "Skepticum — фактчекер без чуши",
     "plr.home.tagline": "Вставьте ссылку на YouTube — получите проверку каждого утверждения.",
     "plr.home.analyze": "Разобрать",
     "plr.home.upload": "Взять файл субтитров вместо YouTube (.vtt / .srt)",

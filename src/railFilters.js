@@ -6,7 +6,7 @@
 // circle is filled with its colour; an unselected one shows only a coloured
 // outline over a muted fill. No selection means "all flags".
 
-import { t } from "./i18n.js?v=6b72ee8b93";
+import { t } from "./i18n.js?v=078ff1187e";
 
 export const RAIL_ORDER = ["green", "yellow", "red", "insufficient", "white", "pending", "failed"];
 
