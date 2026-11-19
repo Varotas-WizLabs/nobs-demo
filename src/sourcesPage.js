@@ -7,10 +7,10 @@
 //
 // The score is shown for reading only: it never decides a verdict.
 
-import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=35f6cb96ae";
-import { renderTrustRow } from "./trustPage.js?v=35f6cb96ae";
-import { tf, tl, topicLabel } from "./stringsSources.js?v=35f6cb96ae";
-import { t } from "./i18n.js?v=35f6cb96ae";
+import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=4d95c3d228";
+import { renderTrustRow } from "./trustPage.js?v=4d95c3d228";
+import { tf, tl, topicLabel } from "./stringsSources.js?v=4d95c3d228";
+import { t } from "./i18n.js?v=4d95c3d228";
 
 // The weight of a corroboration / contradiction by the evidence behind it
 // (claims about research only; backend nobs.sources.evidence).

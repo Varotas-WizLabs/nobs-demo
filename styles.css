@@ -2461,7 +2461,7 @@ button.nobs-scoop-verdict:hover {
 .nobs-logo-word::after {
   content: "*";
   display: inline-block;
-  margin-left: 1px;
+  margin-left: -1px;
   font-size: 0.95em;
   font-weight: 800;
   vertical-align: 0.3em;

@@ -16,12 +16,12 @@
 // is flat. This module knows only the source and the parameter; the
 // management links come from the source (pageHref, manage_href).
 
-import { formatCost, formatDuration } from "./runStats.js?v=35f6cb96ae";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=35f6cb96ae";
-import { enableMenuSettings } from "./settings.js?v=35f6cb96ae";
-import { t } from "./i18n.js?v=35f6cb96ae";
-import { buildEffortBadge } from "./effort.js?v=35f6cb96ae";
-import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=35f6cb96ae";
+import { formatCost, formatDuration } from "./runStats.js?v=4d95c3d228";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=4d95c3d228";
+import { enableMenuSettings } from "./settings.js?v=4d95c3d228";
+import { t } from "./i18n.js?v=4d95c3d228";
+import { buildEffortBadge } from "./effort.js?v=4d95c3d228";
+import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=4d95c3d228";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const SVG_NS = "http://www.w3.org/2000/svg";
