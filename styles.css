@@ -2462,9 +2462,9 @@ button.nobs-scoop-verdict:hover {
   content: "*";
   display: inline-block;
   margin-left: 1px;
-  font-size: 0.6em;
-  font-weight: 700;
-  vertical-align: super;
+  font-size: 0.95em;
+  font-weight: 800;
+  vertical-align: 0.3em;
   line-height: 0;
   text-decoration: none;
 }

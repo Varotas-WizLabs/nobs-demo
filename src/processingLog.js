@@ -9,8 +9,8 @@
 // player -- so it works while the video is still loading, or if it never
 // loads. All server-provided text is inserted with textContent.
 
-import { progressLine } from "./progress.js?v=cbff49fb19";
-import { formatUsage } from "./runStats.js?v=cbff49fb19";
+import { progressLine } from "./progress.js?v=11dec613b4";
+import { formatUsage } from "./runStats.js?v=11dec613b4";
 
 const STAGE_LABELS = {
   run: "starting",
