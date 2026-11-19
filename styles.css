@@ -2457,15 +2457,20 @@ button.nobs-scoop-verdict:hover {
   letter-spacing: 0.04em;
   transform: translateY(-2px);
 }
-/* The brand word is struck through (a sceptic's mark); hover adds an underline. */
-.nobs-logo-word {
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
+/* The brand word ends with a small footnote asterisk: «Skepticum*». */
+.nobs-logo-word::after {
+  content: "*";
+  display: inline-block;
+  margin-left: 1px;
+  font-size: 0.6em;
+  font-weight: 700;
+  vertical-align: super;
+  line-height: 0;
+  text-decoration: none;
 }
 .nobs-logo:hover .nobs-logo-word,
 .nobs-logo:focus-visible .nobs-logo-word {
-  text-decoration: line-through underline;
-  text-decoration-thickness: 2px;
+  text-decoration: underline;
   text-underline-offset: 3px;
 }
 

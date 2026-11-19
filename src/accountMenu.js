@@ -10,8 +10,8 @@
 // page; account.html, which does load it, refreshes the session. «Выход»
 // revokes the session on Supabase (best effort) and forgets it locally.
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=4f390fa6da";
-import { t } from "./i18n.js?v=4f390fa6da";
+import { loadAccountsConfig } from "./accountsConfig.js?v=cbff49fb19";
+import { t } from "./i18n.js?v=cbff49fb19";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {
