@@ -5,6 +5,8 @@
 // claim popup shows it under the verdict as «Второе мнение специалиста»,
 // and the sources page lists every opinion, disagreements first.
 
+import { labelLanguage } from "./i18n.js?v=4f390fa6da";
+
 const FLAG_TEXT = {
   ru: { green: "верно", yellow: "неточно", red: "неверно", white: "не проверить" },
   en: { green: "true", yellow: "inaccurate", red: "false", white: "can't check" },
@@ -71,17 +73,20 @@ function safeUrl(url) {
 }
 
 export function flagText(flag, lang = "ru") {
+  lang = labelLanguage(lang);
   return (FLAG_TEXT[lang] ?? FLAG_TEXT.ru)[flag] ?? flag ?? "";
 }
 
 /** One-line headline: «Второе мнение специалиста: неточно — не согласен». */
 export function specialistHeadline(op, lang = "ru") {
+  lang = labelLanguage(lang);
   const t = TEXT[lang] ?? TEXT.ru;
   return `${t.title}: ${flagText(op.verdict, lang)} — ${op.agrees ? t.agrees : t.disagrees}`;
 }
 
 /** The popup block for a claim with `claim.specialist` ('' without one). */
 export function specialistBlockHtml(claim, lang = "ru") {
+  lang = labelLanguage(lang);
   const op = claim?.specialist;
   if (!op || !op.verdict) return "";
   const t = TEXT[lang] ?? TEXT.ru;

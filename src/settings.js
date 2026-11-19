@@ -36,10 +36,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=8999e255c1";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=8999e255c1";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=8999e255c1";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=8999e255c1";
+import { t } from "./i18n.js?v=4f390fa6da";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=4f390fa6da";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=4f390fa6da";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=4f390fa6da";
 
 const KEY = "nobs.settings";
 
@@ -619,7 +619,9 @@ export function openSettingsDialog(doc, lang = "en") {
 // registration the dialog shows no such link.
 let adminEntry = null;
 export function setAdminEntry(href, label) {
-  adminEntry = typeof href === "string" && href ? { href, label: String(label || href) } : null;
+  // `label` may be a function, read when the dialog is drawn (the interface
+  // language is chosen after this module loads).
+  adminEntry = typeof href === "string" && href ? { href, label } : null;
 }
 
 function adminEntryField(doc) {
@@ -629,7 +631,7 @@ function adminEntryField(doc) {
   const link = doc.createElement("a");
   link.className = "nobs-settings-link nobs-settings-admin-link";
   link.href = adminEntry.href;
-  link.textContent = adminEntry.label;
+  link.textContent = String((typeof adminEntry.label === "function" ? adminEntry.label() : adminEntry.label) || adminEntry.href);
   box.append(link);
   return box;
 }

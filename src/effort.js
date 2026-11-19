@@ -13,6 +13,8 @@
 //                       then shows a small «deeper version ready» notice (never swaps claims)
 // Built with DOM APIs and textContent only.
 
+import { labelLanguage } from "./i18n.js?v=4f390fa6da";
+
 export const EFFORTS = ["light", "deep"];
 export const UPGRADE_POLL_MS = 30000;
 const KEY = "nobs.effort";
@@ -51,6 +53,7 @@ const STRINGS = {
 };
 
 export function effortText(key, lang = "ru") {
+  lang = labelLanguage(lang);
   return (STRINGS[lang] ?? STRINGS.ru)[key] ?? STRINGS.ru[key] ?? key;
 }
 
