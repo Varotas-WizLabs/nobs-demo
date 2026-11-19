@@ -2468,10 +2468,14 @@ button.nobs-scoop-verdict:hover {
   line-height: 0;
   text-decoration: none;
 }
-.nobs-logo:hover .nobs-logo-word,
-.nobs-logo:focus-visible .nobs-logo-word {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+/* No underline on hover; keyboard focus still gets a visible ring. */
+.nobs-logo:hover {
+  text-decoration: none;
+}
+.nobs-logo:focus-visible {
+  outline: 2px solid var(--nobs-muted);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 /* ---- Progressive delivery (spec 2026-11-17 §4.5): claims of a run still

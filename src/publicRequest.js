@@ -18,8 +18,8 @@
 // The invite code may come in the link's fragment (#code=…, never sent to a
 // server); it pre-fills the field and is remembered for this visitor.
 
-import { interfaceLanguageOf, t } from "./i18n.js?v=4219fdb83d";
-import { VIDEO_ID_RE, extractVideoId, youtubeVideoId } from "./youtubeId.js?v=4219fdb83d";
+import { interfaceLanguageOf, t } from "./i18n.js?v=35f6cb96ae";
+import { VIDEO_ID_RE, extractVideoId, youtubeVideoId } from "./youtubeId.js?v=35f6cb96ae";
 
 export const WORKER_URL = "https://nobs-queue.iopuki-6fa.workers.dev";
 export const POLL_MS = 10000;
