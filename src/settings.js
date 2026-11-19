@@ -36,10 +36,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=cc372a02d2";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=cc372a02d2";
-import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=cc372a02d2";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=cc372a02d2";
+import { t } from "./i18n.js?v=71942d6165";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=71942d6165";
+import { baseLang, defaultHebrewEngine, localEngines } from "./voiceEngines.js?v=71942d6165";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=71942d6165";
 
 const KEY = "nobs.settings";
 
