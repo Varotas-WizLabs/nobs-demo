@@ -5,10 +5,10 @@
 // (src/commentators.js), in Russian and English. Persona line texts, opener
 // phrases and anything spoken stay as they are (content, not labels).
 
-import { registerStrings } from "./i18n.js?v=0fb3c8f93f";
+import { registerStrings } from "./i18n.js?v=4219fdb83d";
 
 const ru = {
-  "cmui.pageTitle": "Skepticum — Комментаторы",
+  "cmui.pageTitle": "Skeptium — Комментаторы",
   "cmui.heading": "Комментаторы",
   "cmui.lead":
     "Кто комментирует флажки в плеере. «Душнила» спокойно пересказывает итог проверки, «Яблогер» — открыто помеченная пародия на хайп-блогера. Выбрать комментатора в плеере: двойной клик (или долгое нажатие) по кнопке голоса рядом с громкостью.",
@@ -193,7 +193,7 @@ const ru = {
 };
 
 const en = {
-  "cmui.pageTitle": "Skepticum — Commentators",
+  "cmui.pageTitle": "Skeptium — Commentators",
   "cmui.heading": "Commentators",
   "cmui.lead":
     "Who comments on the flags in the player. Dushnila calmly retells the fact-check result; Yablogger is an openly labelled parody of a hype blogger. To pick a commentator in the player, double-click (or long-press) the voice button next to the volume.",

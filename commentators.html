@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=0fb3c8f93f"></script>
+    <script src="src/demoShim.js?v=4219fdb83d"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
@@ -16,8 +16,8 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-i18n="cmui.pageTitle">Skepticum — комментаторы</title>
-    <link rel="stylesheet" href="styles.css?v=0fb3c8f93f" />
+    <title data-i18n="cmui.pageTitle">Skeptium — комментаторы</title>
+    <link rel="stylesheet" href="styles.css?v=4219fdb83d" />
   </head>
   <body class="nobs-cm-page">
     <header class="nobs-cm-header">
@@ -30,11 +30,11 @@
     </header>
     <main id="commentators"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=0fb3c8f93f";
-      import { initUiLang, renderLangSwitch, reloadWithout, translatePage } from "./src/uiLang.js?v=0fb3c8f93f";
-      import { t } from "./src/i18n.js?v=0fb3c8f93f";
-      import "./src/stringsCommentators.js?v=0fb3c8f93f";
-      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=0fb3c8f93f";
+      import { applyTheme } from "./src/settings.js?v=4219fdb83d";
+      import { initUiLang, renderLangSwitch, reloadWithout, translatePage } from "./src/uiLang.js?v=4219fdb83d";
+      import { t } from "./src/i18n.js?v=4219fdb83d";
+      import "./src/stringsCommentators.js?v=4219fdb83d";
+      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=4219fdb83d";
       applyTheme(document);
       const lang = initUiLang();
       translatePage(document, lang);

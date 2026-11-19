@@ -2,7 +2,7 @@
 // Labels of the sources index (web/sources.html, srcui.*) and the trust
 // signals page (web/trust.html, trustui.*) in Russian and English.
 
-import { labelLanguage, registerStrings, t } from "./i18n.js?v=0fb3c8f93f";
+import { labelLanguage, registerStrings, t } from "./i18n.js?v=4219fdb83d";
 
 /** t() with {name} placeholders filled from `vars`. */
 export function tf(key, vars = {}, lang = "ru") {
@@ -18,7 +18,7 @@ export function tl(key, fallback, lang = "ru") {
 registerStrings({
   ru: {
     // sources.html
-    "srcui.docTitle": "Skepticum — Индекс источников",
+    "srcui.docTitle": "Skeptium — Индекс источников",
     "srcui.title": "Индекс источников",
     "srcui.trustLink": "Сигналы доверия: все коннекторы →",
     "srcui.lead":
@@ -135,7 +135,7 @@ registerStrings({
       "Классифицировано утверждений: {claims}; Jev: ${cost}, в среднем {ms} мс на утверждение. Проверка пока не использует темы.",
 
     // trust.html
-    "trustui.docTitle": "Skepticum — Сигналы доверия",
+    "trustui.docTitle": "Skeptium — Сигналы доверия",
     "trustui.title": "Сигналы доверия",
     "trustui.sourcesLink": "Индекс источников",
     "trustui.lead":
@@ -256,7 +256,7 @@ registerStrings({
   },
   en: {
     // sources.html
-    "srcui.docTitle": "Skepticum — Source index",
+    "srcui.docTitle": "Skeptium — Source index",
     "srcui.title": "Source index",
     "srcui.trustLink": "Trust signals: all connectors →",
     "srcui.lead":
@@ -373,7 +373,7 @@ registerStrings({
       "Claims classified: {claims}; Jev: ${cost}, {ms} ms per claim on average. Fact-checking does not use the topics yet.",
 
     // trust.html
-    "trustui.docTitle": "Skepticum — Trust signals",
+    "trustui.docTitle": "Skeptium — Trust signals",
     "trustui.title": "Trust signals",
     "trustui.sourcesLink": "Source index",
     "trustui.lead":

@@ -3,11 +3,11 @@
 // modules they use) in Russian and English, reached through t() from i18n.js.
 // Content (claims, titles, server log lines, spoken lines) is never here.
 
-import { registerStrings } from "./i18n.js?v=0fb3c8f93f";
+import { registerStrings } from "./i18n.js?v=4219fdb83d";
 
 registerStrings({
   en: {
-    "plr.pageTitle": "Skepticum — player",
+    "plr.pageTitle": "Skeptium — player",
     "plr.aria.library": "Analyses",
     "plr.aria.relatedClaims": "Related claims",
     "plr.aria.flag": "Claim fact-check",
@@ -75,7 +75,7 @@ registerStrings({
     "plr.evidence.other": "other",
     "plr.evidence.unknown": "not stated",
     // Local submit page (index.html, src/submit.js)
-    "plr.home.pageTitle": "Skepticum — No Bullshit fact-checker",
+    "plr.home.pageTitle": "Skeptium — No Bullshit fact-checker",
     "plr.home.tagline": "Paste a YouTube URL to get a claim-by-claim fact-check.",
     "plr.home.analyze": "Question",
     "plr.home.upload": "Use a caption file instead of YouTube (.vtt / .srt)",
@@ -90,7 +90,7 @@ registerStrings({
     "plr.submit.status.failed": "failed",
   },
   ru: {
-    "plr.pageTitle": "Skepticum — плеер",
+    "plr.pageTitle": "Skeptium — плеер",
     "plr.aria.library": "Разборы",
     "plr.aria.relatedClaims": "Связанные утверждения",
     "plr.aria.flag": "Проверка утверждения",
@@ -153,7 +153,7 @@ registerStrings({
     "plr.evidence.preprint": "препринт",
     "plr.evidence.other": "прочее",
     "plr.evidence.unknown": "не указан",
-    "plr.home.pageTitle": "Skepticum — фактчекер без чуши",
+    "plr.home.pageTitle": "Skeptium — фактчекер без чуши",
     "plr.home.tagline": "Вставьте ссылку на YouTube — получите проверку каждого утверждения.",
     "plr.home.analyze": "Усомниться",
     "plr.home.upload": "Взять файл субтитров вместо YouTube (.vtt / .srt)",

@@ -574,7 +574,7 @@ function mainThreadPort() {
       handle.then(run);
       return;
     }
-    handle = import("./piperWorker.js?v=0fb3c8f93f").then(({ createPiperHandler }) => createPiperHandler(post));
+    handle = import("./piperWorker.js?v=4219fdb83d").then(({ createPiperHandler }) => createPiperHandler(post));
     handle.then(run, (err) => port.onerror?.(err));
   };
   port.terminate = () => {

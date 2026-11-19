@@ -2427,7 +2427,7 @@ button.nobs-scoop-verdict:hover {
   border-style: dashed;
 }
 
-/* Brand bar with the «Skepticum» logo, top left of the player page. */
+/* Brand bar with the «Skeptium» logo, top left of the player page. */
 .nobs-topbar {
   display: flex;
   align-items: center;
@@ -2457,7 +2457,7 @@ button.nobs-scoop-verdict:hover {
   letter-spacing: 0.04em;
   transform: translateY(-2px);
 }
-/* The brand word ends with a small footnote asterisk: «Skepticum*». */
+/* The brand word ends with a small footnote asterisk: «Skeptium*». */
 .nobs-logo-word::after {
   content: "*";
   display: inline-block;
