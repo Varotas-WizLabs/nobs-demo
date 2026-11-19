@@ -10,7 +10,8 @@
 // page; account.html, which does load it, refreshes the session. «Выход»
 // revokes the session on Supabase (best effort) and forgets it locally.
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=2a52d7b88c";
+import { loadAccountsConfig } from "./accountsConfig.js?v=4250a1ebb1";
+import { t } from "./i18n.js?v=4250a1ebb1";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {
@@ -81,12 +82,12 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
   bar.querySelector(".nobs-account-menu")?.remove();
   const root = el(doc, "div", { class: "nobs-account-menu" });
   if (!session) {
-    const login = el(doc, "a", { class: "nobs-account-login", href: accountHref }, "Войти");
+    const login = el(doc, "a", { class: "nobs-account-login", href: accountHref }, t("menu.signIn", "ru"));
     root.append(login);
     bar.append(root);
     return root;
   }
-  const label = session.name || session.email || "Аккаунт";
+  const label = session.name || session.email || t("menu.account", "ru");
   const button = el(doc, "button", {
     type: "button",
     class: "nobs-account-avatar",
@@ -108,8 +109,8 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
   const menu = el(doc, "div", { class: "nobs-account-dropdown", role: "menu" });
   menu.hidden = true;
   if (session.email) menu.append(el(doc, "div", { class: "nobs-account-dropdown-who" }, session.email));
-  const settings = el(doc, "a", { role: "menuitem", href: accountHref }, "Настройки аккаунта");
-  const exit = el(doc, "button", { type: "button", role: "menuitem" }, "Выход");
+  const settings = el(doc, "a", { role: "menuitem", href: accountHref }, t("menu.settings", "ru"));
+  const exit = el(doc, "button", { type: "button", role: "menuitem" }, t("menu.signOut", "ru"));
   menu.append(settings, exit);
 
   const close = () => {

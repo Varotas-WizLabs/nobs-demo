@@ -1,5 +1,11 @@
-// web/src/accountMenuBoot.js — shows the account corner of the top bar
-// (src/accountMenu.js) on the page that loads it.
-import { mountAccountMenu } from "./accountMenu.js?v=2a52d7b88c";
+// web/src/accountMenuBoot.js — the top bar of the page that loads it: the
+// interface language (src/uiLang.js: RU / EN switch, [data-i18n] labels of
+// the bar and footer) and the account corner (src/accountMenu.js).
+import { mountAccountMenu } from "./accountMenu.js?v=4250a1ebb1";
+import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./uiLang.js?v=4250a1ebb1";
 
+const lang = initUiLang();
+const bar = document.querySelector(".nobs-topbar");
+for (const root of [bar, document.querySelector(".nobs-footer")]) if (root) translatePage(root, lang);
+if (bar) renderLangSwitch(document, bar, { lang, storage: globalThis.localStorage, reload: () => reloadWithout() });
 mountAccountMenu().catch(() => {});

@@ -14,10 +14,10 @@
 // hypotheses and the audience / agenda / persona map (collapsed), and a
 // totals line (passes, time, cost, models). DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=2a52d7b88c";
-import { t } from "./i18n.js?v=2a52d7b88c";
-import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=2a52d7b88c";
-import { seekTarget } from "./settings.js?v=2a52d7b88c";
+import { formatTimecode } from "./claimSync.js?v=4250a1ebb1";
+import { labelLanguage, t } from "./i18n.js?v=4250a1ebb1";
+import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=4250a1ebb1";
+import { seekTarget } from "./settings.js?v=4250a1ebb1";
 
 /**
  * Play `player` from a scoop anchor at `sec`, the seek lead-in earlier
@@ -51,7 +51,7 @@ export function tf(key, lang, vars = {}) {
 export function formatScore(value, lang, digits = 1) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "–";
   const text = value.toFixed(digits).replace(/\.0+$/, "");
-  return String(lang ?? "").toLowerCase().startsWith("ru") ? text.replace(".", ",") : text;
+  return String(labelLanguage(lang) ?? "").toLowerCase().startsWith("ru") ? text.replace(".", ",") : text;
 }
 
 /** The scoops a response shows (complete generation only). */

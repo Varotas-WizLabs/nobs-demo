@@ -6,8 +6,8 @@
 // processing line «Проанализировано 7:40 / 41:20 · 23 утверждения · 5
 // проверяются». Pure functions; no DOM.
 
-import { formatTimecode } from "./claimSync.js?v=2a52d7b88c";
-import { t } from "./i18n.js?v=2a52d7b88c";
+import { formatTimecode } from "./claimSync.js?v=4250a1ebb1";
+import { labelLanguage, t } from "./i18n.js?v=4250a1ebb1";
 
 const STATES = new Set(["pending", "checking", "done", "failed", "superseded"]);
 
@@ -114,7 +114,7 @@ export function mergeDelta(run, delta) {
 }
 
 function plural(lang, n, base) {
-  const ru = String(lang ?? "").toLowerCase().startsWith("ru");
+  const ru = String(labelLanguage(lang) ?? "").toLowerCase().startsWith("ru");
   if (!ru) return t(`${base}.${n === 1 ? "one" : "many"}`, lang);
   const mod10 = n % 10;
   const mod100 = n % 100;

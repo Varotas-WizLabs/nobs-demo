@@ -362,8 +362,16 @@ const STRINGS = {
     "settings.queueHint": "How often this server checks for new requests from the public page.",
     "settings.queueOff": "Not configured: NOBS_QUEUE_GITHUB_TOKEN is not set in .env.",
     "settings.manageCodes": "Invite codes",
-    "account.pageTitle": "душнила AI — account",
+    "account.pageTitle": "Contrarium — account",
     "account.title": "Account",
+    "request.pageTitle": "Contrarium — analyse a video",
+    "menu.signIn": "Sign in",
+    "menu.settings": "Account settings",
+    "menu.signOut": "Sign out",
+    "menu.account": "Account",
+    "menu.language": "Interface language",
+    "banner.ai": "Analyses are made automatically (AI) and may contain errors; check the sources.",
+    "footer.privacy": "Privacy Policy",
     "account.loading": "Loading…",
     "account.off": "Accounts are not enabled yet.",
     "account.offHint": "For now, new videos are analysed by invite code on the main page.",
@@ -460,7 +468,7 @@ const STRINGS = {
     "account.error.link_failed": "The link has expired or was opened in another browser. Open it in the browser where you asked to sign in, or request a new e-mail.",
     "account.error.network": "No connection. Check the internet and try again.",
     "account.error.other": "Something went wrong. Try again later.",
-    "watch.pageTitle": "душнила AI — analysis",
+    "watch.pageTitle": "Contrarium — analysis",
     "watch.checking": "Checking access…",
     "watch.pending": "The analysis is being prepared — refresh in a minute.",
     "watch.notFound": "Video not found, or access is closed.",
@@ -788,7 +796,7 @@ const STRINGS = {
     "scoop.aap.mech.borrowed": "заимствованно",
     "scoop.aap.mech.negative": "от противного",
     "request.title": "Разобрать новое видео",
-    "request.tagline": "Вставьте ссылку на YouTube — душнила проверит каждое утверждение в видео. Видео до 90 минут, с субтитрами.",
+    "request.tagline": "Вставьте ссылку на YouTube — Contrarium проверит каждое утверждение в видео. Видео до 90 минут, с субтитрами.",
     "request.url": "Ссылка на YouTube",
     "request.code": "Код приглашения",
     "request.codeHint": "Доступ только по приглашениям. Код был в вашей ссылке-приглашении.",
@@ -826,8 +834,16 @@ const STRINGS = {
     "settings.queueHint": "Как часто этот сервер проверяет новые заявки с публичной страницы.",
     "settings.queueOff": "Не настроено: в .env нет NOBS_QUEUE_GITHUB_TOKEN.",
     "settings.manageCodes": "Коды приглашений",
-    "account.pageTitle": "душнила AI — аккаунт",
+    "account.pageTitle": "Contrarium — аккаунт",
     "account.title": "Аккаунт",
+    "request.pageTitle": "Contrarium — разобрать видео",
+    "menu.signIn": "Войти",
+    "menu.settings": "Настройки аккаунта",
+    "menu.signOut": "Выход",
+    "menu.account": "Аккаунт",
+    "menu.language": "Язык интерфейса",
+    "banner.ai": "Разборы сделаны автоматически (AI) и могут содержать ошибки; проверяйте источники.",
+    "footer.privacy": "Политика конфиденциальности",
     "account.loading": "Загружаем…",
     "account.off": "Аккаунты пока не включены.",
     "account.offHint": "Пока новые видео разбираются по коду приглашения на главной странице.",
@@ -925,7 +941,7 @@ const STRINGS = {
     "account.error.link_failed": "Ссылка устарела или открыта в другом браузере. Откройте её в том браузере, где запрашивали вход, или запросите новое письмо.",
     "account.error.network": "Нет связи. Проверьте интернет и попробуйте ещё раз.",
     "account.error.other": "Что-то пошло не так. Попробуйте позже.",
-    "watch.pageTitle": "душнила AI — разбор",
+    "watch.pageTitle": "Contrarium — разбор",
     "watch.checking": "Проверяем доступ…",
     "watch.pending": "Разбор готовится, обновите через минуту.",
     "watch.notFound": "Видео не найдено или доступ закрыт.",
@@ -955,7 +971,31 @@ function baseLanguage(lang) {
   return base === "iw" ? "he" : base;
 }
 
+// The interface language the visitor chose (src/uiLang.js): Russian or English.
+// When it is set, every label uses it, whatever content language the caller
+// passes (a Hebrew video still gets a Russian or English interface). Text that
+// is read aloud stays in the voice's language: the keys in SPOKEN.
+export const UI_LANGUAGES = ["ru", "en"];
+const SPOKEN = new Set(["voice.notReady"]);
+let interfaceLanguage = null;
+
+/** Use `lang` ("ru" / "en") for every label; null goes back to per-call languages. */
+export function setInterfaceLanguage(lang) {
+  interfaceLanguage = UI_LANGUAGES.includes(lang) ? lang : null;
+}
+
+/** The language labels are shown in: the chosen interface language, else `lang`. */
+export function labelLanguage(lang) {
+  return interfaceLanguage ?? lang;
+}
+
+/** The chosen interface language, or null when none was set. */
+export function interfaceLanguageOf() {
+  return interfaceLanguage;
+}
+
 export function t(key, lang) {
+  if (interfaceLanguage && !SPOKEN.has(key)) lang = interfaceLanguage;
   const table = STRINGS[baseLanguage(lang)] ?? STRINGS.en;
   return table[key] ?? STRINGS.en[key] ?? key;
 }

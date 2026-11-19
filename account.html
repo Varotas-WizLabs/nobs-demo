@@ -14,14 +14,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>душнила AI — аккаунт</title>
-    <link rel="stylesheet" href="styles.css?v=2a52d7b88c" />
+    <title>Contrarium — аккаунт</title>
+    <link rel="stylesheet" href="styles.css?v=4250a1ebb1" />
     <script src="vendor/supabase.js"></script>
   </head>
   <body>
     <header class="nobs-topbar">
-      <a class="nobs-logo" href="index.html" aria-label="душнила AI">
-        <span class="nobs-logo-word">душнила</span><span class="nobs-logo-ai">AI</span>
+      <a class="nobs-logo" href="index.html" aria-label="Contrarium">
+        <span class="nobs-logo-word">Contrarium</span>
       </a>
     </header>
     <main class="nobs-home nobs-request nobs-account">
@@ -30,12 +30,11 @@
     </main>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=2a52d7b88c";
-      import { pickLang } from "./src/publicRequest.js?v=2a52d7b88c";
-      import { mountAccountPage } from "./src/accountPage.js?v=2a52d7b88c";
+      import { t } from "./src/i18n.js?v=4250a1ebb1";
+      import { initUiLang } from "./src/uiLang.js?v=4250a1ebb1";
+      import { mountAccountPage } from "./src/accountPage.js?v=4250a1ebb1";
 
-      const lang = pickLang(location);
-      document.documentElement.lang = lang;
+      const lang = initUiLang();
       document.title = t("account.pageTitle", lang);
       for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n, lang);
       mountAccountPage({ root: document.getElementById("account-root"), lang });

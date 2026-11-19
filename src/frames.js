@@ -7,7 +7,8 @@
 // is a lead, never evidence: the popup says so when the original was not
 // found. Frames never change a flag.
 
-import { formatTimecode } from "./claimSync.js?v=2a52d7b88c";
+import { formatTimecode } from "./claimSync.js?v=4250a1ebb1";
+import { labelLanguage } from "./i18n.js?v=4250a1ebb1";
 
 const LABELS = {
   ru: {
@@ -35,7 +36,7 @@ const LABELS = {
 };
 
 export function frameLabels(lang) {
-  return LABELS[String(lang ?? "").startsWith("ru") ? "ru" : "en"];
+  return LABELS[String(labelLanguage(lang) ?? "").startsWith("ru") ? "ru" : "en"];
 }
 
 function safeUrl(url) {
@@ -152,7 +153,7 @@ export function screenBlockHtml(claim, lang = "ru") {
 export function frameTimelineItems(run) {
   const lang = run?.caption_language ?? "ru";
   const L = frameLabels(lang);
-  const key = String(lang).startsWith("ru") ? "ru" : "en";
+  const key = String(labelLanguage(lang)).startsWith("ru") ? "ru" : "en";
   return (run?.frame_marks ?? [])
     .filter((m) => Number.isFinite(Number(m.t_sec)))
     .map((m) => {

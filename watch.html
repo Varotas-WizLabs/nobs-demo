@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=2a52d7b88c"></script>
+    <script src="src/demoShim.js?v=4250a1ebb1"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,14 +17,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <meta name="referrer" content="no-referrer" />
-    <title>душнила AI — разбор</title>
-    <link rel="stylesheet" href="styles.css?v=2a52d7b88c" />
+    <title>Contrarium — разбор</title>
+    <link rel="stylesheet" href="styles.css?v=4250a1ebb1" />
     <script src="vendor/supabase.js"></script>
   </head>
   <body>
     <header class="nobs-topbar">
-      <a class="nobs-logo" href="index.html" aria-label="душнила AI">
-        <span class="nobs-logo-word">душнила</span><span class="nobs-logo-ai">AI</span>
+      <a class="nobs-logo" href="index.html" aria-label="Contrarium">
+        <span class="nobs-logo-word">Contrarium</span>
       </a>
     </header>
     <main class="nobs-home nobs-request nobs-account">
@@ -32,12 +32,11 @@
     </main>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=2a52d7b88c";
-      import { pickLang } from "./src/publicRequest.js?v=2a52d7b88c";
-      import { runWatchPage } from "./src/watchPage.js?v=2a52d7b88c";
+      import { t } from "./src/i18n.js?v=4250a1ebb1";
+      import { initUiLang } from "./src/uiLang.js?v=4250a1ebb1";
+      import { runWatchPage } from "./src/watchPage.js?v=4250a1ebb1";
 
-      const lang = pickLang(location);
-      document.documentElement.lang = lang;
+      const lang = initUiLang();
       document.title = t("watch.pageTitle", lang);
       runWatchPage({ root: document.getElementById("watch-root"), lang });
     </script>
