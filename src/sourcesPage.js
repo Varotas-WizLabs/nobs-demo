@@ -7,8 +7,8 @@
 //
 // The score is shown for reading only: it never decides a verdict.
 
-import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=4250a1ebb1";
-import { renderTrustRow } from "./trustPage.js?v=4250a1ebb1";
+import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=c1a53f5cb1";
+import { renderTrustRow } from "./trustPage.js?v=c1a53f5cb1";
 
 // The weight of a corroboration / contradiction by the evidence behind it
 // (claims about research only; backend nobs.sources.evidence).
