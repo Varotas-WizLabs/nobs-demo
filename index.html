@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=078ff1187e"></script>
+    <script src="src/demoShim.js?v=86fe2f8bff"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skepticum — разобрать видео</title>
-    <link rel="stylesheet" href="styles.css?v=078ff1187e" />
+    <link rel="stylesheet" href="styles.css?v=86fe2f8bff" />
   </head>
   <body>
     <header class="nobs-topbar">
@@ -40,7 +40,7 @@
           <small data-i18n="request.codeHint"></small>
         </label>
         <div id="request-effort"></div>
-        <button type="submit" id="request-button" data-i18n="request.button">Разобрать</button>
+        <button type="submit" id="request-button" data-i18n="request.button">Усомниться</button>
       </form>
 
       <p id="request-error" class="nobs-request-error" role="alert" hidden></p>
@@ -66,10 +66,10 @@
     </footer>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=078ff1187e";
-      import { initUiLang } from "./src/uiLang.js?v=078ff1187e";
-      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=078ff1187e";
-      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=078ff1187e";
+      import { t } from "./src/i18n.js?v=86fe2f8bff";
+      import { initUiLang } from "./src/uiLang.js?v=86fe2f8bff";
+      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=86fe2f8bff";
+      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=86fe2f8bff";
 
       const lang = initUiLang();
       document.title = t("request.pageTitle", lang);

@@ -1,8 +1,8 @@
 // web/src/accountMenuBoot.js — the top bar of the page that loads it: the
 // interface language (src/uiLang.js: RU / EN switch, [data-i18n] labels of
 // the bar and footer) and the account corner (src/accountMenu.js).
-import { mountAccountMenu } from "./accountMenu.js?v=078ff1187e";
-import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./uiLang.js?v=078ff1187e";
+import { mountAccountMenu } from "./accountMenu.js?v=86fe2f8bff";
+import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./uiLang.js?v=86fe2f8bff";
 
 const lang = initUiLang();
 const bar = document.querySelector(".nobs-topbar");
