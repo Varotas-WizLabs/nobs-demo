@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=e1e4378fd1"></script>
+    <script src="src/demoShim.js?v=cc372a02d2"></script>
 
     <!-- Theme before first paint (settings: dark / light / system). -->
     <script>
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NOBS — демо</title>
-    <link rel="stylesheet" href="styles.css?v=e1e4378fd1" />
+    <link rel="stylesheet" href="styles.css?v=cc372a02d2" />
   </head>
   <body>
     <!-- Brand bar: the «душнила AI» logo, top left. -->
@@ -76,30 +76,30 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=e1e4378fd1";
-      import { bootstrapPlayerPage } from "./src/main.js?v=e1e4378fd1";
-      import { startProcessingLog } from "./src/processingLog.js?v=e1e4378fd1";
-      import { startLibrary } from "./src/library.js?v=e1e4378fd1";
-      import { buildShareControl, isSolo, watchShareUrl } from "./src/share.js?v=e1e4378fd1";
-      import { renderClaimList } from "./src/claimList.js?v=e1e4378fd1";
-      import { buildRailFilters } from "./src/railFilters.js?v=e1e4378fd1";
-      import { verdictKey } from "./src/popup.js?v=e1e4378fd1";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=e1e4378fd1";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=e1e4378fd1";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=e1e4378fd1";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=e1e4378fd1";
-      import { t } from "./src/i18n.js?v=e1e4378fd1";
-      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=e1e4378fd1";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=e1e4378fd1";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=e1e4378fd1";
-      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=e1e4378fd1";
-      import { createHoldIcon } from "./src/holdIcon.js?v=e1e4378fd1";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=e1e4378fd1";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=e1e4378fd1";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=e1e4378fd1";
-      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=e1e4378fd1";
-      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=e1e4378fd1";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=e1e4378fd1";
+      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=cc372a02d2";
+      import { bootstrapPlayerPage } from "./src/main.js?v=cc372a02d2";
+      import { startProcessingLog } from "./src/processingLog.js?v=cc372a02d2";
+      import { startLibrary } from "./src/library.js?v=cc372a02d2";
+      import { buildShareControl, isSolo, watchShareUrl } from "./src/share.js?v=cc372a02d2";
+      import { renderClaimList } from "./src/claimList.js?v=cc372a02d2";
+      import { buildRailFilters } from "./src/railFilters.js?v=cc372a02d2";
+      import { verdictKey } from "./src/popup.js?v=cc372a02d2";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=cc372a02d2";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=cc372a02d2";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=cc372a02d2";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=cc372a02d2";
+      import { t } from "./src/i18n.js?v=cc372a02d2";
+      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=cc372a02d2";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=cc372a02d2";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, piperSupported, resolveEngineId, systemSupported, systemVoiceNames } from "./src/voiceEngines.js?v=cc372a02d2";
+      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=cc372a02d2";
+      import { createHoldIcon } from "./src/holdIcon.js?v=cc372a02d2";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=cc372a02d2";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=cc372a02d2";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=cc372a02d2";
+      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=cc372a02d2";
+      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=cc372a02d2";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=cc372a02d2";
       applyTheme(document);
       // A phone or tablet (src/mobile.js): the system voice by default, a
       // longer Piper lead, touch hints; CSS keys the layout on the screen size.
@@ -1071,5 +1071,6 @@
           container.textContent = "Could not load this video: " + err.message;
         });
     </script>
+  <script type="module" src="src/accountMenuBoot.js"></script>
   </body>
 </html>

@@ -54,6 +54,15 @@ export function createAccountsClient(config, { createClient = globalThis.supabas
   const sb = createClient(config.url, config.publishableKey, {
     auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true, autoRefreshToken: true },
   });
+  // Tell the top bar's account corner (src/accountMenu.js) that the stored
+  // session changed in this tab (the storage event fires only in other tabs).
+  try {
+    sb.auth.onAuthStateChange(() => {
+      setTimeout(() => globalThis.dispatchEvent?.(new Event("nobs:auth-changed")), 0);
+    });
+  } catch {
+    /* a client without auth events */
+  }
   const rpc = (name, args) => call(() => sb.rpc(name, args));
 
   const client = {

@@ -31,9 +31,9 @@
 //
 // Pure helpers first (tested on their own), then the controller.
 
-import { formatTimecode } from "./claimSync.js?v=e1e4378fd1";
-import { t } from "./i18n.js?v=e1e4378fd1";
-import { isUnchecked } from "./progress.js?v=e1e4378fd1";
+import { formatTimecode } from "./claimSync.js?v=cc372a02d2";
+import { t } from "./i18n.js?v=cc372a02d2";
+import { isUnchecked } from "./progress.js?v=cc372a02d2";
 
 export const TICK_MS = 500;
 // The start gate opens when the checks reach this far (or after the wait).
