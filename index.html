@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=a1c8a76876"></script>
+    <script src="src/demoShim.js?v=71b2d983c0"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
@@ -17,7 +17,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skeptium — разобрать видео</title>
-    <link rel="stylesheet" href="styles.css?v=a1c8a76876" />
+    <link rel="stylesheet" href="styles.css?v=71b2d983c0" />
   </head>
   <body>
     <header class="nobs-topbar">
@@ -63,13 +63,14 @@
     <footer class="nobs-footer">
       <span>Skeptium (NobsAI) by WizLabs</span>
       <a href="privacy.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
+      <a href="terms.html" data-i18n="footer.terms">Условия использования</a>
     </footer>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=a1c8a76876";
-      import { initUiLang } from "./src/uiLang.js?v=a1c8a76876";
-      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=a1c8a76876";
-      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=a1c8a76876";
+      import { t } from "./src/i18n.js?v=71b2d983c0";
+      import { initUiLang } from "./src/uiLang.js?v=71b2d983c0";
+      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=71b2d983c0";
+      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=71b2d983c0";
 
       const lang = initUiLang();
       document.title = t("request.pageTitle", lang);

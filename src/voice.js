@@ -81,7 +81,7 @@
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
 
-import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=a1c8a76876";
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=71b2d983c0";
 
 export { RATE_BY_LEVEL, selectStops };
 

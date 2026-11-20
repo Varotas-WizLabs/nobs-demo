@@ -9,13 +9,13 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=a1c8a76876";
-import { pickLang } from "./publicRequest.js?v=a1c8a76876";
-import { youtubeVideoId } from "./youtubeId.js?v=a1c8a76876";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=a1c8a76876";
-import { loadAccountsConfig } from "./accountsConfig.js?v=a1c8a76876";
-import { createAccountsClient } from "./accountsClient.js?v=a1c8a76876";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=a1c8a76876";
+import { t } from "./i18n.js?v=71b2d983c0";
+import { pickLang } from "./publicRequest.js?v=71b2d983c0";
+import { youtubeVideoId } from "./youtubeId.js?v=71b2d983c0";
+import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=71b2d983c0";
+import { loadAccountsConfig } from "./accountsConfig.js?v=71b2d983c0";
+import { createAccountsClient } from "./accountsClient.js?v=71b2d983c0";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=71b2d983c0";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
