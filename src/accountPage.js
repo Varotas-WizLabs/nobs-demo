@@ -9,13 +9,13 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=71a82834c3";
-import { pickLang } from "./publicRequest.js?v=71a82834c3";
-import { youtubeVideoId } from "./youtubeId.js?v=71a82834c3";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=71a82834c3";
-import { loadAccountsConfig } from "./accountsConfig.js?v=71a82834c3";
-import { createAccountsClient } from "./accountsClient.js?v=71a82834c3";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=71a82834c3";
+import { t } from "./i18n.js?v=922fa24595";
+import { pickLang } from "./publicRequest.js?v=922fa24595";
+import { youtubeVideoId } from "./youtubeId.js?v=922fa24595";
+import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=922fa24595";
+import { loadAccountsConfig } from "./accountsConfig.js?v=922fa24595";
+import { createAccountsClient } from "./accountsClient.js?v=922fa24595";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=922fa24595";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
@@ -176,7 +176,7 @@ function formatDate(iso, lang) {
 function formatShortDate(iso, lang) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(lang === "en" ? "en-GB" : "ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString(lang === "en" ? "en-GB" : "ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
 }
 
 function el(doc, tag, attrs = {}, ...children) {
@@ -697,7 +697,8 @@ export function mountAccountPage({
     const req = r.data ?? {};
     const asked = ui.visibility.value();
     const kind = req.joined_to ? "joined" : req.status === "done" ? "done" : "queued";
-    let text = tt(`account.created.${kind}`, { cost: Number(req.cost) || 0 });
+    const created = req.allowance === true && kind === "queued" ? "allowance" : kind;
+    let text = tt(`account.created.${created}`, { cost: Number(req.cost) || 0 });
     ui.url.value = "";
     await refresh({ force: true });
     // A video already in «Мои видео» keeps its visibility: say so when the pick differs.
@@ -719,7 +720,10 @@ export function mountAccountPage({
 
   async function refreshPlan() {
     const r = await state.client.myPlan();
-    state.plan = r.error ? null : r.data;
+    // A transient failure keeps the last good plan (Deep must not flip to Light
+    // mid-form); only a lost session clears it. A failed first load stays non-Pro (plan starts null).
+    if (!r.error) state.plan = r.data;
+    else if (r.error === "not_signed_in") state.plan = null;
     renderPlan();
   }
 
