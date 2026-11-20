@@ -15,7 +15,7 @@
 export const DB_ERRORS = [
   "not_signed_in", "blocked", "rate_limited", "bad_code", "code_revoked", "code_expired", "code_already_redeemed",
   "code_used_up", "bad_video", "bad_mode", "bad_visibility", "not_accepting", "insufficient_credits", "queue_full",
-  "not_found", "not_cancellable",
+  "not_found", "not_cancellable", "pro_required",
 ];
 const KNOWN = new Set(DB_ERRORS);
 
@@ -106,6 +106,9 @@ export function createAccountsClient(config, { createClient = globalThis.supabas
     },
     createRequest(videoId, mode, visibility = "public") {
       return rpc("create_request", { p_video: videoId, p_mode: mode, p_visibility: visibility });
+    },
+    myPlan() {
+      return rpc("my_plan");
     },
     async myVideos() {
       const r = await rpc("my_videos");

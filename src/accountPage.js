@@ -9,13 +9,13 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=392e705d28";
-import { pickLang } from "./publicRequest.js?v=392e705d28";
-import { youtubeVideoId } from "./youtubeId.js?v=392e705d28";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=392e705d28";
-import { loadAccountsConfig } from "./accountsConfig.js?v=392e705d28";
-import { createAccountsClient } from "./accountsClient.js?v=392e705d28";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=392e705d28";
+import { t } from "./i18n.js?v=71a82834c3";
+import { pickLang } from "./publicRequest.js?v=71a82834c3";
+import { youtubeVideoId } from "./youtubeId.js?v=71a82834c3";
+import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=71a82834c3";
+import { loadAccountsConfig } from "./accountsConfig.js?v=71a82834c3";
+import { createAccountsClient } from "./accountsClient.js?v=71a82834c3";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=71a82834c3";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
@@ -172,6 +172,13 @@ function formatDate(iso, lang) {
   return d.toLocaleDateString(lang === "en" ? "en-GB" : "ru-RU", { day: "numeric", month: "long", year: "numeric" });
 }
 
+// The plan line's date: ru «31.12.2026», en the locale's short date.
+function formatShortDate(iso, lang) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(lang === "en" ? "en-GB" : "ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function el(doc, tag, attrs = {}, ...children) {
   const node = doc.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -208,7 +215,7 @@ export function mountAccountPage({
   demoBase = DEMO_BASE,
 } = {}) {
   const tt = (key, values) => fill(t(key, lang), values ?? {});
-  const state = { user: null, videos: [], balance: null, settings: null, offline: false, timer: null, stopped: false, redeemedPending: false, client: null, mode: "loading" };
+  const state = { user: null, videos: [], balance: null, plan: null, settings: null, offline: false, timer: null, stopped: false, redeemedPending: false, client: null, mode: "loading" };
 
   // The invite code in the link is taken (and removed from the address) before
   // supabase-js reads the address for a sign-in ?code=.
@@ -437,6 +444,7 @@ export function mountAccountPage({
 
     ui.balance = el(doc, "p", { class: "nobs-account-balance", id: "account-balance", text: "…" });
     ui.expiry = el(doc, "small", { class: "nobs-account-note", id: "account-expiry", hidden: true });
+    ui.plan = el(doc, "p", { class: "nobs-account-note", id: "account-plan", hidden: true });
 
     ui.redeemInput = el(doc, "input", { type: "text", id: "account-redeem-code", placeholder: tt("account.redeemPlaceholder"), autocomplete: "off", spellcheck: "false", maxlength: "40" });
     ui.redeemButton = el(doc, "button", { type: "submit", id: "account-redeem", text: tt("account.redeem") });
@@ -450,7 +458,8 @@ export function mountAccountPage({
     });
 
     ui.url = el(doc, "input", { type: "url", id: "account-url", placeholder: "https://www.youtube.com/watch?v=...", autocomplete: "off", required: true });
-    ui.effort = buildEffortPicker(doc, { lang, value: loadEffort(storages?.[1]), onChange: (v) => saveEffort(v, storages?.[1]), name: "account-effort" });
+    ui.effort = buildEffortPicker(doc, { lang, value: loadEffort(storages?.[1]), onChange: (v) => saveEffort(v, storages?.[1]), name: "account-effort", proBadge: true, disabled: { deep: tt("account.pro.deepLocked") } });
+    ui.effort.deepLocked = true; // until my_plan says Pro
     ui.visibility = buildVisibilityPicker();
     ui.price = el(doc, "p", { class: "nobs-account-note", id: "account-price", hidden: true });
     ui.submit = el(doc, "button", { type: "submit", id: "account-submit", text: tt("account.submit") });
@@ -469,7 +478,7 @@ export function mountAccountPage({
     root.replaceChildren(
       ui.offline,
       el(doc, "section", { class: "nobs-account-card", id: "account-profile" }, who,
-        el(doc, "h2", { text: tt("account.balanceTitle") }), ui.balance, ui.expiry),
+        el(doc, "h2", { text: tt("account.balanceTitle") }), ui.balance, ui.expiry, ui.plan),
       el(doc, "section", { class: "nobs-account-card", id: "account-redeem-box" },
         el(doc, "h2", { text: tt("account.redeemTitle") }), redeemForm, ui.redeemResult),
       el(doc, "section", { class: "nobs-account-card", id: "account-request" },
@@ -492,6 +501,34 @@ export function mountAccountPage({
     const exp = state.balance.next_expiry ? formatDate(state.balance.next_expiry, lang) : "";
     ui.expiry.textContent = exp ? tt("account.nextExpiry", { date: exp }) : "";
     ui.expiry.hidden = !exp;
+  }
+
+  // Pro: the plan line and Deep enabled; otherwise (also when my_plan failed)
+  // Deep is locked and a saved «Deep» falls back to Light without being forgotten.
+  function renderPlan() {
+    if (!ui.plan) return;
+    const plan = state.plan;
+    if (!plan?.pro) {
+      ui.plan.hidden = true;
+      ui.plan.textContent = "";
+      if (!ui.effort.deepLocked) {
+        ui.effort.deepLocked = true;
+        ui.effort.setDeepDisabled(tt("account.pro.deepLocked"));
+      }
+      return;
+    }
+    const until = plan.pro_until ? formatShortDate(plan.pro_until, lang) : "";
+    const left = Number(plan.deep_left) || 0;
+    const usage = left > 0
+      ? tt("account.pro.left", { left, total: Number(plan.deep_per_month) || 0 })
+      : tt("account.pro.creditsNow");
+    ui.plan.textContent = (until ? tt("account.pro.until", { date: until }) + " · " : "") + usage;
+    ui.plan.hidden = false;
+    if (ui.effort.deepLocked) {
+      ui.effort.deepLocked = false;
+      ui.effort.setDeepDisabled(null);
+      ui.effort.set(loadEffort(storages?.[1]));
+    }
   }
 
   function renderPrice() {
@@ -680,9 +717,15 @@ export function mountAccountPage({
     }
   }
 
+  async function refreshPlan() {
+    const r = await state.client.myPlan();
+    state.plan = r.error ? null : r.data;
+    renderPlan();
+  }
+
   async function refresh({ force = false } = {}) {
     if (state.mode !== "signedIn") return;
-    const [videos, , status] = await Promise.all([state.client.myVideos(), refreshBalance(), state.client.serverStatus()]);
+    const [videos, , status] = await Promise.all([state.client.myVideos(), refreshBalance(), state.client.serverStatus(), refreshPlan()]);
     if (state.mode !== "signedIn") return;
     if (!videos.error) {
       state.videos = videos.data;
@@ -758,6 +801,7 @@ export function mountAccountPage({
     state.timer = null;
     state.user = null;
     state.videos = [];
+    state.plan = null;
     renderSignedOut();
   }
 

@@ -13,7 +13,7 @@
 //                       then shows a small «deeper version ready» notice (never swaps claims)
 // Built with DOM APIs and textContent only.
 
-import { labelLanguage } from "./i18n.js?v=392e705d28";
+import { labelLanguage } from "./i18n.js?v=71a82834c3";
 
 export const EFFORTS = ["light", "deep"];
 export const UPGRADE_POLL_MS = 30000;
@@ -28,6 +28,7 @@ const STRINGS = {
     "deep.hint": "Распознавание речи, кадры, глубокая проверка и второе мнение. Стартует как Light, затем глубокая версия подменяет её для следующих просмотров.",
     "badge.light": "Light",
     "badge.deep": "Deep",
+    "badge.pro": "Pro",
     "badge.upgrading": "Deep готовится…",
     "badge.lightTitle": "Быстрый разбор по субтитрам YouTube",
     "badge.deepTitle": "Глубокий разбор: распознавание речи, кадры, глубокая проверка",
@@ -43,6 +44,7 @@ const STRINGS = {
     "deep.hint": "Speech recognition, frames, deep fact-check and a second opinion. Starts like Light; the deep version then replaces it for later views.",
     "badge.light": "Light",
     "badge.deep": "Deep",
+    "badge.pro": "Pro",
     "badge.upgrading": "Deep in progress…",
     "badge.lightTitle": "Quick analysis from YouTube captions",
     "badge.deepTitle": "Deep analysis: speech recognition, frames, deep fact-check",
@@ -81,13 +83,14 @@ export function saveEffort(value, storage = globalThis.localStorage) {
  * The two-option selector (radio group). Returns {root, value(), set(v)}.
  * `onChange(effort)` on a change; `name` keeps two pickers on a page apart.
  */
-export function buildEffortPicker(doc, { lang = "ru", value = "light", onChange = null, name = "nobs-effort" } = {}) {
+export function buildEffortPicker(doc, { lang = "ru", value = "light", onChange = null, name = "nobs-effort", disabled = null, proBadge = false } = {}) {
   const root = doc.createElement("fieldset");
   root.className = "nobs-effort";
   const legend = doc.createElement("legend");
   legend.textContent = effortText("legend", lang);
   root.appendChild(legend);
   const inputs = {};
+  const hints = {};
   for (const effort of EFFORTS) {
     const label = doc.createElement("label");
     label.className = `nobs-effort-option nobs-effort-${effort}`;
@@ -104,18 +107,38 @@ export function buildEffortPicker(doc, { lang = "ru", value = "light", onChange 
     text.className = "nobs-effort-text";
     const title = doc.createElement("strong");
     title.textContent = effortText(`${effort}.title`, lang);
+    if (effort === "deep" && (proBadge || disabled)) {
+      const pro = doc.createElement("span");
+      pro.className = "nobs-pro-badge";
+      pro.textContent = effortText("badge.pro", lang);
+      title.append(" ", pro);
+    }
     const hint = doc.createElement("small");
     hint.textContent = effortText(`${effort}.hint`, lang);
+    hints[effort] = hint;
     text.append(title, hint);
     label.append(input, text);
     root.appendChild(label);
   }
+  const normalHint = hints.deep.textContent;
+  // `reason` a string: Deep is off and the text is its hint; null: Deep is on.
+  const setDeepDisabled = (reason) => {
+    const off = typeof reason === "string";
+    inputs.deep.disabled = off;
+    inputs.deep.closest("label").classList.toggle("nobs-effort-disabled", off);
+    hints.deep.textContent = off ? reason : normalHint;
+    if (off && inputs.deep.checked) inputs.light.checked = true;
+  };
+  if (disabled && typeof disabled.deep === "string") setDeepDisabled(disabled.deep);
   return {
     root,
     value: () => (inputs.deep.checked ? "deep" : "light"),
     set: (v) => {
-      inputs[normalizeEffort(v)].checked = true;
+      const k = normalizeEffort(v);
+      if (inputs[k].disabled) return;
+      inputs[k].checked = true;
     },
+    setDeepDisabled,
   };
 }
 
