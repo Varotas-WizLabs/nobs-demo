@@ -1793,8 +1793,7 @@ main {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
-  .nobs-topbar .nobs-demo-banner ~ .nobs-account-menu,
-  .nobs-topbar .nobs-demo-banner ~ .nobs-lang-switch { margin-left: 0; }
+  .nobs-topbar .nobs-demo-banner ~ .nobs-account-menu { margin-left: 0; }
 }
 [data-demo="1"] .nobs-library-new {
   display: none;
@@ -3751,15 +3750,6 @@ button.nobs-scoop-verdict:hover {
     font-size: 16px;
   }
 }
-.nobs-library-request {
-  color: var(--nobs-green);
-  text-decoration: none;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.nobs-library[data-collapsed="true"] .nobs-library-request {
-  display: none;
-}
 
 .nobs-codes {
   max-width: 980px;
@@ -5520,6 +5510,25 @@ html.nobs-pseudo-fs-open body {
   text-decoration: none;
 }
 .nobs-account-login:hover { border-color: var(--nobs-text); }
+/* «Question a video»: left of the picture, signed in only. */
+.nobs-account-ask {
+  margin-right: 10px;
+  padding: 4px 12px;
+  border: 1px solid var(--nobs-green);
+  border-radius: 999px;
+  color: var(--nobs-green);
+  font-size: 13px;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.nobs-account-ask:hover { background: var(--nobs-green); color: var(--nobs-bg, #0e1214); }
+.nobs-account-ask-plus { margin-right: 5px; }
+@media (max-width: 480px) {
+  .nobs-account-ask { margin-right: 6px; padding: 3px 9px; font-size: 15px; font-weight: 600; }
+  .nobs-account-ask-text { display: none; }
+  .nobs-account-ask-plus { margin-right: 0; }
+}
 .nobs-account-avatar {
   width: 30px;
   height: 30px;
@@ -5593,30 +5602,46 @@ html.nobs-pseudo-fs-open body {
 }
 .nobs-nerd-toggle:hover { opacity: 0.8; text-decoration: underline; }
 
-/* Interface language switch of the top bar (src/uiLang.js): RU / EN. */
-.nobs-lang-switch {
-  margin-left: auto;
-  display: inline-flex;
-  border: 1px solid var(--nobs-border);
-  border-radius: 999px;
-  overflow: hidden;
+
+/* «Question a video» lightbox (src/requestModal.js). */
+.nobs-modal-open { overflow: hidden; }
+.nobs-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8vh 16px 16px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.6);
 }
-.nobs-lang-switch button {
-  padding: 3px 8px;
-  border: 0;
+.nobs-modal {
+  width: 100%;
+  max-width: 520px;
+  padding: 20px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 12px;
+  background: var(--nobs-bg);
+  color: var(--nobs-text);
+}
+.nobs-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.nobs-modal-head h2 { margin: 0; font-size: 20px; }
+.nobs-modal-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--nobs-border);
+  border-radius: 50%;
   background: transparent;
   color: var(--nobs-text);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  opacity: 0.55;
+  font-size: 20px;
+  line-height: 1;
   cursor: pointer;
 }
-.nobs-lang-switch button[aria-pressed="true"] {
-  background: var(--nobs-border);
-  opacity: 1;
-  cursor: default;
+.nobs-modal-close:hover { border-color: var(--nobs-text); }
+.nobs-modal-message { margin-top: 12px; }
+.nobs-modal-code { display: inline-block; margin-top: 12px; color: var(--nobs-muted); font-size: 13px; }
+@media (max-width: 480px) {
+  .nobs-modal-backdrop { padding: 0; }
+  .nobs-modal { min-height: 100%; max-width: none; border: 0; border-radius: 0; }
 }
-.nobs-lang-switch button:hover { opacity: 1; }
-.nobs-lang-switch ~ .nobs-account-menu { margin-left: 10px; }

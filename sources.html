@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=922fa24595"></script>
+    <script src="src/demoShim.js?v=fc9b98c915"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=922fa24595"></script>
+    <script src="src/themeEarly.js?v=fc9b98c915"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
     <title>Skeptium — индекс источников</title>
-    <link rel="stylesheet" href="styles.css?v=922fa24595" />
+    <link rel="stylesheet" href="styles.css?v=fc9b98c915" />
     <link rel="stylesheet" href="sources.css" />
   </head>
   <body class="nobs-cm-page nobs-src-page">
@@ -29,16 +29,15 @@
     </header>
     <main id="sources"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=922fa24595";
-      import { t } from "./src/i18n.js?v=922fa24595";
-      import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./src/uiLang.js?v=922fa24595";
-      import "./src/stringsSources.js?v=922fa24595";
-      import { mountSourcesPage } from "./src/sourcesPage.js?v=922fa24595";
+      import { applyTheme } from "./src/settings.js?v=fc9b98c915";
+      import { t } from "./src/i18n.js?v=fc9b98c915";
+      import { initUiLang, translatePage } from "./src/uiLang.js?v=fc9b98c915";
+      import "./src/stringsSources.js?v=fc9b98c915";
+      import { mountSourcesPage } from "./src/sourcesPage.js?v=fc9b98c915";
       applyTheme(document);
       const lang = initUiLang();
       translatePage(document, lang);
       document.title = t("srcui.docTitle", lang);
-      renderLangSwitch(document, document.querySelector(".nobs-src-topline"), { lang, storage: localStorage, reload: () => reloadWithout() });
       mountSourcesPage(document.getElementById("sources"), { fetchImpl: fetch });
     </script>
   </body>

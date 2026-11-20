@@ -65,6 +65,15 @@ export function createAccountsClient(config, { createClient = globalThis.supabas
   }
   const rpc = (name, args) => call(() => sb.rpc(name, args));
 
+  async function currentUserId() {
+    try {
+      const { data } = await sb.auth.getSession();
+      return data?.session?.user?.id ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   const client = {
     raw: sb,
     googleEnabled: Boolean(config.googleEnabled),
@@ -131,6 +140,21 @@ export function createAccountsClient(config, { createClient = globalThis.supabas
         () => sb.from("server_status").select("heartbeat_at,version").eq("id", 1).maybeSingle(),
         (row) => ({ heartbeat_at: row?.heartbeat_at ?? null }),
       );
+    },
+    // The interface language kept on the profile (profiles.locale, 'ru' | 'en' | null).
+    async getLocale() {
+      const uid = await currentUserId();
+      if (!uid) return { error: "not_signed_in" };
+      return call(
+        () => sb.from("profiles").select("locale").eq("id", uid).maybeSingle(),
+        (row) => (row?.locale === "ru" || row?.locale === "en" ? row.locale : null),
+      );
+    },
+    async setLocale(lang) {
+      if (lang !== "ru" && lang !== "en") return { error: "other" };
+      const uid = await currentUserId();
+      if (!uid) return { error: "not_signed_in" };
+      return call(() => sb.from("profiles").update({ locale: lang }).eq("id", uid), () => true);
     },
     publicSettings() {
       return rpc("public_settings");

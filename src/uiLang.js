@@ -1,14 +1,14 @@
 // web/src/uiLang.js
 //
 // The interface language: Russian or English. The visitor's choice wins
-// (the RU / EN switch in the top bar, kept in localStorage); a ?lang=ru|en
+// (chosen on the account page, kept in localStorage); a ?lang=ru|en
 // link sets it too. Without a choice the browser's languages decide:
 // Russian for ru / uk / be / kk, English otherwise.
 //
 // Content stays in its own language: claims, arguments and explanations are
 // written in the video's language; only the labels around them follow this.
 
-import { UI_LANGUAGES, setInterfaceLanguage, t } from "./i18n.js?v=922fa24595";
+import { UI_LANGUAGES, setInterfaceLanguage, t } from "./i18n.js?v=fc9b98c915";
 
 export const LANG_KEY = "nobs.lang";
 const RUSSIAN_READERS = ["ru", "uk", "be", "kk"];
@@ -72,33 +72,6 @@ export function initUiLang({
 export function translatePage(doc, lang) {
   for (const el of doc.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n, lang);
   for (const el of doc.querySelectorAll("[data-i18n-title]")) el.title = t(el.dataset.i18nTitle, lang);
-}
-
-/** The RU / EN switch in the top bar: saves the choice and reloads the page. */
-export function renderLangSwitch(doc, bar, { lang, storage, reload }) {
-  bar.querySelector(".nobs-lang-switch")?.remove();
-  const root = doc.createElement("div");
-  root.className = "nobs-lang-switch";
-  root.setAttribute("role", "group");
-  root.setAttribute("aria-label", t("menu.language", lang));
-  for (const code of UI_LANGUAGES) {
-    const b = doc.createElement("button");
-    b.type = "button";
-    b.textContent = code.toUpperCase();
-    b.lang = code;
-    b.setAttribute("aria-pressed", String(code === lang));
-    b.addEventListener("click", () => {
-      if (code === lang) return;
-      saveUiLang(storage, code);
-      reload(code);
-    });
-    root.append(b);
-  }
-  // Before the account corner when it is already there, else at the end.
-  const account = bar.querySelector(".nobs-account-menu");
-  if (account) account.before(root);
-  else bar.append(root);
-  return root;
 }
 
 /** Reload without a ?lang= that would override the new choice. */

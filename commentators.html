@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=922fa24595"></script>
+    <script src="src/demoShim.js?v=fc9b98c915"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=922fa24595"></script>
+    <script src="src/themeEarly.js?v=fc9b98c915"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
     <title data-i18n="cmui.pageTitle">Skeptium — комментаторы</title>
-    <link rel="stylesheet" href="styles.css?v=922fa24595" />
+    <link rel="stylesheet" href="styles.css?v=fc9b98c915" />
   </head>
   <body class="nobs-cm-page">
     <header class="nobs-cm-header">
@@ -27,11 +27,11 @@
     </header>
     <main id="commentators"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=922fa24595";
-      import { initUiLang, renderLangSwitch, reloadWithout, translatePage } from "./src/uiLang.js?v=922fa24595";
-      import { t } from "./src/i18n.js?v=922fa24595";
-      import "./src/stringsCommentators.js?v=922fa24595";
-      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=922fa24595";
+      import { applyTheme } from "./src/settings.js?v=fc9b98c915";
+      import { initUiLang, translatePage } from "./src/uiLang.js?v=fc9b98c915";
+      import { t } from "./src/i18n.js?v=fc9b98c915";
+      import "./src/stringsCommentators.js?v=fc9b98c915";
+      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=fc9b98c915";
       applyTheme(document);
       const lang = initUiLang();
       translatePage(document, lang);
@@ -42,7 +42,6 @@
       } catch {
         store = null;
       }
-      renderLangSwitch(document, document.querySelector(".nobs-cm-header"), { lang, storage: store, reload: () => reloadWithout() });
       mountCommentatorsPage(document.getElementById("commentators"), { fetchImpl: fetch });
     </script>
   </body>

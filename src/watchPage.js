@@ -15,9 +15,9 @@
 // On the local server (no accounts config) the video's run comes straight
 // from the local run list.
 
-import { t } from "./i18n.js?v=922fa24595";
-import { loadAccountsConfig } from "./accountsConfig.js?v=922fa24595";
-import { createAccountsClient } from "./accountsClient.js?v=922fa24595";
+import { t } from "./i18n.js?v=fc9b98c915";
+import { loadAccountsConfig } from "./accountsConfig.js?v=fc9b98c915";
+import { createAccountsClient } from "./accountsClient.js?v=fc9b98c915";
 
 export const WATCH_KEY_PREFIX = "nobs.watch.";
 const VIDEO_RE = /^[A-Za-z0-9_-]{11}$/;

@@ -16,12 +16,12 @@
 // is flat. This module knows only the source and the parameter; the
 // management links come from the source (pageHref, manage_href).
 
-import { formatCost, formatDuration } from "./runStats.js?v=922fa24595";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=922fa24595";
-import { enableMenuSettings } from "./settings.js?v=922fa24595";
-import { t } from "./i18n.js?v=922fa24595";
-import { buildEffortBadge } from "./effort.js?v=922fa24595";
-import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=922fa24595";
+import { formatCost, formatDuration } from "./runStats.js?v=fc9b98c915";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=fc9b98c915";
+import { enableMenuSettings } from "./settings.js?v=fc9b98c915";
+import { t } from "./i18n.js?v=fc9b98c915";
+import { buildEffortBadge } from "./effort.js?v=fc9b98c915";
+import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=fc9b98c915";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -271,17 +271,9 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
   newLink.textContent = t("lib.new", "en");
   // Settings: an entry of the account menu (signed in only), not a gear here.
   enableMenuSettings(doc, () => doc.body?.dataset.lang || "en");
-  // The public demo has no local submit page; its index is the invite-only
-  // request page (request.html, src/publicRequest.js) instead.
+  // The public demo has no local submit page; its «Question a video» entry
+  // lives in the top bar next to the account picture (src/accountMenu.js).
   const demo = doc.documentElement?.dataset.demo === "1";
-  let requestLink = null;
-  if (demo) {
-    requestLink = doc.createElement("a");
-    requestLink.href = "index.html";
-    requestLink.className = "nobs-library-request";
-    requestLink.textContent = t("lib.request", "ru");
-    requestLink.title = t("lib.requestTitle", "ru");
-  }
   let foldersLink = null;
   if (!demo && pageHref && Array.isArray(folders)) {
     foldersLink = doc.createElement("a");
@@ -289,7 +281,7 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
     foldersLink.className = "nobs-library-folders-link";
     foldersLink.textContent = t("lib.playlists", "ru");
   }
-  heading.append(...[toggle, label, foldersLink, demo ? requestLink : newLink].filter(Boolean));
+  heading.append(...[toggle, label, foldersLink, demo ? null : newLink].filter(Boolean));
 
   const list = doc.createElement("nav");
   list.className = "nobs-library-list";

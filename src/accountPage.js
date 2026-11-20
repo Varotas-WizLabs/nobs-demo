@@ -9,19 +9,19 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=922fa24595";
-import { pickLang } from "./publicRequest.js?v=922fa24595";
-import { youtubeVideoId } from "./youtubeId.js?v=922fa24595";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=922fa24595";
-import { loadAccountsConfig } from "./accountsConfig.js?v=922fa24595";
-import { createAccountsClient } from "./accountsClient.js?v=922fa24595";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=922fa24595";
+import { t } from "./i18n.js?v=fc9b98c915";
+import { pickLang } from "./publicRequest.js?v=fc9b98c915";
+import { buildRequestForm, VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=fc9b98c915";
+import { loadAccountsConfig } from "./accountsConfig.js?v=fc9b98c915";
+import { createAccountsClient } from "./accountsClient.js?v=fc9b98c915";
+import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=fc9b98c915";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=fc9b98c915";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
 export const POLL_IDLE_MS = 60000;
 export const OFFLINE_AFTER_MS = 15 * 60 * 1000;
-export const VISIBILITIES = ["public", "unlisted", "private"];
+export { VISIBILITIES, accountErrorText };
 const VIDEO_RE = /^[A-Za-z0-9_-]{11}$/;
 const TOKEN_RE = /^[0-9a-f]{32}$/;
 const FAILED_REASONS = ["too_long", "unavailable", "no_captions", "expired", "error"];
@@ -31,10 +31,6 @@ export const NEXT_KEY = "nobs.account.next";
 export const NEXT_TTL_MS = 60 * 60 * 1000;
 const AUTH_LINK_PARAMS = ["error", "error_code", "error_description"];
 
-function fill(text, values) {
-  return String(text).replace(/\{(\w+)\}/g, (m, k) => (values[k] != null ? String(values[k]) : m));
-}
-
 /** «N разборов» with the Russian plural (English: credit / credits). */
 export function creditsText(n, lang) {
   const v = Math.abs(Number(n) || 0);
@@ -43,17 +39,6 @@ export function creditsText(n, lang) {
   else if (v % 10 === 1 && v % 100 !== 11) key = "account.balanceOne";
   else if ([2, 3, 4].includes(v % 10) && ![12, 13, 14].includes(v % 100)) key = "account.balanceFew";
   return fill(t(key, lang), { n: Number(n) || 0 });
-}
-
-/** The visitor-facing text of an accounts error code (`context`: redeem, signin or none). */
-export function accountErrorText(code, lang, context = null) {
-  const c = code || "other";
-  if (context) {
-    const specific = t(`account.error.${context}.${c}`, lang);
-    if (specific !== `account.error.${context}.${c}`) return specific;
-  }
-  const general = t(`account.error.${c}`, lang);
-  return general === `account.error.${c}` ? t("account.error.other", lang) : general;
 }
 
 /** The status line of a «Мои видео» row's latest request. */
@@ -213,6 +198,7 @@ export function mountAccountPage({
   clipboard = globalThis.navigator?.clipboard,
   confirmImpl = (text) => globalThis.confirm?.(text) ?? false,
   demoBase = DEMO_BASE,
+  reload = () => reloadWithout(),
 } = {}) {
   const tt = (key, values) => fill(t(key, lang), values ?? {});
   const state = { user: null, videos: [], balance: null, plan: null, settings: null, offline: false, timer: null, stopped: false, redeemedPending: false, client: null, mode: "loading" };
@@ -310,6 +296,58 @@ export function mountAccountPage({
 
   root.replaceChildren(el(doc, "p", { class: "nobs-account-loading", text: tt("account.loading") }));
 
+  // ---------------------------------------------------------------- language
+  // «Язык интерфейса»: Русский / English. The choice is kept in localStorage
+  // (saveUiLang) and, when signed in, on the profile (profiles.locale; a failed
+  // save changes nothing); then the page reloads in the new language.
+  function buildLanguageCard() {
+    const fieldset = el(doc, "fieldset", { class: "nobs-effort nobs-account-language", id: "account-language" },
+      el(doc, "legend", { text: tt("account.language") }));
+    for (const code of ["ru", "en"]) {
+      const input = el(doc, "input", { type: "radio", name: "account-language", value: code });
+      input.checked = code === lang;
+      input.addEventListener("change", async () => {
+        if (!input.checked || code === lang) return;
+        saveUiLang(local1, code);
+        if (state.user && state.client?.setLocale) {
+          try {
+            await state.client.setLocale(code);
+          } catch {
+            // the profile copy is a convenience: the local choice stands
+          }
+        }
+        reload(code);
+      });
+      fieldset.append(el(doc, "label", { class: "nobs-effort-option" }, input,
+        el(doc, "span", { class: "nobs-effort-text" }, el(doc, "strong", { text: tt(`account.language.${code}`) }))));
+    }
+    fieldset.append(el(doc, "small", { class: "nobs-account-note", text: tt("account.language.hint") }));
+    return el(doc, "section", { class: "nobs-account-card", id: "account-language-box" }, fieldset);
+  }
+
+  // After sign-in: with no saved choice on this device, the profile's language applies.
+  async function applyProfileLocale() {
+    if (!state.client?.getLocale) return false;
+    if (storageGet(local1, LANG_KEY) === "ru" || storageGet(local1, LANG_KEY) === "en") return false;
+    try {
+      if (new URL(String(location?.href ?? "")).searchParams.has("lang")) return false;
+    } catch {
+      // no address to look at
+    }
+    let r;
+    try {
+      r = await state.client.getLocale();
+    } catch {
+      return false;
+    }
+    const wanted = r?.data;
+    if ((wanted !== "ru" && wanted !== "en") || wanted === lang) return false;
+    saveUiLang(local1, wanted);
+    if (storageGet(local1, LANG_KEY) !== wanted) return false; // storage blocked: would reload forever
+    reload(wanted);
+    return true;
+  }
+
   // ---------------------------------------------------------------- signed out
   function renderSignedOut() {
     state.mode = "signedOut";
@@ -397,6 +435,7 @@ export function mountAccountPage({
         el(doc, "h2", { text: tt("account.signInTitle") }),
         el(doc, "p", { class: "nobs-tagline", text: tt("account.signInHint") }),
         invite, emailForm, sent, otpForm, google, error),
+      buildLanguageCard(),
     );
     const step = otpStep.load();
     if (step) {
@@ -411,24 +450,6 @@ export function mountAccountPage({
 
   // ---------------------------------------------------------------- signed in
   const ui = {};
-
-  function buildVisibilityPicker() {
-    const fieldset = el(doc, "fieldset", { class: "nobs-effort nobs-account-visibility", id: "account-visibility" },
-      el(doc, "legend", { text: tt("account.visibility") }));
-    for (const v of VISIBILITIES) {
-      const input = el(doc, "input", { type: "radio", name: "account-visibility", value: v });
-      input.checked = v === "public";
-      fieldset.append(el(doc, "label", { class: "nobs-effort-option" }, input,
-        el(doc, "span", { class: "nobs-effort-text" },
-          el(doc, "strong", { text: tt(`account.vis.${v}`) }),
-          el(doc, "small", { text: tt(`account.vis.${v}Hint`) }))));
-    }
-    fieldset.append(el(doc, "small", { class: "nobs-account-note", text: tt("account.vis.ytCap") }));
-    return {
-      root: fieldset,
-      value: () => fieldset.querySelector("input:checked")?.value ?? "public",
-    };
-  }
 
   function renderSignedInShell() {
     state.mode = "signedIn";
@@ -457,20 +478,25 @@ export function mountAccountPage({
       await redeem(code);
     });
 
-    ui.url = el(doc, "input", { type: "url", id: "account-url", placeholder: "https://www.youtube.com/watch?v=...", autocomplete: "off", required: true });
-    ui.effort = buildEffortPicker(doc, { lang, value: loadEffort(storages?.[1]), onChange: (v) => saveEffort(v, storages?.[1]), name: "account-effort", proBadge: true, disabled: { deep: tt("account.pro.deepLocked") } });
-    ui.effort.deepLocked = true; // until my_plan says Pro
-    ui.visibility = buildVisibilityPicker();
-    ui.price = el(doc, "p", { class: "nobs-account-note", id: "account-price", hidden: true });
-    ui.submit = el(doc, "button", { type: "submit", id: "account-submit", text: tt("account.submit") });
-    ui.requestError = el(doc, "p", { class: "nobs-request-error", id: "account-request-error", role: "alert", hidden: true });
-    const requestForm = el(doc, "form", { class: "nobs-request-form", id: "account-request-form", novalidate: true },
-      el(doc, "label", { class: "nobs-request-field" }, el(doc, "span", { text: tt("account.url") }), ui.url),
-      ui.effort.root, ui.visibility.root, ui.price, ui.submit);
-    requestForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      submitRequest();
+    ui.request = buildRequestForm(doc, {
+      lang,
+      storage: storages?.[1],
+      idPrefix: "account",
+      getClient: () => state.client,
+      showMessage: (text) => showMessage(text),
+      // A video already in «Мои видео» keeps its visibility: say so when the pick differs.
+      onCreated: async ({ id, asked }) => {
+        await refresh({ force: true });
+        const entry = state.videos.find((v) => v.video_id === id);
+        if (entry && VISIBILITIES.includes(entry.visibility) && entry.visibility !== asked) {
+          return tt("account.created.keptVisibility", { vis: tt(`account.vis.${entry.visibility}`) });
+        }
+        return "";
+      },
     });
+    ui.effort = ui.request.ui.effort;
+    ui.requestError = ui.request.error;
+    const requestForm = ui.request.form;
 
     ui.list = el(doc, "div", { class: "nobs-account-videos", id: "account-videos" });
     ui.empty = el(doc, "p", { class: "nobs-account-note", id: "account-videos-empty", text: tt("account.videosEmpty"), hidden: true });
@@ -485,6 +511,7 @@ export function mountAccountPage({
         el(doc, "h2", { text: tt("account.requestTitle") }), requestForm, ui.requestError, ui.message),
       el(doc, "section", { class: "nobs-account-card", id: "account-my-videos" },
         el(doc, "h2", { text: tt("account.videosTitle") }), ui.empty, ui.list),
+      buildLanguageCard(),
     );
   }
 
@@ -508,13 +535,10 @@ export function mountAccountPage({
   function renderPlan() {
     if (!ui.plan) return;
     const plan = state.plan;
+    ui.request.setPlan(plan);
     if (!plan?.pro) {
       ui.plan.hidden = true;
       ui.plan.textContent = "";
-      if (!ui.effort.deepLocked) {
-        ui.effort.deepLocked = true;
-        ui.effort.setDeepDisabled(tt("account.pro.deepLocked"));
-      }
       return;
     }
     const until = plan.pro_until ? formatShortDate(plan.pro_until, lang) : "";
@@ -524,19 +548,10 @@ export function mountAccountPage({
       : tt("account.pro.creditsNow");
     ui.plan.textContent = (until ? tt("account.pro.until", { date: until }) + " · " : "") + usage;
     ui.plan.hidden = false;
-    if (ui.effort.deepLocked) {
-      ui.effort.deepLocked = false;
-      ui.effort.setDeepDisabled(null);
-      ui.effort.set(loadEffort(storages?.[1]));
-    }
   }
 
   function renderPrice() {
-    const s = state.settings;
-    if (!ui.price || !s) return;
-    ui.price.textContent = s.accepting === false ? tt("account.notAccepting")
-      : tt("account.price", { light: s.light_cost, deep: s.deep_cost, upgrade: s.upgrade_cost });
-    ui.price.hidden = false;
+    if (ui.request) ui.request.setSettings(state.settings);
   }
 
   // Rebuilt only when the data changed, and not while the visitor is inside
@@ -677,39 +692,6 @@ export function mountAccountPage({
     return r;
   }
 
-  async function submitRequest() {
-    ui.requestError.hidden = true;
-    showMessage(null);
-    const { id, reason } = youtubeVideoId(ui.url.value.trim());
-    if (!id) {
-      ui.requestError.textContent = t(reason === "clip" ? "request.error.clip" : "request.error.bad_url", lang);
-      ui.requestError.hidden = false;
-      return reason === "clip" ? "clip" : "bad_url";
-    }
-    ui.submit.disabled = true;
-    const r = await state.client.createRequest(id, ui.effort.value(), ui.visibility.value());
-    ui.submit.disabled = false;
-    if (r.error) {
-      ui.requestError.textContent = accountErrorText(r.error, lang);
-      ui.requestError.hidden = false;
-      return r.error;
-    }
-    const req = r.data ?? {};
-    const asked = ui.visibility.value();
-    const kind = req.joined_to ? "joined" : req.status === "done" ? "done" : "queued";
-    const created = req.allowance === true && kind === "queued" ? "allowance" : kind;
-    let text = tt(`account.created.${created}`, { cost: Number(req.cost) || 0 });
-    ui.url.value = "";
-    await refresh({ force: true });
-    // A video already in «Мои видео» keeps its visibility: say so when the pick differs.
-    const entry = state.videos.find((v) => v.video_id === id);
-    if (entry && VISIBILITIES.includes(entry.visibility) && entry.visibility !== asked) {
-      text += " " + tt("account.created.keptVisibility", { vis: tt(`account.vis.${entry.visibility}`) });
-    }
-    showMessage(text);
-    return kind;
-  }
-
   async function refreshBalance() {
     const r = await state.client.balance();
     if (!r.error) {
@@ -780,6 +762,7 @@ export function mountAccountPage({
       }
     }
     renderSignedInShell();
+    if (await applyProfileLocale()) return;
     const settings = await state.client.publicSettings();
     if (!settings.error) {
       state.settings = settings.data;
@@ -815,6 +798,7 @@ export function mountAccountPage({
       el(doc, "section", { class: "nobs-account-card", id: "account-off" },
         el(doc, "p", { class: "nobs-account-off", text: tt("account.off") }),
         el(doc, "p", { class: "nobs-account-note", text: tt("account.offHint") })),
+      buildLanguageCard(),
     );
   }
 

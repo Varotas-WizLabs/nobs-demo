@@ -40,10 +40,10 @@ import {
   levelForSpeed,
   rateFor,
   SPEED_STEP,
-} from "./commentators.js?v=922fa24595";
-import { ENGINE_IDS, fetchVoiceEngines, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=922fa24595";
-import { labelLanguage, t } from "./i18n.js?v=922fa24595";
-import { fillVars } from "./stringsCommentators.js?v=922fa24595";
+} from "./commentators.js?v=fc9b98c915";
+import { ENGINE_IDS, fetchVoiceEngines, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=fc9b98c915";
+import { labelLanguage, t } from "./i18n.js?v=fc9b98c915";
+import { fillVars } from "./stringsCommentators.js?v=fc9b98c915";
 
 // Labels (src/stringsCommentators.js), read at draw time in the interface language.
 const L = (key, vars) => fillVars(t(`cmui.${key}`, "ru"), vars);
@@ -650,9 +650,9 @@ export function mountCommentatorsPage(root, {
   }
 
   async function defaultListen(result, draft, lang) {
-    const voice = await import("./voice.js?v=922fa24595");
-    const engines = await import("./voiceEngines.js?v=922fa24595");
-    const settings = await import("./settings.js?v=922fa24595");
+    const voice = await import("./voice.js?v=fc9b98c915");
+    const engines = await import("./voiceEngines.js?v=fc9b98c915");
+    const settings = await import("./settings.js?v=fc9b98c915");
     const text = String(result?.text ?? "");
     if (!text) return;
     // First: the local engines decide the flags and the English default.
