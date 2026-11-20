@@ -9,9 +9,9 @@
 // whether this run is published there and says so if not yet. Inside the
 // demo itself the link is the current page's own address.
 
-import { t } from "./i18n.js?v=cbdb3cd407";
+import { t } from "./i18n.js?v=a1c8a76876";
 
-export const PUBLIC_PLAYER = "https://varotas-wizlabs.github.io/nobs-demo/player.html";
+export const PUBLIC_PLAYER = "https://skeptium.com/player.html";
 
 /** Whether the page was opened as a single-video link (`?solo=1`). */
 export function isSolo(search) {

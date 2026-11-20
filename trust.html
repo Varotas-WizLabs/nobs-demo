@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=cbdb3cd407"></script>
+    <script src="src/demoShim.js?v=a1c8a76876"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / system). -->
@@ -17,13 +17,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skeptium — сигналы доверия</title>
-    <link rel="stylesheet" href="styles.css?v=cbdb3cd407" />
+    <link rel="stylesheet" href="styles.css?v=a1c8a76876" />
     <link rel="stylesheet" href="sources.css" />
   </head>
   <body class="nobs-cm-page nobs-src-page nobs-trust-page">
     <header class="nobs-cm-header">
       <div class="nobs-src-topline">
-        <span><a class="nobs-cm-back" href="index.html">← NOBS</a> · <a class="nobs-cm-back" href="sources.html" data-i18n="trustui.sourcesLink">Индекс источников</a></span>
+        <span><a class="nobs-cm-back" href="index.html">← Skeptium</a> · <a class="nobs-cm-back" href="sources.html" data-i18n="trustui.sourcesLink">Индекс источников</a></span>
       </div>
       <h1 data-i18n="trustui.title">Сигналы доверия</h1>
       <p class="nobs-cm-lead" data-i18n="trustui.lead">
@@ -34,11 +34,11 @@
     </header>
     <main id="trust"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=cbdb3cd407";
-      import { t } from "./src/i18n.js?v=cbdb3cd407";
-      import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./src/uiLang.js?v=cbdb3cd407";
-      import "./src/stringsSources.js?v=cbdb3cd407";
-      import { mountTrustPage } from "./src/trustPage.js?v=cbdb3cd407";
+      import { applyTheme } from "./src/settings.js?v=a1c8a76876";
+      import { t } from "./src/i18n.js?v=a1c8a76876";
+      import { initUiLang, reloadWithout, renderLangSwitch, translatePage } from "./src/uiLang.js?v=a1c8a76876";
+      import "./src/stringsSources.js?v=a1c8a76876";
+      import { mountTrustPage } from "./src/trustPage.js?v=a1c8a76876";
       applyTheme(document);
       const lang = initUiLang();
       translatePage(document, lang);

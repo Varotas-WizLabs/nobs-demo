@@ -13,8 +13,8 @@
 // moves, capped; popularity never counts as reliability; disagreement is
 // flagged and widens the prior; verdicts are never touched.
 
-import { t } from "./i18n.js?v=cbdb3cd407";
-import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=cbdb3cd407";
+import { t } from "./i18n.js?v=a1c8a76876";
+import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=a1c8a76876";
 
 // Labels of data values, in the interface language at draw time.
 export const kindLabel = (k) => tl(`trustui.kind.${k}`, k);
@@ -23,7 +23,7 @@ export const measureLabel = (k) => tl(`trustui.measure.${k}`, k);
 
 // Short names for the compact chips of the sources page.
 export const SHORT_NAMES = {
-  nobs_registry: "NOBS",
+  nobs_registry: "Skeptium",
   wp_rsp: "WP:RSP",
   iffy: "Iffy.news",
   lin2023: "Lin 2023",

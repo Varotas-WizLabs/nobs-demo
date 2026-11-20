@@ -9,15 +9,15 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=cbdb3cd407";
-import { pickLang } from "./publicRequest.js?v=cbdb3cd407";
-import { youtubeVideoId } from "./youtubeId.js?v=cbdb3cd407";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=cbdb3cd407";
-import { loadAccountsConfig } from "./accountsConfig.js?v=cbdb3cd407";
-import { createAccountsClient } from "./accountsClient.js?v=cbdb3cd407";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=cbdb3cd407";
+import { t } from "./i18n.js?v=a1c8a76876";
+import { pickLang } from "./publicRequest.js?v=a1c8a76876";
+import { youtubeVideoId } from "./youtubeId.js?v=a1c8a76876";
+import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=a1c8a76876";
+import { loadAccountsConfig } from "./accountsConfig.js?v=a1c8a76876";
+import { createAccountsClient } from "./accountsClient.js?v=a1c8a76876";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=a1c8a76876";
 
-export const DEMO_BASE = "https://varotas-wizlabs.github.io/nobs-demo/";
+export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
 export const POLL_IDLE_MS = 60000;
 export const OFFLINE_AFTER_MS = 15 * 60 * 1000;

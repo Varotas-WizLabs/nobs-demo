@@ -2,7 +2,7 @@
 // Labels of the sources index (web/sources.html, srcui.*) and the trust
 // signals page (web/trust.html, trustui.*) in Russian and English.
 
-import { labelLanguage, registerStrings, t } from "./i18n.js?v=cbdb3cd407";
+import { labelLanguage, registerStrings, t } from "./i18n.js?v=a1c8a76876";
 
 /** t() with {name} placeholders filled from `vars`. */
 export function tf(key, vars = {}, lang = "ru") {
@@ -526,7 +526,7 @@ export const SERVER_EN = {
   "srcui.topic.other": "other",
 
   // Connectors (specs.py CONNECTORS): only the fields written in Russian.
-  "trustui.conn.nobs_registry.name": "NOBS registry (our fact-checks)",
+  "trustui.conn.nobs_registry.name": "Skeptium registry (our fact-checks)",
   "trustui.conn.nobs_registry.coverage": "Every site our fact-checks relied on",
   "trustui.conn.nobs_registry.license": "Our own data",
   "trustui.conn.nobs_registry.judgement": "Our own fact-checks: whether what the source said was confirmed by independent sources",

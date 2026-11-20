@@ -10,11 +10,11 @@
 // counted among the claims "with phrasing notes"; a tag the speaker
 // qualifies elsewhere carries the line «Дальше — оговорка автора: «…» (mm:ss)».
 
-import { formatTimecode } from "./claimSync.js?v=cbdb3cd407";
-import { labelLanguage, t } from "./i18n.js?v=cbdb3cd407";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=cbdb3cd407";
-import { isNote, isPossible, qualifierLine, segmentSource, tagLabel, visibleTags } from "./tags.js?v=cbdb3cd407";
-import { formatScoopTotals, formatScore, rejectedSummary, scoopAnchors, shownScoops } from "./scoopList.js?v=cbdb3cd407";
+import { formatTimecode } from "./claimSync.js?v=a1c8a76876";
+import { labelLanguage, t } from "./i18n.js?v=a1c8a76876";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=a1c8a76876";
+import { isNote, isPossible, qualifierLine, segmentSource, tagLabel, visibleTags } from "./tags.js?v=a1c8a76876";
+import { formatScoopTotals, formatScore, rejectedSummary, scoopAnchors, shownScoops } from "./scoopList.js?v=a1c8a76876";
 
 const VERDICT_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 
@@ -570,7 +570,7 @@ export function reportHtml(run, options = {}) {
       ${i.sources.length ? `<p class="label">${esc(w.sources)}:</p><ul class="src">${i.sources.map((s) => `<li><a href="${esc(safeUrl(s))}">${esc(s)}</a></li>`).join("")}</ul>` : ""}
     </section>`);
   }
-  return `<!doctype html><html lang="${esc(r.lang)}"><head><meta charset="utf-8"><title>NOBS — ${esc(r.title)}</title><style>${PRINT_CSS}</style></head><body>${parts.join("\n")}</body></html>`;
+  return `<!doctype html><html lang="${esc(r.lang)}"><head><meta charset="utf-8"><title>Skeptium — ${esc(r.title)}</title><style>${PRINT_CSS}</style></head><body>${parts.join("\n")}</body></html>`;
 }
 
 // ---- Delivery ----
@@ -581,7 +581,7 @@ function fileStem(run, title) {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 80);
-  return `NOBS ${run.run_id} - ${base}`;
+  return `Skeptium ${run.run_id} - ${base}`;
 }
 
 /** Download the Markdown write-up as a .md file. */
