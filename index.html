@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=fc9b98c915"></script>
+    <script src="src/demoShim.js?v=5fa56d3ec5"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=fc9b98c915"></script>
+    <script src="src/themeEarly.js?v=5fa56d3ec5"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
@@ -13,72 +13,163 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
-    <title>Skeptium — разобрать видео</title>
-    <link rel="stylesheet" href="styles.css?v=fc9b98c915" />
+    <title>Skeptium — все разборы</title>
+    <link rel="stylesheet" href="styles.css?v=5fa56d3ec5" />
   </head>
-  <body>
-    <header class="nobs-topbar">
-      <a class="nobs-logo" href="index.html" aria-label="Skeptium">
+  <body class="nobs-hp">
+    <a class="nobs-hp-skip" href="#home-main" data-i18n="home.grid">Все разборы</a>
+    <header class="nobs-topbar nobs-hp-bar" id="home-bar">
+      <div class="nobs-hp-start">
+        <button type="button" class="nobs-hp-icon-button nobs-hp-menu" id="home-menu" aria-controls="home-rail" data-i18n-aria="home.menu" aria-label="Меню">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <a class="nobs-logo" href="./" aria-label="Skeptium">
         <svg class="nobs-logo-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="nobs-logo-spectrum" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0"><stop offset="0%" stop-color="#EF3442"/><stop offset="22%" stop-color="#F87B31"/><stop offset="46%" stop-color="#F8D46B"/><stop offset="68%" stop-color="#CDE8C5"/><stop offset="100%" stop-color="#83DDE4"/></linearGradient></defs><rect class="nobs-logo-frame" x="4" y="4" width="92" height="92" rx="20" fill="none" stroke="url(#nobs-logo-spectrum)" stroke-width="7"/><path class="nobs-logo-ink" fill="url(#nobs-logo-spectrum)" d="M29.69 66.37Q25.72 66.37 22.75 65.19Q19.79 64.01 18.15 61.55Q16.51 59.09 16.49 55.25H24.36Q24.44 56.65 25.07 57.61Q25.7 58.58 26.83 59.07Q27.97 59.56 29.57 59.56Q30.9 59.56 31.81 59.23Q32.71 58.9 33.17 58.32Q33.63 57.74 33.63 56.98Q33.63 56.28 33.19 55.76Q32.75 55.23 31.75 54.8Q30.74 54.37 29.04 54.02L25.96 53.37Q21.92 52.51 19.59 50.42Q17.27 48.34 17.27 44.75Q17.27 41.84 18.85 39.66Q20.43 37.47 23.2 36.25Q25.98 35.03 29.61 35.03Q33.32 35.03 36.02 36.27Q38.72 37.51 40.18 39.76Q41.65 42.01 41.67 45H33.71Q33.61 43.5 32.62 42.67Q31.62 41.84 29.61 41.84Q28.34 41.84 27.52 42.14Q26.7 42.44 26.31 42.97Q25.92 43.5 25.92 44.18Q25.92 44.9 26.34 45.44Q26.76 45.98 27.67 46.38Q28.59 46.78 30.02 47.09L32.52 47.62Q35.05 48.16 36.86 49.04Q38.68 49.92 39.84 51.1Q40.99 52.28 41.54 53.76Q42.08 55.23 42.08 56.98Q42.08 59.99 40.59 62.09Q39.11 64.2 36.34 65.28Q33.57 66.37 29.69 66.37ZM51.91 60.59V50.78H53.05L58.59 43.07H67.86L58.55 55.09H56.21ZM44.52 66V35.44H52.77V66ZM58.67 66 53.42 56.94 58.8 51.07 68.07 66ZM78.64 34.17L78.64 50.13L74.81 50.13L74.81 34.17ZM84.59 39.82L70.77 47.80L68.85 44.48L82.67 36.50ZM70.77 36.50L84.59 44.48L82.67 47.80L68.85 39.82Z"/></svg>
         <span class="nobs-logo-word">Skeptium</span>
       </a>
-    </header>
-    <main class="nobs-home nobs-request">
-      <h1 data-i18n="request.title">Разобрать новое видео</h1>
-      <p class="nobs-tagline" data-i18n="request.tagline"></p>
-
-      <form id="request-form" class="nobs-request-form" novalidate>
-        <label class="nobs-request-field">
-          <span data-i18n="request.url"></span>
-          <input type="url" id="request-url" name="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" required />
-        </label>
-        <label class="nobs-request-field">
-          <span data-i18n="request.code"></span>
-          <input type="text" id="request-code" name="code" placeholder="NOBS-…" autocomplete="off" spellcheck="false" maxlength="40" />
-          <small data-i18n="request.codeHint"></small>
-        </label>
-        <div id="request-effort"></div>
-        <button type="submit" id="request-button" data-i18n="request.button">Усомниться</button>
+      </div>
+      <form class="nobs-hp-search" id="home-search" role="search" autocomplete="off">
+        <button type="button" class="nobs-hp-icon-button nobs-hp-search-back" id="home-search-back" data-i18n-aria="search.back" aria-label="Закрыть поиск">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="nobs-hp-search-field">
+          <svg class="nobs-hp-search-glyph" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM15.3 15.3 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input type="search" id="home-q" name="q" enterkeyhint="search" spellcheck="false" data-i18n-placeholder="search.placeholder" placeholder="Поиск: название, канал, утверждение" data-i18n-aria="search.label" aria-label="Поиск по разборам" />
+          <kbd class="nobs-hp-kbd" aria-hidden="true">/</kbd>
+          <button type="button" class="nobs-hp-search-clear" id="home-clear" data-i18n-aria="search.clear" aria-label="Очистить" hidden>
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <ul class="nobs-hp-suggestions" id="home-suggest" hidden></ul>
+        </div>
+        <button type="submit" class="nobs-hp-search-go" data-i18n-aria="search.submit" aria-label="Искать">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM15.3 15.3 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
       </form>
+      <button type="button" class="nobs-hp-icon-button nobs-hp-search-open" id="home-search-open" data-i18n-aria="search.open" aria-label="Открыть поиск">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM15.3 15.3 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </header>
 
-      <p id="request-error" class="nobs-request-error" role="alert" hidden></p>
+    <div class="nobs-hp-scrim" id="home-scrim" hidden>
+    </div>
+    <nav class="nobs-hp-rail" id="home-rail" data-i18n-aria="home.nav" aria-label="Разделы">
+      <div class="nobs-hp-rail-top">
+        <button type="button" class="nobs-hp-icon-button nobs-hp-rail-close" id="home-rail-close" data-i18n-aria="home.closeMenu" aria-label="Закрыть меню">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <a class="nobs-logo" href="./" aria-label="Skeptium">
+        <svg class="nobs-logo-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><rect class="nobs-logo-frame" x="4" y="4" width="92" height="92" rx="20" fill="none" stroke="url(#nobs-logo-spectrum)" stroke-width="7"/><path class="nobs-logo-ink" fill="url(#nobs-logo-spectrum)" d="M29.69 66.37Q25.72 66.37 22.75 65.19Q19.79 64.01 18.15 61.55Q16.51 59.09 16.49 55.25H24.36Q24.44 56.65 25.07 57.61Q25.7 58.58 26.83 59.07Q27.97 59.56 29.57 59.56Q30.9 59.56 31.81 59.23Q32.71 58.9 33.17 58.32Q33.63 57.74 33.63 56.98Q33.63 56.28 33.19 55.76Q32.75 55.23 31.75 54.8Q30.74 54.37 29.04 54.02L25.96 53.37Q21.92 52.51 19.59 50.42Q17.27 48.34 17.27 44.75Q17.27 41.84 18.85 39.66Q20.43 37.47 23.2 36.25Q25.98 35.03 29.61 35.03Q33.32 35.03 36.02 36.27Q38.72 37.51 40.18 39.76Q41.65 42.01 41.67 45H33.71Q33.61 43.5 32.62 42.67Q31.62 41.84 29.61 41.84Q28.34 41.84 27.52 42.14Q26.7 42.44 26.31 42.97Q25.92 43.5 25.92 44.18Q25.92 44.9 26.34 45.44Q26.76 45.98 27.67 46.38Q28.59 46.78 30.02 47.09L32.52 47.62Q35.05 48.16 36.86 49.04Q38.68 49.92 39.84 51.1Q40.99 52.28 41.54 53.76Q42.08 55.23 42.08 56.98Q42.08 59.99 40.59 62.09Q39.11 64.2 36.34 65.28Q33.57 66.37 29.69 66.37ZM51.91 60.59V50.78H53.05L58.59 43.07H67.86L58.55 55.09H56.21ZM44.52 66V35.44H52.77V66ZM58.67 66 53.42 56.94 58.8 51.07 68.07 66ZM78.64 34.17L78.64 50.13L74.81 50.13L74.81 34.17ZM84.59 39.82L70.77 47.80L68.85 44.48L82.67 36.50ZM70.77 36.50L84.59 44.48L82.67 47.80L68.85 39.82Z"/></svg>
+        <span class="nobs-logo-word">Skeptium</span>
+      </a>
+      </div>
+      <ul class="nobs-hp-rail-list">
+        <li><a class="nobs-hp-rail-item" href="./" aria-current="page"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span data-i18n="home.nav.home">Главная</span></a></li>
+        <li><a class="nobs-hp-rail-item" id="home-library" href="player.html"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H4zM10 8.5v4l3.5-2zM7 19h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nobs-hp-rail-full" data-i18n="home.nav.library">Библиотека разборов</span><span class="nobs-hp-rail-short" data-i18n="home.nav.library.short">Библиотека</span></a></li>
+        <li><a class="nobs-hp-rail-item" href="commentators.html"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M5 5h14v10H10l-4 4v-4H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="nobs-hp-rail-full" data-i18n="home.nav.commentators">Комментаторы</span><span class="nobs-hp-rail-short" data-i18n="home.nav.commentators.short">Голоса</span></a></li>
+        <li><a class="nobs-hp-rail-item" href="sources.html"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6M9 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="home.nav.sources">Источники</span></a></li>
+        <li><a class="nobs-hp-rail-item" href="trust.html"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 3.5 19 6v5.5c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6zM9 12l2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="home.nav.trust">Доверие</span></a></li>
+      </ul>
+      <section class="nobs-hp-rail-section nobs-hp-you" id="home-you" hidden></section>
+      <footer class="nobs-hp-rail-foot">
+        <a href="privacy.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
+        <a href="terms.html" data-i18n="footer.terms">Условия использования</a>
+        <span class="nobs-footer-line">Where ideas meet evidence.</span>
+        <span>Skeptium by WizLabs</span>
+      </footer>
+    </nav>
 
-      <section id="request-waiting" class="nobs-request-waiting" hidden aria-live="polite">
-        <h2 data-i18n="request.waitingTitle"></h2>
-        <p id="request-video" class="nobs-request-video"></p>
-        <p id="request-status" class="nobs-request-status"></p>
-        <p id="request-elapsed" class="nobs-request-elapsed"></p>
-        <p class="nobs-request-hint" data-i18n="request.waitHint"></p>
-        <button type="button" id="request-again" class="nobs-secondary" data-i18n="request.again" hidden></button>
-        <button type="button" id="request-cancel" class="nobs-secondary" data-i18n="request.cancel"></button>
+    <main class="nobs-hp-main" id="home-main" tabindex="-1">
+      <section class="nobs-hp-cta" id="home-cta" aria-labelledby="home-cta-title">
+        <div class="nobs-hp-cta-text">
+          <h2 id="home-cta-title" data-i18n="home.cta.title">Усомниться можно в любом видео с YouTube</h2>
+          <p data-i18n="home.cta.text">Skeptium разбирает видео на утверждения и сверяет каждое с источниками.</p>
+        </div>
+        <div class="nobs-hp-cta-actions">
+          <a class="nobs-hp-button nobs-hp-button-primary" id="home-cta-signin" hidden><span data-i18n="home.cta.signIn">Войти и разобрать видео</span></a>
+          <button type="button" class="nobs-hp-button" id="home-cta-code"><span class="nobs-hp-cta-long" data-i18n="home.cta.code">У меня есть код приглашения</span><span class="nobs-hp-cta-short" data-i18n="home.cta.code.short">Код приглашения</span></button>
+        </div>
       </section>
-
-      <section class="nobs-request-recent-wrap">
-        <h2><span data-i18n="request.recent"></span> <a id="request-library" class="nobs-request-library" href="player.html" data-i18n="request.library"></a></h2>
-        <nav id="request-recent" class="nobs-request-recent" hidden></nav>
-      </section>
+      <div class="nobs-hp-chips" id="home-chips" hidden></div>
+      <h1 class="nobs-hp-visually-hidden" id="home-heading" data-i18n="home.grid">Все разборы</h1>
+      <section class="nobs-hp-feed" id="home-grid" aria-labelledby="home-heading" aria-busy="false"></section>
+      <section class="nobs-hp-feed nobs-hp-results-view" id="home-results" aria-live="polite" hidden></section>
     </main>
-    <footer class="nobs-footer">
-      <span class="nobs-footer-line">Skeptium — Where ideas meet evidence.</span>
-      <span>Skeptium by WizLabs</span>
-      <a href="privacy.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
-      <a href="terms.html" data-i18n="footer.terms">Условия использования</a>
-    </footer>
+
+    <!-- Phones (<=760px): the main sections in a bar at the bottom, in thumb
+         reach; «You» opens a sheet with sign-in and the invite code. -->
+    <nav class="nobs-hp-tabbar" id="home-tabbar" data-i18n-aria="home.tabs" aria-label="Основные разделы">
+      <a class="nobs-hp-tab" href="./" aria-current="page"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span data-i18n="home.nav.home">Главная</span></a>
+      <a class="nobs-hp-tab" id="home-tab-library" href="player.html"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H4zM10 8.5v4l3.5-2zM7 19h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="home.nav.library.short">Библиотека</span></a>
+      <a class="nobs-hp-tab" href="commentators.html"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M5 5h14v10H10l-4 4v-4H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span data-i18n="home.nav.commentators.short">Голоса</span></a>
+      <button type="button" class="nobs-hp-tab" id="home-tab-you" aria-haspopup="dialog" aria-controls="home-you-sheet" aria-expanded="false" hidden><span class="nobs-hp-tab-icon" id="home-tab-you-icon"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="home.you">Вы</span></button>
+    </nav>
+    <div class="nobs-hp-sheet-scrim" id="home-you-scrim" hidden>
+      <div class="nobs-hp-sheet" id="home-you-sheet" role="dialog" aria-modal="true" data-i18n-aria="home.you" aria-label="Вы">
+        <section class="nobs-hp-you nobs-hp-sheet-you" id="home-you-sheet-body"></section>
+      </div>
+    </div>
+
+    <!-- The invite lightbox (src/publicRequest.js): a link with #code=… opens it. -->
+    <div class="nobs-modal-backdrop nobs-hp-invite" id="invite-modal" hidden>
+      <div class="nobs-modal" role="dialog" aria-modal="true" aria-labelledby="invite-title">
+        <div class="nobs-modal-head">
+          <h2 id="invite-title" data-i18n="home.invite.title">Разобрать видео по приглашению</h2>
+          <button type="button" class="nobs-modal-close" id="invite-close" data-i18n-aria="home.invite.close" aria-label="Закрыть">×</button>
+        </div>
+        <p class="nobs-tagline" data-i18n="request.tagline"></p>
+        <form id="request-form" class="nobs-request-form" novalidate>
+          <label class="nobs-request-field">
+            <span data-i18n="request.url"></span>
+            <input type="url" id="request-url" name="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" required />
+          </label>
+          <label class="nobs-request-field">
+            <span data-i18n="request.code"></span>
+            <input type="text" id="request-code" name="code" placeholder="NOBS-…" autocomplete="off" spellcheck="false" maxlength="40" />
+            <small data-i18n="request.codeHint"></small>
+          </label>
+          <div id="request-effort"></div>
+          <button type="submit" id="request-button" data-i18n="request.button">Усомниться</button>
+        </form>
+        <p id="request-error" class="nobs-request-error" role="alert" hidden></p>
+        <section id="request-waiting" class="nobs-request-waiting" hidden aria-live="polite">
+          <h2 data-i18n="request.waitingTitle"></h2>
+          <p id="request-video" class="nobs-request-video"></p>
+          <p id="request-status" class="nobs-request-status"></p>
+          <p id="request-elapsed" class="nobs-request-elapsed"></p>
+          <p class="nobs-request-hint" data-i18n="request.waitHint"></p>
+          <button type="button" id="request-again" class="nobs-secondary" data-i18n="request.again" hidden></button>
+          <button type="button" id="request-cancel" class="nobs-secondary" data-i18n="request.cancel"></button>
+        </section>
+      </div>
+    </div>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=fc9b98c915";
-      import { initUiLang } from "./src/uiLang.js?v=fc9b98c915";
-      import { mountRequestPage, renderRecent } from "./src/publicRequest.js?v=fc9b98c915";
-      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=fc9b98c915";
+      import { t } from "./src/i18n.js?v=5fa56d3ec5";
+      import { initUiLang } from "./src/uiLang.js?v=5fa56d3ec5";
+      import "./src/stringsHome.js?v=5fa56d3ec5";
+      import { mountRequestPage } from "./src/publicRequest.js?v=5fa56d3ec5";
+      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=5fa56d3ec5";
+      import { makeOverlay, mountHome } from "./src/homePage.js?v=5fa56d3ec5";
 
       const lang = initUiLang();
-      document.title = t("request.pageTitle", lang);
+      document.documentElement.lang = lang;
       for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n, lang);
+      for (const el of document.querySelectorAll("[data-i18n-aria]")) {
+        el.setAttribute("aria-label", t(el.dataset.i18nAria, lang));
+        if (el.tagName === "BUTTON") el.title = t(el.dataset.i18nAria, lang);
+      }
+      for (const el of document.querySelectorAll("[data-i18n-placeholder]")) el.placeholder = t(el.dataset.i18nPlaceholder, lang);
 
       const $ = (id) => document.getElementById(id);
+      // The invite lightbox: the public request form (src/publicRequest.js).
+      const invite = makeOverlay(document, $("invite-modal"), $("invite-modal").querySelector(".nobs-modal"), {
+        focusFirst: () => ($("request-waiting").hidden ? $("request-url") : $("request-cancel")),
+      });
+      $("invite-close").addEventListener("click", () => invite.close());
       // Light / Deep (src/effort.js): the visitor's last choice, Light by default.
       const picker = buildEffortPicker(document, { lang, value: loadEffort(), onChange: saveEffort });
       $("request-effort").replaceWith(picker.root);
+      const hadCode = /(^|[#&])code=/.test(window.location.hash);
       const page = mountRequestPage({
         getEffort: () => picker.value(),
         els: {
@@ -88,16 +179,28 @@
         },
         lang,
       });
-      page.resume();
+      // A request still waiting, or an invite link: the lightbox opens at once.
+      // Focus goes back to the invite control when it shows (a phone hides the
+      // call to action), else to the feed.
+      const inviteReturn = () => ($("home-cta-code").getClientRects().length ? $("home-cta-code") : $("home-main"));
+      if (page.resume() || hadCode) invite.open(inviteReturn());
 
-      fetch("/runs")
-        .then((r) => (r.ok ? r.json() : { runs: [] }))
-        .then((body) => {
-          const runs = body.runs ?? [];
-          renderRecent($("request-recent"), runs, lang);
-          if (runs[0]) $("request-library").href = `player.html?run_id=${Number(runs[0].run_id)}`;
-        })
-        .catch(() => {});
+      mountHome({
+        lang,
+        onInvite: () => invite.open(document.activeElement),
+        els: {
+          bar: $("home-bar"), menu: $("home-menu"), rail: $("home-rail"), scrim: $("home-scrim"),
+          form: $("home-search"), input: $("home-q"), clear: $("home-clear"), suggest: $("home-suggest"),
+          searchOpen: $("home-search-open"), searchBack: $("home-search-back"),
+          you: $("home-you"), cta: $("home-cta"), ctaSignIn: $("home-cta-signin"), ctaCode: $("home-cta-code"),
+          chips: $("home-chips"), heading: $("home-heading"), grid: $("home-grid"), results: $("home-results"),
+          main: $("home-main"), libraryLink: $("home-library"),
+          tabbar: $("home-tabbar"), tabLibrary: $("home-tab-library"), tabYou: $("home-tab-you"),
+          tabYouIcon: $("home-tab-you-icon"), youScrim: $("home-you-scrim"), youSheet: $("home-you-sheet"),
+          youSheetBody: $("home-you-sheet-body"),
+        },
+      });
+      $("home-rail-close").addEventListener("click", () => $("home-menu").click());
     </script>
   <script type="module" src="src/accountMenuBoot.js"></script>
   </body>

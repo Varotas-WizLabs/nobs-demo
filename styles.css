@@ -2556,6 +2556,17 @@ button.nobs-scoop-verdict:hover {
   -webkit-text-fill-color: transparent;
   padding-bottom: 0.08em; /* keeps the descender of «p» inside the painted box */
 }
+/* The brand asterisk after the word: «Skeptium*», raised like a footnote mark.
+   It is inline text, so the spectrum (or the solid mark colour) covers it too. */
+.nobs-logo-word::after {
+  content: "*";
+  display: inline-block;
+  margin-left: 0.02em;
+  font-size: 0.95em;
+  font-weight: 900;
+  vertical-align: 0.32em;
+  line-height: 0;
+}
 :root[data-theme="light"] .nobs-logo-frame,
 :root[data-theme="monochrome"] .nobs-logo-frame {
   stroke: var(--brand-mark);
@@ -5645,3 +5656,1518 @@ html.nobs-pseudo-fs-open body {
   .nobs-modal-backdrop { padding: 0; }
   .nobs-modal { min-height: 100%; max-width: none; border: 0; border-radius: 0; }
 }
+
+/* ======================================================================
+   Home page (web/request.html; src/homePage.js, src/homeSearch.js,
+   src/homeFilters.js): a video-site layout with Skeptium's own content.
+   Top bar with the search in the middle, a left rail (a drawer below
+   1100 px), chips, a grid of cards; the results view while searching.
+   Verdict colours stay semantic (counts are also written out); the brand
+   spectrum appears only as an accent line, never as a truth scale.
+   ====================================================================== */
+.nobs-hp {
+  --hp-bar: 56px;
+  --hp-rail: 248px;
+  --hp-gutter: 24px;
+  min-height: 100vh;
+  background: var(--nobs-bg);
+}
+.nobs-hp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.nobs-hp-skip {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 3000;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--nobs-text);
+  color: var(--nobs-bg);
+  font-weight: 600;
+}
+.nobs-hp-skip:focus { top: 8px; }
+.nobs-hp :focus-visible {
+  outline: 2px solid var(--nobs-link);
+  outline-offset: 2px;
+}
+
+/* ---- top bar ---- */
+.nobs-topbar.nobs-hp-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, 728px) minmax(max-content, 1fr);
+  align-items: center;
+  gap: 16px;
+  height: var(--hp-bar);
+  padding: 0 16px;
+}
+.nobs-hp-start {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nobs-hp-bar .nobs-hp-search { grid-column: 2; grid-row: 1; }
+.nobs-hp-bar .nobs-account-menu,
+.nobs-hp-bar .nobs-hp-search-open { grid-column: 3; grid-row: 1; justify-self: end; }
+.nobs-hp-icon-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--nobs-text);
+  cursor: pointer;
+}
+.nobs-hp-icon-button:hover { background: var(--nobs-hover); }
+.nobs-hp-icon-button:active { background: var(--nobs-pressed); }
+.nobs-hp-bar .nobs-logo { font-size: 20px; }
+.nobs-hp-bar .nobs-logo-mark { width: 28px; height: 28px; }
+.nobs-hp-search-open,
+.nobs-hp-search-back { display: none; }
+
+/* ---- the search field ---- */
+.nobs-hp-search {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 728px;
+  margin: 0 auto;
+}
+.nobs-hp-search-field {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 40px;
+  padding: 0 4px 0 16px;
+  border: 1px solid var(--nobs-border-strong);
+  border-right: 0;
+  border-radius: 40px 0 0 40px;
+  background: var(--nobs-input-bg);
+}
+.nobs-hp-search-field:focus-within {
+  border-color: var(--nobs-link);
+  box-shadow: inset 0 1px 2px var(--nobs-shadow);
+  padding-left: 12px;
+}
+.nobs-hp-search-glyph {
+  display: none;
+  flex: none;
+  margin-right: 10px;
+  color: var(--nobs-muted);
+}
+.nobs-hp-search-field:focus-within .nobs-hp-search-glyph { display: block; }
+.nobs-hp-search-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--nobs-text);
+  font-size: 16px;
+}
+.nobs-hp-search-field input::placeholder { color: var(--nobs-muted); opacity: 1; }
+.nobs-hp-search-field input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.nobs-hp .nobs-hp-search-field input:focus-visible { outline: 0; }
+.nobs-hp-kbd {
+  flex: none;
+  margin-right: 8px;
+  padding: 0 6px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 4px;
+  color: var(--nobs-muted);
+  font: 600 12px/18px var(--nobs-font);
+}
+.nobs-hp-search-field:focus-within .nobs-hp-kbd,
+.nobs-hp-search-field:has(.nobs-hp-search-clear:not([hidden])) .nobs-hp-kbd { display: none; }
+.nobs-hp-search-clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--nobs-text);
+  cursor: pointer;
+}
+.nobs-hp-search-clear:hover { background: var(--nobs-hover); }
+.nobs-hp-search-go {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 0 40px 40px 0;
+  background: var(--nobs-raised);
+  color: var(--nobs-text);
+  cursor: pointer;
+}
+.nobs-hp-search-go:hover { background: var(--nobs-raised-hover); }
+.nobs-hp-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -1px;
+  right: 0;
+  z-index: 1300;
+  max-height: min(72vh, 600px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 8px 0;
+  list-style: none;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 12px;
+  background: var(--nobs-raised);
+  box-shadow: 0 4px 8px var(--nobs-shadow), 0 16px 48px var(--nobs-shadow);
+}
+/* A scrim over the page below the open panel (a click on it closes the
+   panel): the panel reads as lifted, the page behind as set aside. */
+.nobs-hp-search[data-suggest="open"]::after {
+  content: "";
+  position: fixed;
+  top: var(--hp-bar);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1250;
+  background: rgba(0, 0, 0, 0.6);
+}
+/* While the panel is up, the hero's buttons fade out instead of showing a
+   bright pill sliced by the panel edge next to the results. */
+.nobs-hp-cta-actions { transition: opacity 120ms ease; }
+:root[data-search-open] .nobs-hp-cta-actions { opacity: 0; visibility: hidden; }
+.nobs-hp-suggest-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--nobs-border); }
+.nobs-hp-suggest-group ul { margin: 0; padding: 0; list-style: none; }
+.nobs-hp-suggest-label {
+  display: block;
+  padding: 8px 16px 4px;
+  color: var(--nobs-muted);
+  font: 600 11px/1.4 var(--nobs-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nobs-hp-suggest {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Every row keeps one rhythm: one title line and at most one meta line,
+     the same height for an analysis, a channel, a claim or Search for. */
+  box-sizing: border-box;
+  height: 52px;
+  padding: 0 16px 0 13px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+.nobs-hp-suggest:hover { background: var(--nobs-raised-hover); }
+.nobs-hp-suggest[aria-selected="true"] {
+  border-left-color: var(--nobs-link);
+  background: color-mix(in srgb, var(--nobs-link) 16%, var(--nobs-raised));
+}
+.nobs-hp-suggest-lead {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--nobs-hover);
+  color: var(--nobs-muted);
+}
+.nobs-hp-suggest-lead img { width: 100%; height: 100%; object-fit: cover; }
+.nobs-hp-suggest-lead-search { background: none; color: var(--nobs-text); }
+/* No match: a quiet note (muted icon, one hint) above the «Search for» row. */
+.nobs-hp-suggest-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 16px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--nobs-border);
+  cursor: default;
+}
+.nobs-hp-suggest-lead-empty { background: none; color: var(--nobs-muted); }
+.nobs-hp-suggest-empty-title { color: var(--nobs-text); font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.nobs-hp-suggest-empty-hint { color: var(--nobs-muted); font-size: 13px; line-height: 1.35; }
+.nobs-hp-suggest-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--nobs-pressed);
+  color: var(--nobs-text);
+  font: 700 14px/1 var(--nobs-font);
+}
+/* A claim row leads with its verdict: a filled disc with a mark per verdict
+   (check, dash, cross, question), centred in the thumbnail column with no
+   box around it, so the colour is never the only cue. */
+.nobs-hp-suggest-lead-claim { --hp-verdict: var(--nobs-white); height: 28px; background: none; overflow: visible; }
+.nobs-hp-suggest-verdict-green { --hp-verdict: var(--nobs-green); }
+.nobs-hp-suggest-verdict-yellow { --hp-verdict: var(--nobs-yellow); }
+.nobs-hp-suggest-verdict-red { --hp-verdict: var(--nobs-red); }
+.nobs-hp-verdict-disc { fill: var(--hp-verdict); stroke: none; }
+.nobs-hp-suggest-verdict-white .nobs-hp-verdict-disc { stroke: var(--nobs-white-edge); stroke-width: 1; }
+.nobs-hp-verdict-mark { stroke: var(--nobs-on-flag, #05090b); }
+
+.nobs-hp-suggest-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.nobs-hp-suggest-title {
+  display: block;
+  overflow: hidden;
+  color: var(--nobs-text);
+  font-size: 15px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.nobs-hp-suggest-search .nobs-hp-suggest-title { font-weight: 600; }
+/* «See all N results»: a quiet last row, only when more analyses match than are listed. */
+.nobs-hp-suggest-footer { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--nobs-border); }
+.nobs-hp-suggest-footer ul { margin: 0; padding: 0; list-style: none; }
+
+.nobs-hp-suggest-more .nobs-hp-suggest-lead { height: 24px; color: var(--nobs-muted); }
+.nobs-hp-suggest-more .nobs-hp-suggest-title { color: var(--nobs-link); font-size: 14px; font-weight: 500; }
+.nobs-hp-suggest-claim .nobs-hp-suggest-title { font-size: 14px; }
+.nobs-hp-suggest-where {
+  color: var(--nobs-muted);
+  font-size: 13px;
+  line-height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nobs-hp mark {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}
+.nobs-hp-result mark,
+.nobs-hp-suggest-where mark,
+.nobs-hp-suggest-claim .nobs-hp-suggest-title mark {
+  color: var(--nobs-text);
+  background: var(--nobs-current);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px var(--nobs-current);
+}
+
+/* ---- the rail ---- */
+.nobs-hp-rail {
+  position: fixed;
+  top: var(--hp-bar);
+  bottom: 0;
+  left: 0;
+  z-index: 1100;
+  --hp-rail-pad: 12px;
+  width: var(--hp-rail);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px var(--hp-rail-pad) 24px;
+  background: var(--nobs-bg);
+  scrollbar-width: thin;
+}
+.nobs-hp-rail-top { display: none; }
+/* The rules between the rail's groups run edge to edge, like the bar's. */
+.nobs-hp-rail-list {
+  margin: 0 calc(-1 * var(--hp-rail-pad));
+  padding: 0 var(--hp-rail-pad) 12px;
+  list-style: none;
+  border-bottom: 1px solid var(--nobs-border);
+}
+.nobs-hp-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--nobs-text);
+  font: 400 14px/1.2 var(--nobs-font);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nobs-hp-rail-item svg { flex: none; }
+.nobs-hp-rail-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nobs-hp-rail-item:hover { background: var(--nobs-hover); }
+.nobs-hp-rail-item .nobs-hp-rail-short { display: none; }
+.nobs-hp-rail-item:active { background: var(--nobs-border); }
+/* The current section: semibold text and a heavier, tinted icon. */
+.nobs-hp-rail-item[aria-current="page"] {
+  background: var(--nobs-current);
+  font-weight: 600;
+}
+.nobs-hp-rail-item[aria-current="page"] svg path {
+  stroke-width: 2.4;
+  fill: color-mix(in srgb, currentColor 28%, transparent);
+  fill-rule: evenodd;
+}
+.nobs-hp-rail-section {
+  margin: 0 calc(-1 * var(--hp-rail-pad));
+  padding: 12px var(--hp-rail-pad);
+  border-bottom: 1px solid var(--nobs-border);
+}
+.nobs-hp-rail-heading {
+  margin: 4px 12px 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.nobs-hp-rail-note {
+  margin: 0 12px 12px;
+  color: var(--nobs-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.nobs-hp-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 999px;
+  color: var(--nobs-link);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.nobs-hp-signin:hover { background: var(--nobs-hover); }
+/* The invite code is an ordinary rail row under the pill. */
+.nobs-hp-signin + .nobs-hp-rail-item { margin-top: 8px; }
+.nobs-hp-rail-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 16px 12px 0;
+  color: var(--nobs-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.nobs-hp-rail-foot a { color: inherit; text-decoration: none; }
+.nobs-hp-rail-foot a:hover { color: var(--nobs-text); }
+.nobs-hp-rail-foot span { flex-basis: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* One muted 12px style for the whole footer; the brand line just starts a new group. */
+.nobs-hp-rail-foot .nobs-footer-line { margin-top: 8px; font-weight: 400; text-align: left; }
+/* The account corner's «Sign in» as a pill of the bar's size. */
+.nobs-hp-bar .nobs-account-login {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  border-color: var(--nobs-border-strong);
+  color: var(--nobs-link);
+  font-size: 14px;
+  font-weight: 600;
+}
+.nobs-hp-bar .nobs-account-login:hover { background: var(--nobs-hover); border-color: var(--nobs-border-strong); }
+.nobs-hp-bar .nobs-account-avatar { width: 34px; height: 34px; }
+.nobs-hp-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(0, 0, 0, 0.55);
+}
+/* Wide screens: the menu button folds the rail to icons. */
+.nobs-hp[data-rail="mini"] { --hp-rail: 76px; }
+.nobs-hp[data-rail="mini"] .nobs-hp-rail { --hp-rail-pad: 4px; padding: 4px; }
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-item {
+  flex-direction: column;
+  gap: 6px;
+  min-height: 72px;
+  padding: 14px 2px;
+  font-size: 10px;
+  text-align: center;
+  justify-content: center;
+}
+/* Mini tiles carry the short label, clamped to two lines inside 64 px. */
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-item .nobs-hp-rail-full:has(+ .nobs-hp-rail-short) { display: none; }
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-item span {
+  display: -webkit-box;
+  max-width: 64px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-item .nobs-hp-rail-short { display: -webkit-box; }
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-list { border: 0; }
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-section,
+.nobs-hp[data-rail="mini"] .nobs-hp-rail-foot { display: none; }
+
+/* ---- the content column ---- */
+.nobs-hp-main {
+  max-width: none;
+  margin: 0 0 0 var(--hp-rail);
+  padding: 8px var(--hp-gutter) 56px;
+  outline: 0;
+}
+.nobs-hp-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin: 8px 0 12px;
+  padding: 20px 24px;
+  overflow: hidden;
+  border: 1px solid var(--nobs-border);
+  border-radius: 16px;
+  background: var(--nobs-surface);
+}
+/* The brand spectrum as a small accent only (a hairline on top). */
+.nobs-hp-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--brand-spectrum);
+}
+:root[data-theme="monochrome"] .nobs-hp-cta::before { background: var(--nobs-text); }
+.nobs-hp-cta-text h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+.nobs-hp-cta-text p {
+  margin: 0;
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+.nobs-hp-cta-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.nobs-hp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 999px;
+  background: var(--nobs-raised);
+  color: var(--nobs-text);
+  font: 600 14px/1 var(--nobs-font);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nobs-hp-button:hover { background: var(--nobs-raised-hover); }
+.nobs-hp-button-primary {
+  border-color: var(--nobs-text);
+  background: var(--nobs-text);
+  color: var(--nobs-bg);
+}
+.nobs-hp-button-primary:hover { background: var(--nobs-text); opacity: 0.88; }
+.nobs-hp-cta-short { display: none; }
+
+/* ---- chips ---- */
+/* The bar: the scrolling row (in a track that holds its two overflow
+   arrows, each over a fade into the page colour, shown only while the row
+   can scroll that way) and, anchored at the right end, the Filters control
+   with the facets not in the row (src/homeFilters.js mountChipScroller,
+   renderFilterMenu). */
+.nobs-hp-chipbar {
+  --hp-chips-pad: var(--hp-gutter);
+  /* An overflow edge: a raised 32px arrow disc plus a 64px gradient that
+     fades whole chips (fill and text) into the page, never a square cut. */
+  --hp-chips-arrow: 32px;
+  --hp-chips-fade: 64px;
+  position: sticky;
+  top: var(--hp-bar);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  margin: 0 calc(-1 * var(--hp-gutter));
+  background: var(--nobs-bg);
+}
+.nobs-hp-chipbar[hidden] { display: none; }
+.nobs-hp-chips-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nobs-hp-chips {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px var(--hp-chips-pad, var(--hp-gutter));
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Scrolling settles on a chip's start just past the edge, and a chip
+     reached by keyboard is not left under an arrow or its fade. */
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: calc(var(--hp-chips-pad, var(--hp-gutter)) + var(--hp-chips-arrow, 32px) + var(--hp-chips-fade, 64px));
+  background: var(--nobs-bg);
+}
+.nobs-hp-chips-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  width: calc(var(--hp-chips-pad) + var(--hp-chips-arrow) + var(--hp-chips-fade));
+  pointer-events: none;
+}
+.nobs-hp-chips-edge[hidden] { display: none; }
+.nobs-hp-chips-edge-start {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: var(--hp-chips-pad);
+  background: linear-gradient(to right,
+    var(--nobs-bg) calc(var(--hp-chips-pad) + var(--hp-chips-arrow) + 4px),
+    color-mix(in srgb, var(--nobs-bg) 70%, transparent) calc(var(--hp-chips-pad) + var(--hp-chips-arrow) + 24px),
+    transparent);
+}
+.nobs-hp-chips-edge-end {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: var(--hp-chips-pad);
+  background: linear-gradient(to left,
+    var(--nobs-bg) calc(var(--hp-chips-pad) + var(--hp-chips-arrow) + 4px),
+    color-mix(in srgb, var(--nobs-bg) 70%, transparent) calc(var(--hp-chips-pad) + var(--hp-chips-arrow) + 24px),
+    transparent);
+}
+/* A raised disc, so the arrow reads as its own control, apart from the
+   bare Filters glyph next to it. */
+.nobs-hp-chips-arrow {
+  pointer-events: auto;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--hp-chips-arrow);
+  height: var(--hp-chips-arrow);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--nobs-raised);
+  box-shadow: 0 1px 4px var(--nobs-shadow);
+  color: var(--nobs-text);
+  cursor: pointer;
+}
+.nobs-hp-chips-arrow svg { width: 20px; height: 20px; }
+/* Hover discs only for a real pointer: a tap does not leave one behind. */
+@media (hover: hover) {
+  .nobs-hp-chips-arrow:hover { background: var(--nobs-raised-hover); }
+}
+/* The row ends at the Filters control: the end fade and arrow sit at the
+   track's edge, not the page gutter, and a 1px rule sets the arrow apart
+   from the Filters control. */
+.nobs-hp-chipbar:has(.nobs-hp-filters:not([hidden])) .nobs-hp-chips { padding-right: 0; }
+.nobs-hp-chipbar:has(.nobs-hp-filters:not([hidden])) .nobs-hp-chips-edge-end {
+  --hp-chips-pad: 8px;
+}
+.nobs-hp-chipbar:has(.nobs-hp-filters:not([hidden])) .nobs-hp-chips-edge-end::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 1px;
+  height: 20px;
+  transform: translateY(-50%);
+  background: var(--nobs-border-strong);
+}
+/* A touch screen or a phone: no arrow discs, fades or rule; the row
+   scrolls natively right up to the Filters control. */
+@media (hover: none), (max-width: 760px) {
+  .nobs-hp-chipbar .nobs-hp-chips-edge { display: none; }
+  /* No arrows here, so the row itself fades out over 32px at an edge that
+     has more chips past it (never a raw cut mid-word; fully gone 4px before
+     the edge, so the Filters hairline stands in clear air), and a chip
+     reached by keyboard or a snap settles clear of that fade. */
+  .nobs-hp-chipbar { --hp-chips-mask: 32px; }
+  .nobs-hp-chips { scroll-padding-inline: calc(var(--hp-chips-pad, 12px) + var(--hp-chips-mask)); }
+  .nobs-hp-chips-track[data-more-end] .nobs-hp-chips {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--hp-chips-mask)), transparent calc(100% - 4px));
+    mask-image: linear-gradient(to right, #000 calc(100% - var(--hp-chips-mask)), transparent calc(100% - 4px));
+  }
+  .nobs-hp-chips-track[data-more-start] .nobs-hp-chips {
+    -webkit-mask-image: linear-gradient(to right, transparent 4px, #000 var(--hp-chips-mask));
+    mask-image: linear-gradient(to right, transparent 4px, #000 var(--hp-chips-mask));
+  }
+  .nobs-hp-chips-track[data-more-start][data-more-end] .nobs-hp-chips {
+    -webkit-mask-image: linear-gradient(to right, transparent 4px, #000 var(--hp-chips-mask), #000 calc(100% - var(--hp-chips-mask)), transparent calc(100% - 4px));
+    mask-image: linear-gradient(to right, transparent 4px, #000 var(--hp-chips-mask), #000 calc(100% - var(--hp-chips-mask)), transparent calc(100% - 4px));
+  }
+  /* The pinned Filters control: a solid page-coloured block with a hairline
+     and a soft shadow on its left, so the row visibly slides under it. */
+  .nobs-hp-filters {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    background: var(--nobs-bg);
+    box-shadow: -6px 0 8px -6px var(--nobs-shadow);
+  }
+  .nobs-hp-filters::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 1px;
+    height: 20px;
+    transform: translateY(-50%);
+    background: var(--nobs-border-strong);
+  }
+}
+/* A thin rule between the row's facets (kind | verdict mix). */
+.nobs-hp-chips-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--nobs-border-strong);
+}
+.nobs-hp-filters {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+  padding: 0 var(--hp-chips-pad) 0 12px;
+}
+.nobs-hp-filters[hidden] { display: none; }
+.nobs-hp-filters-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nobs-text);
+  font: 500 14px/1 var(--nobs-font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nobs-hp-filters-button:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: 2px; }
+.nobs-hp-filters[data-open="true"] .nobs-hp-filters-button { background: var(--nobs-raised); }
+.nobs-hp-filters-button[data-active="true"] { background: var(--nobs-text); color: var(--nobs-bg); }
+.nobs-hp-filters-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: var(--hp-chips-pad);
+  z-index: 1300;
+  min-width: 240px;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 0;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 12px;
+  background: var(--nobs-raised);
+  box-shadow: 0 4px 8px var(--nobs-shadow), 0 16px 48px var(--nobs-shadow);
+}
+.nobs-hp-filters-menu[hidden] { display: none; }
+.nobs-hp-filters-group + .nobs-hp-filters-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--nobs-border); }
+.nobs-hp-filters-heading {
+  padding: 8px 16px 4px;
+  color: var(--nobs-muted);
+  font: 600 11px/1.4 var(--nobs-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nobs-hp-filters-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--nobs-text);
+  font: 400 14px/1 var(--nobs-font);
+  text-align: left;
+  cursor: pointer;
+}
+.nobs-hp-filters-item:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: -2px; }
+.nobs-hp-filters-item:focus { background: var(--nobs-raised-hover); }
+.nobs-hp-filters-check { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; visibility: hidden; }
+.nobs-hp-filters-item[aria-checked="true"] .nobs-hp-filters-check { visibility: visible; }
+.nobs-hp-filters-item[aria-checked="true"] .nobs-hp-filters-name { font-weight: 600; }
+.nobs-hp-filters-name { flex: 1 1 auto; }
+.nobs-hp-filters-count { flex: none; color: var(--nobs-muted); font-variant-numeric: tabular-nums; }
+@media (hover: hover) {
+  .nobs-hp-filters-button:hover:not([data-active="true"]) { background: var(--nobs-raised-hover); }
+  .nobs-hp-filters-item:hover { background: var(--nobs-raised-hover); }
+}
+.nobs-hp-chips::-webkit-scrollbar { display: none; }
+.nobs-hp-chip {
+  flex: none;
+  scroll-snap-align: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--nobs-raised);
+  color: var(--nobs-text);
+  font: 500 14px/1 var(--nobs-font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .nobs-hp-chip:hover { background: var(--nobs-raised-hover); }
+  .nobs-hp-chip[aria-pressed="true"]:hover { background: var(--nobs-text); }
+}
+.nobs-hp-chip:focus-visible {
+  outline: 2px solid var(--nobs-link);
+  outline-offset: 2px;
+}
+.nobs-hp-chip[aria-pressed="true"] {
+  background: var(--nobs-text);
+  color: var(--nobs-bg);
+}
+.nobs-hp-chip-dot,
+.nobs-hp-dot {
+  flex: none;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.nobs-hp-dot-green { background: var(--nobs-green); }
+.nobs-hp-dot-yellow { background: var(--nobs-yellow); }
+.nobs-hp-dot-red { background: var(--nobs-red); }
+.nobs-hp-dot-white { background: var(--nobs-white); box-shadow: 0 0 0 1px var(--nobs-white-edge); }
+
+/* Under the chips the row's own padding is the gap (about 12px). */
+.nobs-hp-chipbar:not([hidden]) ~ .nobs-hp-feed .nobs-hp-grid { padding-top: 0; }
+
+/* ---- the grid of cards ---- */
+.nobs-hp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 40px 16px;
+  padding-top: 12px;
+}
+.nobs-hp-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--nobs-text);
+  text-decoration: none;
+  border-radius: 12px;
+}
+/* A grid cell: the card (one link) and its «More» button over the same area.
+   The button's top margin is a share of the cell's width (the 16:9
+   thumbnail is 56.25% of it) plus 3px, so the 36px button is centred on the
+   title's first line (12px body padding + half the 18px line - half the
+   button). Pointer screens show it on hover or focus, like the reference
+   layout; touch screens always. */
+.nobs-hp-item {
+  display: grid;
+  grid-template-areas: "cell";
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.nobs-hp-item > .nobs-hp-card,
+.nobs-hp-item > .nobs-hp-more { grid-area: cell; }
+.nobs-hp-more {
+  align-self: start;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 36px;
+  margin: calc(56.25% + 3px) -8px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--nobs-text);
+  cursor: pointer;
+}
+.nobs-hp-more:hover,
+.nobs-hp-more[aria-expanded="true"] { background: color-mix(in srgb, var(--nobs-text) 10%, transparent); }
+.nobs-hp-more:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) {
+  .nobs-hp-more { opacity: 0; }
+  .nobs-hp-item:hover .nobs-hp-more,
+  .nobs-hp-item:focus-within .nobs-hp-more,
+  .nobs-hp-more[aria-expanded="true"] { opacity: 1; }
+}
+/* The card menu (src/cardMenu.js): a popover under the button; a sheet from
+   the bottom on a phone. */
+.nobs-hp-cardmenu-scrim { position: fixed; inset: 0; z-index: 1290; background: transparent; }
+.nobs-hp-cardmenu {
+  position: fixed;
+  top: var(--menu-top, 64px);
+  right: var(--menu-right, 16px);
+  z-index: 1300;
+  min-width: 220px;
+  padding: 8px 0;
+  border: 1px solid var(--nobs-border-strong);
+  border-radius: 12px;
+  background: var(--nobs-raised);
+  box-shadow: 0 4px 8px var(--nobs-shadow), 0 16px 48px var(--nobs-shadow);
+}
+.nobs-hp-cardmenu[hidden],
+.nobs-hp-cardmenu-scrim[hidden],
+.nobs-hp-cardmenu-item[hidden] { display: none; }
+.nobs-hp-cardmenu-item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  height: 44px;
+  padding: 0 20px 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--nobs-text);
+  font: 400 14px/1 var(--nobs-font);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nobs-hp-cardmenu-item:hover { background: color-mix(in srgb, var(--nobs-text) 8%, transparent); }
+.nobs-hp-cardmenu-item:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: -2px; }
+.nobs-hp-cardmenu-status { margin: 0; padding: 0 16px; color: var(--nobs-muted); font-size: 13px; line-height: 20px; }
+.nobs-hp-cardmenu-status:empty { display: none; }
+.nobs-hp-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--nobs-raised);
+}
+.nobs-hp-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.nobs-hp-card:hover .nobs-hp-thumb img,
+.nobs-hp-result-link:hover .nobs-hp-thumb img { transform: scale(1.03); }
+.nobs-hp-badge,
+.nobs-hp-duration {
+  position: absolute;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  font: 600 12px/16px var(--nobs-font);
+  letter-spacing: 0.02em;
+}
+.nobs-hp-badge { top: 8px; left: 8px; text-transform: uppercase; font-size: 11px; font-weight: 700; }
+.nobs-hp-badge-deep { color: #a9bcff; box-shadow: inset 0 0 0 1px rgba(169, 188, 255, 0.55); }
+.nobs-hp-badge-upgrading { color: #a9bcff; text-transform: none; }
+.nobs-hp-duration { right: 8px; bottom: 8px; padding: 1px 4px; border-radius: 4px; background: rgba(0, 0, 0, 0.82); font-weight: 500; letter-spacing: 0; }
+.nobs-hp-card-body {
+  display: flex;
+  gap: 12px;
+  padding-top: 12px;
+}
+.nobs-hp-avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--nobs-raised);
+  color: var(--nobs-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+/* The initial's disc (no picture): a neutral tone picked by a hash of the
+   channel name (src/channelAvatar.js), mixed from the theme's text and
+   surface, so it follows every theme. Never brand spectrum, never verdicts. */
+.nobs-avatar-tone-0 { background: color-mix(in srgb, var(--nobs-text) 12%, var(--nobs-surface)); }
+.nobs-avatar-tone-1 { background: color-mix(in srgb, var(--nobs-text) 18%, var(--nobs-surface)); }
+.nobs-avatar-tone-2 { background: color-mix(in srgb, var(--nobs-text) 24%, var(--nobs-surface)); }
+.nobs-avatar-tone-3 { background: color-mix(in srgb, var(--nobs-text) 30%, var(--nobs-surface)); }
+.nobs-avatar-tone-4 { background: color-mix(in srgb, var(--nobs-text) 36%, var(--nobs-surface)); }
+.nobs-avatar-tone-5 { background: color-mix(in srgb, var(--nobs-text) 42%, var(--nobs-surface)); }
+/* The channel's picture covers the disc; the initial stays underneath for
+   when it fails to load. */
+.nobs-avatar-pic { position: relative; overflow: hidden; color: transparent; }
+.nobs-avatar-pic img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+/* The text block: a tight 2-line title (18px apart) with the meta row 2px
+   under it. The title stops 28px short of the right edge for the «More»
+   button on its first line (.nobs-hp-more); the meta row runs to the edge,
+   so the verdict counts end under the button. */
+.nobs-hp-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding-right: 0;
+}
+.nobs-hp-card-text > .nobs-hp-title { padding-right: 28px; }
+.nobs-hp-title {
+  margin: 0;
+  color: var(--nobs-text);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 18px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.nobs-hp-channel,
+.nobs-hp-meta {
+  color: var(--nobs-muted);
+  font-size: 14px;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A card's one meta row: «channel · date», then the checked verdict counts at
+   its end. The channel has priority: the counts may take at most 45% of the
+   row (a count that does not fit drops out whole, the full set stays in the
+   tooltip and label), and only then does the channel ellipsise. Smaller and
+   muted, so the title leads. */
+.nobs-hp-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--nobs-muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+.nobs-hp-meta-row .nobs-hp-meta { display: flex; flex: 0 1 auto; min-width: 0; color: inherit; font-size: inherit; line-height: inherit; }
+.nobs-hp-meta-channel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.nobs-hp-meta-claims,
+.nobs-hp-meta-date { flex: none; }
+.nobs-hp-meta-sep::before { content: "\00a0·\00a0"; }
+/* The counts are one unit: a single subtle pill at the row's end (a faint
+   tint of the text colour, so it works in every theme), 8px dots 3px from
+   their number, 8px between pairs, tabular figures. The row gap (6px) is
+   larger than the pill's bottom padding, so a pair that wraps is clipped
+   whole by the 18px height instead of peeking in. */
+.nobs-hp-meta-row .nobs-hp-verdicts {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 45%;
+  height: 18px;
+  overflow: hidden;
+  gap: 6px 8px;
+  margin: 0 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--nobs-text) 8%, transparent);
+  color: var(--nobs-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-hp-meta-row .nobs-hp-verdict { gap: 3px; height: 14px; }
+.nobs-hp-meta-row .nobs-hp-dot { width: 8px; height: 8px; }
+.nobs-hp-card:hover .nobs-hp-meta-row { color: var(--nobs-text); }
+.nobs-hp-card:hover .nobs-hp-meta-row .nobs-hp-verdicts { background: color-mix(in srgb, var(--nobs-text) 14%, transparent); }
+.nobs-hp-verdicts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 2px;
+  color: var(--nobs-text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.nobs-hp-verdict { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---- the results view ---- */
+.nobs-hp-results-count {
+  margin: 12px 0 16px;
+  color: var(--nobs-muted);
+  font-size: 14px;
+}
+.nobs-hp-results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 1280px;
+}
+.nobs-hp-result + .nobs-hp-result { margin-top: 16px; }
+.nobs-hp-result-link {
+  display: grid;
+  grid-template-columns: minmax(240px, 500px) minmax(0, 1fr);
+  gap: 16px;
+  color: var(--nobs-text);
+  text-decoration: none;
+  border-radius: 12px;
+}
+.nobs-hp-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 2px;
+}
+.nobs-hp-result-body .nobs-hp-title { font-size: 18px; line-height: 26px; font-weight: 500; }
+.nobs-hp-result-channel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.nobs-hp-result-channel .nobs-hp-avatar { width: 24px; height: 24px; font-size: 11px; }
+.nobs-hp-result-claims {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  list-style: none;
+  border-radius: 10px;
+  background: var(--nobs-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nobs-hp-result-claim {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--nobs-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.nobs-hp-result-claim .nobs-hp-dot { transform: translateY(-1px); }
+.nobs-hp-claim-text { color: var(--nobs-text); opacity: 0.88; }
+.nobs-hp-result-more { color: var(--nobs-muted); font-size: 12px; }
+
+/* ---- empty states ---- */
+.nobs-hp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 520px;
+  margin: 64px auto;
+  text-align: center;
+}
+.nobs-hp-empty-icon { color: var(--nobs-muted); margin-bottom: 8px; }
+.nobs-hp-empty-title { margin: 0; font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.nobs-hp-empty-hint { margin: 0 0 12px; color: var(--nobs-muted); font-size: 14px; line-height: 1.5; }
+
+/* ---- shelves and the end of the feed (homePage.js renderGrid) ---- */
+/* The «Deep analyses» shelf after the two newest rows: a titled band
+   between hairlines, one row of cards on the same grid. */
+.nobs-hp-shelf {
+  margin: 40px 0;
+  padding: 24px 0 40px;
+  border-block: 1px solid var(--nobs-border);
+}
+.nobs-hp-shelf-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 16px;
+}
+.nobs-hp-shelf-title {
+  margin: 0;
+  font: 700 20px/28px var(--nobs-font);
+  letter-spacing: -0.01em;
+}
+.nobs-hp-shelf-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--nobs-muted);
+  font-size: 14px;
+  line-height: 20px;
+}
+/* «All Deep»: a quiet text link with a chevron beside the heading (no pill,
+   so it never competes with the bar's Sign in). */
+.nobs-hp-shelf-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  align-self: center;
+  min-height: 32px;
+  margin: 0 -6px 0 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--nobs-muted);
+  font: 600 14px/20px var(--nobs-font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nobs-hp-shelf-all:hover { color: var(--nobs-text); background: var(--nobs-raised); }
+.nobs-hp-shelf-all:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: 2px; }
+.nobs-hp-shelf-all svg { flex: none; }
+.nobs-hp-feed .nobs-hp-shelf .nobs-hp-grid,
+.nobs-hp-shelf + .nobs-hp-grid { padding-top: 0; }
+/* The end marker: the count between two hairlines. */
+.nobs-hp-end {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 48px 0 0;
+  color: var(--nobs-muted);
+  font-size: 13px;
+  line-height: 20px;
+  text-align: center;
+}
+.nobs-hp-end::before,
+.nobs-hp-end::after {
+  content: "";
+  flex: 1 1 0;
+  height: 1px;
+  background: var(--nobs-border);
+}
+
+/* Wide screens: the full rail carries «You» (sign in, the invite code) and
+   the top bar «Question a video», so the feed starts right under the chips.
+   A folded rail hides «You»: the call to action comes back. */
+@media (min-width: 1100px) {
+  .nobs-hp:not([data-rail="mini"]) .nobs-hp-cta { display: none; }
+}
+
+/* ---- the invite lightbox ---- */
+.nobs-hp-invite .nobs-tagline { margin: 0 0 16px; color: var(--nobs-muted); font-size: 14px; }
+
+/* ---- below 1100 px: the rail is a drawer ---- */
+@media (max-width: 1099px) {
+  .nobs-hp { --hp-rail: 0px; }
+  .nobs-hp[data-rail="mini"] { --hp-rail: 0px; }
+  .nobs-hp-rail,
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail {
+    top: 0;
+    z-index: 1500;
+    --hp-rail-pad: 12px;
+    width: 264px;
+    padding: 0 12px 24px;
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
+    box-shadow: 8px 0 32px var(--nobs-shadow);
+  }
+  .nobs-hp-drawer-open .nobs-hp-rail {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.2s ease;
+  }
+  .nobs-hp-rail-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--hp-bar);
+    margin: 0 -4px 4px;
+  }
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail-item {
+    flex-direction: row;
+    gap: 20px;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    text-align: left;
+    justify-content: flex-start;
+  }
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail-item span {
+    display: block;
+    max-width: none;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail-item .nobs-hp-rail-short { display: none; }
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail-item .nobs-hp-rail-full:has(+ .nobs-hp-rail-short) { display: block; }
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail-section { display: block; }
+  .nobs-hp[data-rail="mini"] .nobs-hp-rail-foot { display: flex; }
+  .nobs-hp-main { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nobs-hp-rail,
+  .nobs-hp-thumb img { transition: none !important; }
+}
+
+/* ---- phones: the bottom tab bar and the «You» sheet (src/homePage.js) ---- */
+.nobs-hp-tabbar,
+.nobs-hp-sheet-scrim { display: none; }
+@media (max-width: 760px) {
+  .nobs-hp { --hp-tabbar: 56px; }
+  /* The top bar keeps the menu, logo and search: sign-in, «Question a
+     video» and the account picture live under the «You» tab. */
+  .nobs-hp-bar .nobs-account-menu { display: none; }
+  .nobs-hp-tabbar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1200;
+    display: flex;
+    height: calc(var(--hp-tabbar) + env(safe-area-inset-bottom, 0px));
+    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    border-top: 1px solid var(--nobs-border);
+    background: var(--nobs-bg);
+  }
+  .nobs-hp-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: var(--hp-tabbar);
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--nobs-text);
+    font: 400 10px/1.2 var(--nobs-font);
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nobs-hp-tab[hidden] { display: none; }
+  .nobs-hp-tab > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nobs-hp-tab:active { background: var(--nobs-hover); }
+  .nobs-hp-tab:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: -4px; border-radius: 12px; }
+  /* The current tab: a filled icon and a semibold label. */
+  .nobs-hp-tab[aria-current="page"],
+  .nobs-hp-tab[aria-expanded="true"] { font-weight: 600; }
+  .nobs-hp-tab[aria-current="page"] svg path,
+  .nobs-hp-tab[aria-expanded="true"] svg path { fill: currentColor; fill-rule: evenodd; }
+  .nobs-hp-tab-icon { position: relative; display: block; width: 24px; height: 24px; }
+  .nobs-hp-tab-icon svg { display: block; }
+  .nobs-hp-tab-avatar {
+    position: absolute;
+    inset: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--nobs-raised);
+  }
+  .nobs-hp-tab[aria-expanded="true"] .nobs-hp-tab-avatar { box-shadow: 0 0 0 2px var(--nobs-text); }
+  /* «You»: a sheet from the bottom, like the card menu. */
+  .nobs-hp-sheet-scrim:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 1450;
+    display: block;
+    background: rgba(0, 0, 0, 0.55);
+  }
+  .nobs-hp-sheet {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-height: 80dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--nobs-border-strong);
+    border-radius: 16px 16px 0 0;
+    background: var(--nobs-raised);
+    box-shadow: 0 -8px 32px var(--nobs-shadow);
+  }
+  .nobs-hp-sheet::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 12px;
+    border-radius: 2px;
+    background: var(--nobs-border-strong);
+  }
+  .nobs-hp-sheet-you { margin: 0; padding: 0; border: 0; }
+  .nobs-hp-sheet-you .nobs-hp-rail-item { min-height: 48px; }
+  .nobs-hp-sheet-you .nobs-hp-signin { min-height: 40px; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  .nobs-hp-sheet { animation: nobs-hp-sheet-in 0.18s ease-out; }
+}
+@keyframes nobs-hp-sheet-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ---- phones ---- */
+@media (max-width: 760px) {
+  .nobs-hp { --hp-bar: 48px; --hp-gutter: 12px; }
+  .nobs-topbar.nobs-hp-bar {
+    display: flex;
+    gap: 4px;
+    height: var(--hp-bar);
+    padding: 0 8px 0 4px;
+  }
+  .nobs-hp-start { gap: 4px; }
+  .nobs-hp-bar .nobs-logo { font-size: 18px; }
+  .nobs-hp-bar .nobs-logo-mark { width: 24px; height: 24px; }
+  .nobs-hp-bar .nobs-hp-search { display: none; }
+  .nobs-hp-bar .nobs-hp-search-open { display: inline-flex; margin-left: auto; }
+  .nobs-hp-bar .nobs-hp-search-open + .nobs-account-menu,
+  .nobs-hp-bar .nobs-account-menu { margin-left: 4px; }
+  .nobs-hp-bar[data-search="open"] .nobs-hp-search {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    gap: 4px;
+    max-width: none;
+    padding: 0 8px 0 4px;
+    background: var(--nobs-bg);
+  }
+  .nobs-hp-bar[data-search="open"] .nobs-hp-search-back { display: inline-flex; }
+  .nobs-hp-search-field { height: 36px; border-right: 1px solid var(--nobs-border-strong); border-radius: 36px; }
+  .nobs-hp-search-go,
+  .nobs-hp-kbd { display: none; }
+  .nobs-hp-suggestions {
+    position: fixed;
+    top: var(--hp-bar);
+    left: 0;
+    right: 0;
+    /* Above the bottom tab bar. */
+    max-height: calc(100dvh - var(--hp-bar) - var(--hp-tabbar, 0px) - env(safe-area-inset-bottom, 0px));
+    border-width: 0 0 1px;
+    border-radius: 0 0 12px 12px;
+  }
+  .nobs-hp-search[data-suggest="open"]::after { background: rgba(0, 0, 0, 0.6); }
+  .nobs-hp-suggest { gap: 10px; padding-right: 12px; }
+  /* A narrow screen gives the text the room: a smaller thumbnail column. */
+  .nobs-hp-suggest-lead { width: 48px; height: 27px; }
+  .nobs-hp-suggest-lead-claim { height: 24px; }
+  .nobs-hp-suggest-lead-channel { height: 32px; }
+  /* The feed ends above the bottom tab bar. */
+  .nobs-hp-main { padding: 0 0 calc(40px + var(--hp-tabbar, 0px) + env(safe-area-inset-bottom, 0px)); }
+  /* A phone (the rail is a drawer): no call-to-action strip. The bar holds
+     Sign in, the drawer's «You» block Sign in and the invite code, and an
+     invite link (#code=) still opens the invite lightbox, so the first
+     card starts right under the chips. */
+  .nobs-hp-cta { display: none; }
+  .nobs-hp-chipbar { --hp-chips-pad: 12px; margin: 0; }
+  .nobs-hp-chips { padding: 8px 12px; gap: 8px; }
+  /* 12px of air between the last chip and the Filters hairline once the
+     row is scrolled to its end (the edge masks live in the touch/phone
+     block above and follow the scroll position). */
+  .nobs-hp-chipbar:has(.nobs-hp-filters:not([hidden])) .nobs-hp-chips { padding-right: 12px; }
+  /* A phone: the Filters control is its icon (the name stays in its label). */
+  .nobs-hp-filters { padding-left: 8px; }
+  .nobs-hp-filters-button { width: 40px; padding: 0; justify-content: center; }
+  .nobs-hp-filters-label { display: none; }
+  .nobs-hp-filters-menu { right: 12px; max-width: calc(100vw - 24px); }
+  .nobs-hp-grid { grid-template-columns: 1fr; gap: 24px; }
+  /* 12px of air between the chips and the first thumbnail (8px row
+     padding plus this 4px). */
+  .nobs-hp-chipbar:not([hidden]) ~ .nobs-hp-feed { padding-top: 4px; }
+  .nobs-hp-card .nobs-hp-thumb { border-radius: 0; }
+  .nobs-hp-card-body { padding: 12px 12px 0; }
+  /* The button's right edge on the screen's, its dots 14px in (their right
+     edge 12px in, the gutter where the verdict counts end); the title stops
+     20px short of the 12px gutter. */
+  .nobs-hp-more { margin-right: 0; justify-content: flex-end; padding-right: 4px; }
+  .nobs-hp-card-text > .nobs-hp-title { padding-right: 20px; }
+  .nobs-hp-cardmenu {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-width: 0;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+    border-width: 1px 0 0;
+    border-radius: 16px 16px 0 0;
+  }
+  .nobs-hp-cardmenu::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--nobs-border-strong);
+  }
+  .nobs-hp-cardmenu-item { height: 48px; padding: 0 20px; }
+  .nobs-hp-cardmenu-scrim { background: rgba(0, 0, 0, 0.55); }
+  .nobs-hp-results-count { margin: 12px; }
+  .nobs-hp-result-link { grid-template-columns: 1fr; gap: 0; }
+  .nobs-hp-result-link .nobs-hp-thumb { border-radius: 0; }
+  .nobs-hp-result-body { padding: 12px 12px 0; }
+  .nobs-hp-result + .nobs-hp-result { margin-top: 24px; }
+  .nobs-hp-empty { margin: 48px 16px; }
+  .nobs-hp-shelf { margin: 32px 0; padding: 20px 0 32px; }
+  .nobs-hp-shelf-head { padding: 0 12px; margin-bottom: 12px; }
+  .nobs-hp-shelf-title { font-size: 18px; line-height: 24px; }
+  .nobs-hp-shelf-note { display: none; }
+  .nobs-hp-shelf-all { margin-left: auto; }
+  /* One column (homePage.js feedSections): the shelf takes its own form, a
+     band on the raised surface with a swipeable, snapping row of 2 to 4
+     compact cards about 70% of the screen wide (the next one peeks in),
+     rounded 16:9 thumbnails, a 2-line title and the verdict counts, no
+     avatar. The band and its 32px margins set it off from the feed. */
+  .nobs-hp-shelf-row {
+    margin: 32px 0;
+    padding: 16px 0 20px;
+    border: 0;
+    background: color-mix(in srgb, var(--nobs-text) 6%, var(--nobs-bg));
+  }
+  .nobs-hp-shelf-row .nobs-hp-shelf-grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 70%;
+    gap: 12px;
+    padding: 0 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
+    scrollbar-width: none;
+  }
+  .nobs-hp-shelf-row .nobs-hp-shelf-grid::-webkit-scrollbar { display: none; }
+  .nobs-hp-shelf-row .nobs-hp-item { scroll-snap-align: start; }
+  .nobs-hp-shelf-row .nobs-hp-card .nobs-hp-thumb { border-radius: 12px; }
+  .nobs-hp-shelf-row .nobs-hp-card-body { padding: 8px 0 0; }
+  .nobs-hp-shelf-row .nobs-hp-avatar { display: none; }
+  .nobs-hp-shelf-row .nobs-hp-card-text > .nobs-hp-title { padding-right: 28px; }
+  .nobs-hp-shelf-row .nobs-hp-more { margin-top: calc(56.25% - 1px); padding-right: 0; }
+  .nobs-hp-shelf-row .nobs-hp-card:focus-visible { outline: 2px solid var(--nobs-link); outline-offset: -2px; }
+  .nobs-hp-end { margin: 40px 12px 0; }
+}
+

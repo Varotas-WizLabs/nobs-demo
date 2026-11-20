@@ -8,7 +8,7 @@
 // Content stays in its own language: claims, arguments and explanations are
 // written in the video's language; only the labels around them follow this.
 
-import { UI_LANGUAGES, setInterfaceLanguage, t } from "./i18n.js?v=fc9b98c915";
+import { UI_LANGUAGES, setInterfaceLanguage, t } from "./i18n.js?v=5fa56d3ec5";
 
 export const LANG_KEY = "nobs.lang";
 const RUSSIAN_READERS = ["ru", "uk", "be", "kk"];
