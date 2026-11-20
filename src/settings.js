@@ -41,10 +41,10 @@
 // page (commentators.html). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=71b2d983c0";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=71b2d983c0";
-import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=71b2d983c0";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=71b2d983c0";
+import { t } from "./i18n.js?v=392e705d28";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=392e705d28";
+import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=392e705d28";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=392e705d28";
 
 const KEY = "nobs.settings";
 
@@ -101,7 +101,7 @@ export function setSetting(name, value) {
   }
 }
 
-export const THEMES = ["dark", "light", "system"];
+export const THEMES = ["dark", "light", "monochrome", "system"];
 
 export const VOICE_STYLES = ["casual", "normal"];
 
@@ -205,13 +205,14 @@ export function voiceStyle() {
   return VOICE_STYLES.includes(value) ? value : "casual";
 }
 
-/** The page theme setting: "dark" (default), "light" or "system". */
+/** The page theme setting: "dark" (default), "light", "monochrome" or "system". */
 export function themeSetting() {
   const value = read().theme;
   return THEMES.includes(value) ? value : "dark";
 }
 
-/** The theme to draw now: "system" follows the OS light/dark preference. */
+/** The theme to draw now: "system" follows the OS light/dark preference
+ * (src/themeEarly.js applies the same rules before the first paint). */
 export function resolvedTheme(win = globalThis) {
   const theme = themeSetting();
   if (theme !== "system") return theme;

@@ -13,7 +13,7 @@
 //                       then shows a small «deeper version ready» notice (never swaps claims)
 // Built with DOM APIs and textContent only.
 
-import { labelLanguage } from "./i18n.js?v=71b2d983c0";
+import { labelLanguage } from "./i18n.js?v=392e705d28";
 
 export const EFFORTS = ["light", "deep"];
 export const UPGRADE_POLL_MS = 30000;

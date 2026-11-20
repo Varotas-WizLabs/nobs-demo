@@ -14,35 +14,51 @@
  */
 
 :root {
-  /* Theme tokens: dark is the default, [data-theme="light"] overrides them.
-     Colours drawn over the video (control bar, timeline marks, flag icon)
-     stay the same in both themes. */
+  /* Theme tokens (Skeptium brand system, docs/brand/SKEPTIUM_BRAND_SYSTEM_MASTER.md).
+     Dark is the default: the colour system's neutral near-black stage
+     (#05090B, deep #020608), text #F5F7F8, subtle lines #5F666C.
+     [data-theme="light"] (surface #FAFAFA, text #111317) and
+     [data-theme="monochrome"] (radical black/white: #090909, #FFFFFF,
+     graphite #383838, mid #979797, silver #D4D4D4) override them.
+     The verdict colours (green/yellow/red/white/pending) are semantic and
+     never take the brand spectrum: it is not a truth scale. Colours drawn
+     over the video (control bar, timeline marks, flag icon) stay the same
+     in every theme. */
   color-scheme: dark;
-  --nobs-bg: #0b0b0f;
-  --nobs-surface: #16161c;
-  --nobs-text: #f2f2f5;
-  --nobs-muted: #9a9aa5;
-  --nobs-neutral: #6b6b76; /* neutral UI chrome */
-  --nobs-border: #2f2f3a;
-  --nobs-border-strong: #3a3a46;
-  --nobs-border-faint: #55555f;
-  --nobs-hover: #1f1f27;
-  --nobs-current: #23232d;
-  --nobs-pressed: #2a2a33;
-  --nobs-raised: #22222b;
-  --nobs-raised-hover: #2e2e39;
-  --nobs-input-bg: #0f0f14;
-  --nobs-note-bg: #2a2a31;
-  --nobs-note-border: #44444e;
-  --nobs-chip-dash: #6d6d7a;
-  --nobs-link: #8ab4ff;
+  --brand-red: #ef3442;
+  --brand-orange: #f87b31;
+  --brand-gold: #f8d46b;
+  --brand-mint: #cde8c5;
+  --brand-cyan: #83dde4;
+  --brand-spectrum: linear-gradient(90deg, #ef3442 0%, #f87b31 22%, #f8d46b 46%, #cde8c5 68%, #83dde4 100%);
+  --brand-mark: var(--brand-spectrum); /* the logo's letters and frame */
+  --nobs-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --nobs-bg: #05090b;
+  --nobs-bg-deep: #020608;
+  --nobs-surface: #0e1315;
+  --nobs-text: #f5f7f8;
+  --nobs-muted: #a1a8ad;
+  --nobs-neutral: #6c7378; /* neutral UI chrome */
+  --nobs-border: #232a2e;
+  --nobs-border-strong: #333b40;
+  --nobs-border-faint: #5f666c;
+  --nobs-hover: #151b1e;
+  --nobs-current: #1b2226;
+  --nobs-pressed: #20272b;
+  --nobs-raised: #182023;
+  --nobs-raised-hover: #232b2f;
+  --nobs-input-bg: #080c0e;
+  --nobs-note-bg: #1a2124;
+  --nobs-note-border: #3a4247;
+  --nobs-chip-dash: #6c7378;
+  --nobs-link: #83dde4;
   --nobs-line-faint: rgba(255, 255, 255, 0.04);
   --nobs-toggle-border: rgba(255, 255, 255, 0.15);
   --nobs-toggle-border-hover: rgba(255, 255, 255, 0.35);
   --nobs-toggle-on: rgba(255, 255, 255, 0.08);
   --nobs-now-line: rgba(255, 255, 255, 0.85);
   --nobs-shadow: rgba(0, 0, 0, 0.5);
-  --nobs-on-flag: #0b0b0f; /* text on a coloured flag chip */
+  --nobs-on-flag: #05090b; /* text on a coloured flag chip */
   --nobs-banner-bg: #2a2410;
   --nobs-banner-text: #f1dfa0;
   --nobs-white: #f4f4f6; /* white flag: no fact-check available */
@@ -50,7 +66,7 @@
   --nobs-green: #2ecc71;
   --nobs-yellow: #f1c40f;
   --nobs-red: #e74c3c;
-  --nobs-pending: #8b8e98; /* found, being checked: no verdict yet (same in both themes) */
+  --nobs-pending: #8b8e98; /* found, being checked: no verdict yet (same in all themes) */
   --nobs-accent: #b48cff; /* scoop stops of a commentator (not a flag colour) */
   --nobs-parody-bg: #ff3d7f; /* the «пародия» badge */
   --nobs-parody-text: #ffffff;
@@ -59,30 +75,32 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --nobs-bg: #f4f4f7;
+  --brand-mark: #111317; /* solid dark mark; the spectrum only as a small accent */
+  --nobs-bg: #fafafa;
+  --nobs-bg-deep: #f2f3f4;
   --nobs-surface: #ffffff;
-  --nobs-text: #17171c;
-  --nobs-muted: #5c5c68;
-  --nobs-neutral: #8a8a95;
-  --nobs-border: #dcdce3;
-  --nobs-border-strong: #c6c6cf;
-  --nobs-border-faint: #b4b4bf;
-  --nobs-hover: #eeeef3;
-  --nobs-current: #e6eefc;
-  --nobs-pressed: #e3e3ea;
+  --nobs-text: #111317;
+  --nobs-muted: #575c63;
+  --nobs-neutral: #8a8f95;
+  --nobs-border: #e1e3e5;
+  --nobs-border-strong: #cbced2;
+  --nobs-border-faint: #b3b7bc;
+  --nobs-hover: #f0f1f2;
+  --nobs-current: #e8eaec;
+  --nobs-pressed: #e3e5e7;
   --nobs-raised: #ffffff;
-  --nobs-raised-hover: #f0f0f5;
+  --nobs-raised-hover: #f1f2f3;
   --nobs-input-bg: #ffffff;
-  --nobs-note-bg: #f0f0f4;
-  --nobs-note-border: #d0d0d8;
-  --nobs-chip-dash: #9a9aa6;
-  --nobs-link: #1a5fd0;
+  --nobs-note-bg: #f1f2f3;
+  --nobs-note-border: #d3d6d9;
+  --nobs-chip-dash: #989ca2;
+  --nobs-link: #0b6670;
   --nobs-line-faint: rgba(0, 0, 0, 0.06);
   --nobs-toggle-border: rgba(0, 0, 0, 0.18);
   --nobs-toggle-border-hover: rgba(0, 0, 0, 0.4);
   --nobs-toggle-on: rgba(0, 0, 0, 0.06);
-  --nobs-now-line: rgba(23, 23, 28, 0.8);
-  --nobs-shadow: rgba(20, 20, 40, 0.18);
+  --nobs-now-line: rgba(17, 19, 23, 0.8);
+  --nobs-shadow: rgba(17, 19, 23, 0.16);
   --nobs-banner-bg: #fff4cc;
   --nobs-banner-text: #5a4600;
   --nobs-white: #ffffff;
@@ -95,14 +113,52 @@
   --nobs-parody-text: #ffffff;
 }
 
+/* Monochrome: the radical black/white brand system. Chrome uses graphite,
+   mid gray and silver; the verdict colours stay (they carry meaning). */
+:root[data-theme="monochrome"] {
+  color-scheme: dark;
+  --brand-mark: #ffffff; /* solid white mark, no gradient */
+  --nobs-bg: #090909;
+  --nobs-bg-deep: #000000;
+  --nobs-surface: #141414;
+  --nobs-text: #ffffff;
+  --nobs-muted: #979797;
+  --nobs-neutral: #979797;
+  --nobs-border: #383838;
+  --nobs-border-strong: #4a4a4a;
+  --nobs-border-faint: #979797;
+  --nobs-hover: #1c1c1c;
+  --nobs-current: #242424;
+  --nobs-pressed: #2b2b2b;
+  --nobs-raised: #1c1c1c;
+  --nobs-raised-hover: #2b2b2b;
+  --nobs-input-bg: #000000;
+  --nobs-note-bg: #1c1c1c;
+  --nobs-note-border: #383838;
+  --nobs-chip-dash: #979797;
+  --nobs-link: #ffffff;
+  --nobs-line-faint: rgba(255, 255, 255, 0.05);
+  --nobs-toggle-border: rgba(255, 255, 255, 0.22);
+  --nobs-toggle-border-hover: rgba(255, 255, 255, 0.55);
+  --nobs-toggle-on: rgba(255, 255, 255, 0.1);
+  --nobs-now-line: rgba(255, 255, 255, 0.9);
+  --nobs-shadow: rgba(0, 0, 0, 0.6);
+  --nobs-on-flag: #090909;
+  --nobs-banner-bg: #1c1c1c;
+  --nobs-banner-text: #ffffff;
+  --nobs-accent: #d4d4d4;
+  --nobs-parody-bg: #ffffff;
+  --nobs-parody-text: #090909;
+}
+
 /* Over the video (control bar, flag/processing overlay) the controls keep
-   the dark palette in both themes. */
+   the dark palette in every theme. */
 :root[data-theme="light"] .nobs-control-bar,
 :root[data-theme="light"] .nobs-overlay {
-  --nobs-surface: #16161c;
-  --nobs-text: #f2f2f5;
-  --nobs-muted: #9a9aa5;
-  --nobs-neutral: #6b6b76;
+  --nobs-surface: #0e1315;
+  --nobs-text: #f5f7f8;
+  --nobs-muted: #a1a8ad;
+  --nobs-neutral: #6c7378;
   --nobs-white: #f4f4f6;
   --nobs-white-edge: transparent;
 }
@@ -115,7 +171,20 @@ body {
   margin: 0;
   background: var(--nobs-bg);
   color: var(--nobs-text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--nobs-font);
+}
+
+/* Brand type: Inter, heavy for headings, regular/medium for the interface;
+   form controls take the page font instead of the browser's. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+h1,
+h2 {
+  font-weight: 800;
 }
 
 main {
@@ -279,10 +348,10 @@ main {
   min-width: 220px;
   max-width: calc(100% - 16px);
   padding: 4px;
-  border: 1px solid #2f2f3a;
+  border: 1px solid #2a3135;
   border-radius: 10px;
-  background: #16161c;
-  color: #f2f2f5;
+  background: #0e1315;
+  color: #f5f7f8;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   font-size: 14px;
 }
@@ -291,7 +360,7 @@ main {
 }
 .nobs-commentator-menu-title {
   margin: 4px 10px 6px;
-  color: #9a9aa5;
+  color: #a1a8ad;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -313,7 +382,7 @@ main {
 }
 .nobs-commentator-item:hover,
 .nobs-commentator-item:focus-visible {
-  background: #2a2a33;
+  background: #20272b;
   outline: none;
 }
 .nobs-commentator-item[aria-disabled="true"] {
@@ -322,7 +391,7 @@ main {
 }
 .nobs-commentator-note {
   grid-column: 3 / -1;
-  color: #9a9aa5;
+  color: #a1a8ad;
   font-size: 12px;
 }
 .nobs-commentator-check {
@@ -342,17 +411,17 @@ main {
 .nobs-commentator-sep {
   height: 1px;
   margin: 4px 6px;
-  background: #2f2f3a;
+  background: #2a3135;
 }
 .nobs-commentator-manage {
   padding: 8px 10px;
   border-radius: 6px;
-  color: #8ab4ff;
+  color: #83dde4;
   text-decoration: none;
 }
 .nobs-commentator-manage:hover,
 .nobs-commentator-manage:focus-visible {
-  background: #2a2a33;
+  background: #20272b;
   outline: none;
 }
 .nobs-voice-hold.is-in {
@@ -783,7 +852,7 @@ main {
 .nobs-home h1 {
   margin: 0 0 4px;
   font-size: 40px;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.015em;
 }
 
 .nobs-tagline {
@@ -1983,14 +2052,20 @@ main {
 :root {
   --nobs-scoop-accent: #8f8cff;
   --nobs-scoop-track: rgba(255, 255, 255, 0.08);
-  --nobs-scoop-card: #1b1b22;
+  --nobs-scoop-card: #12181b;
   --nobs-scoop-now: rgba(143, 140, 255, 0.55);
 }
 :root[data-theme="light"] {
   --nobs-scoop-accent: #4f4bd6;
   --nobs-scoop-track: rgba(0, 0, 0, 0.08);
-  --nobs-scoop-card: #f7f7fb;
+  --nobs-scoop-card: #f6f7f8;
   --nobs-scoop-now: rgba(79, 75, 214, 0.45);
+}
+:root[data-theme="monochrome"] {
+  --nobs-scoop-accent: #d4d4d4;
+  --nobs-scoop-track: rgba(255, 255, 255, 0.1);
+  --nobs-scoop-card: #141414;
+  --nobs-scoop-now: rgba(255, 255, 255, 0.5);
 }
 
 .nobs-scoops {
@@ -2418,16 +2493,19 @@ button.nobs-scoop-verdict:hover {
    slightly lighter grey, fully opaque). */
 .nobs-rail-flag[data-verdict="white"] {
   --rail-c: var(--nobs-white);
-  background: #2e3036;
+  background: #2a3033;
 }
 .nobs-rail-flag[data-verdict="white"][aria-pressed="true"] {
-  background: #5a5e68;
+  background: #5a6166;
 }
 .nobs-rail-flag[data-verdict="insufficient"] {
   border-style: dashed;
 }
 
-/* Brand bar with the «Skeptium» logo, top left of the player page. */
+/* Brand bar with the Skeptium logo, top left: the element tile (frame +
+   Sk*, inline SVG; web/brand/topbar-mark.svg) and the wordmark. Dark: the
+   five-stop spectrum on the letters and the frame; light: solid #111317;
+   monochrome: solid white (--brand-mark). The «119» is left out at this size. */
 .nobs-topbar {
   display: flex;
   align-items: center;
@@ -2436,16 +2514,62 @@ button.nobs-scoop-verdict:hover {
   background: var(--nobs-bg);
   border-bottom: 1px solid var(--nobs-border);
 }
+/* Light theme: the spectrum only as a small accent, a hairline under the bar. */
+:root[data-theme="light"] .nobs-topbar {
+  border-bottom: 0;
+  box-shadow: inset 0 -1px 0 var(--nobs-border);
+  background-image: var(--brand-spectrum);
+  background-size: 100% 2px;
+  background-position: bottom left;
+  background-repeat: no-repeat;
+}
 .nobs-logo {
   display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
+  align-items: center;
+  gap: 7px;
   color: var(--nobs-text);
   text-decoration: none;
+  font-family: var(--nobs-font);
   font-weight: 800;
   font-size: 19px;
   letter-spacing: -0.02em;
   line-height: 1;
+}
+.nobs-logo-mark {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+.nobs-logo-frame {
+  fill: none;
+  stroke: url(#nobs-logo-spectrum);
+  stroke-width: 7;
+}
+.nobs-logo-ink {
+  fill: url(#nobs-logo-spectrum);
+}
+.nobs-logo-word {
+  color: var(--nobs-text);
+  background: var(--brand-spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-bottom: 0.08em; /* keeps the descender of «p» inside the painted box */
+}
+:root[data-theme="light"] .nobs-logo-frame,
+:root[data-theme="monochrome"] .nobs-logo-frame {
+  stroke: var(--brand-mark);
+}
+:root[data-theme="light"] .nobs-logo-ink,
+:root[data-theme="monochrome"] .nobs-logo-ink {
+  fill: var(--brand-mark);
+}
+:root[data-theme="light"] .nobs-logo-word,
+:root[data-theme="monochrome"] .nobs-logo-word {
+  background: none;
+  -webkit-text-fill-color: var(--brand-mark);
+  color: var(--brand-mark);
 }
 .nobs-logo-ai {
   padding: 2px 5px;
@@ -2457,16 +2581,13 @@ button.nobs-scoop-verdict:hover {
   letter-spacing: 0.04em;
   transform: translateY(-2px);
 }
-/* The brand word ends with a small footnote asterisk: «Skeptium*». */
-.nobs-logo-word::after {
-  content: "*";
-  display: inline-block;
-  margin-left: -1px;
-  font-size: 0.95em;
-  font-weight: 800;
-  vertical-align: 0.3em;
-  line-height: 0;
-  text-decoration: none;
+/* A phone's player bar also holds the AI banner, the language switch and
+   the account button: the tile alone carries the brand there (the link
+   keeps aria-label="Skeptium"). */
+@media (max-width: 480px) {
+  .nobs-topbar:has(.nobs-demo-banner) .nobs-logo-word {
+    display: none;
+  }
 }
 /* No underline on hover; keyboard focus still gets a visible ring. */
 .nobs-logo:hover {
@@ -2663,7 +2784,7 @@ button.nobs-scoop-verdict:hover {
   justify-content: center;
   padding: 16px;
   background: rgba(8, 8, 12, 0.88);
-  color: #f2f2f5;
+  color: #f5f7f8;
 }
 .nobs-gate[hidden] {
   display: none;
@@ -2710,7 +2831,7 @@ button.nobs-scoop-verdict:hover {
   align-items: baseline;
 }
 .nobs-gate-checklist li.is-done {
-  color: #f2f2f5;
+  color: #f5f7f8;
 }
 .nobs-gate-check {
   width: 1em;
@@ -2738,7 +2859,7 @@ button.nobs-scoop-verdict:hover {
 }
 .nobs-gate-meta {
   font-size: 0.85rem;
-  color: #9a9aa5;
+  color: #a1a8ad;
   font-variant-numeric: tabular-nums;
 }
 .nobs-gate-limit {
@@ -2757,7 +2878,7 @@ button.nobs-scoop-verdict:hover {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
-  color: #f2f2f5;
+  color: #f5f7f8;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -2771,16 +2892,16 @@ button.nobs-scoop-verdict:hover {
   color: #c9cad2;
 }
 .nobs-gate[data-ready="1"] .nobs-gate-primary {
-  background: #f2f2f5;
-  color: #0b0b0f;
-  border-color: #f2f2f5;
+  background: #f5f7f8;
+  color: #05090b;
+  border-color: #f5f7f8;
 }
 .nobs-gate-skip {
   align-self: flex-start;
   padding: 0;
   border: none;
   background: none;
-  color: #8ab4ff;
+  color: #83dde4;
   font: inherit;
   font-size: 0.9rem;
   cursor: pointer;
@@ -2806,7 +2927,7 @@ button.nobs-scoop-verdict:hover {
   padding: 9px 14px;
   border-radius: 10px;
   background: rgba(16, 16, 22, 0.92);
-  color: #f2f2f5;
+  color: #f5f7f8;
   font-size: 0.92rem;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
 }
@@ -2834,7 +2955,7 @@ button.nobs-scoop-verdict:hover {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 6px;
   background: none;
-  color: #f2f2f5;
+  color: #f5f7f8;
   font: inherit;
   font-size: 0.85rem;
   cursor: pointer;
@@ -2856,7 +2977,7 @@ button.nobs-scoop-verdict:hover {
   padding: 0 16px 48px;
   background: var(--nobs-bg);
   color: var(--nobs-text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--nobs-font);
 }
 .nobs-cm-header {
   max-width: 1100px;
@@ -3904,7 +4025,7 @@ html.nobs-pseudo-fs-open body {
     width: 30px;
     height: 30px;
     color: var(--nobs-text);
-    font: 700 11px/1 system-ui, -apple-system, sans-serif;
+    font: 700 11px/1 var(--nobs-font);
   }
   .nobs-rail-flag::before {
     content: "";
@@ -4143,8 +4264,8 @@ html.nobs-pseudo-fs-open body {
   z-index: calc(var(--nobs-overlay-z) + 1);
   padding: 9px 14px;
   border-radius: 10px;
-  background: rgba(16, 16, 22, 0.94);
-  color: #f2f2f5;
+  background: rgba(10, 14, 16, 0.94);
+  color: #f5f7f8;
   font-size: 0.9rem;
   line-height: 1.35;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
@@ -5357,6 +5478,11 @@ html.nobs-pseudo-fs-open body {
   opacity: 0.75;
 }
 .nobs-footer a { color: inherit; }
+.nobs-footer-line {
+  flex-basis: 100%;
+  text-align: center;
+  font-weight: 600;
+}
 .nobs-privacy { max-width: 760px; line-height: 1.55; }
 .nobs-privacy h2 { margin-top: 28px; font-size: 18px; }
 
@@ -5384,7 +5510,7 @@ html.nobs-pseudo-fs-open body {
   border: 1px solid var(--nobs-border);
   border-radius: 50%;
   overflow: hidden;
-  background: var(--nobs-surface, #2a2a30);
+  background: var(--nobs-surface, #20272b);
   color: var(--nobs-text);
   font-size: 14px;
   font-weight: 600;
