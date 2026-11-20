@@ -1,9 +1,10 @@
 // web/src/main.js
-import { withFrames } from "./frames.js?v=5fa56d3ec5";
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=5fa56d3ec5";
-import { wireFlagIconClick } from "./popup.js?v=5fa56d3ec5";
-import { t } from "./i18n.js?v=5fa56d3ec5";
-import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=5fa56d3ec5";
+import { withFrames } from "./frames.js?v=84a087744f";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=84a087744f";
+import { wireFlagIconClick } from "./popup.js?v=84a087744f";
+import { t } from "./i18n.js?v=84a087744f";
+import { withSpeakers } from "./speakers.js?v=84a087744f";
+import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=84a087744f";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 
@@ -97,7 +98,7 @@ export function bootstrapPlayerPage({
 
   function startFlagLoop(loaded) {
     // Each finding once (no superseded claim, no repeat merged into another).
-    const run = withVisibleClaims(loaded);
+    const run = withSpeakers(withVisibleClaims(loaded));
     latestRun = run;
     if (run.status === "failed" && run.error && domRefs.failedIndicator) {
       domRefs.failedIndicator.textContent = `${t("analysisFailed", run.caption_language)}: ${run.error}`;
@@ -126,7 +127,7 @@ export function bootstrapPlayerPage({
             pollTags();
             return;
           }
-          latestRun = withVisibleClaims(run);
+          latestRun = withSpeakers(withVisibleClaims(run));
           if (onRunUpdated) {
             try {
               onRunUpdated(latestRun);
@@ -227,7 +228,7 @@ export function bootstrapPlayerPage({
           changes = { first: true, added: claims, changed: [], revised: [], removed: [] };
         } else {
           const merged = mergeDelta(latestRun, data);
-          latestRun = merged.run;
+          latestRun = withSpeakers(merged.run);
           changes = { first: false, added: merged.added, changed: merged.changed, revised: merged.revised, removed: merged.removed };
         }
         if (latestRun.claims.length) ensureFlagLoop();

@@ -7,8 +7,9 @@
 // is a lead, never evidence: the popup says so when the original was not
 // found. Frames never change a flag.
 
-import { formatTimecode } from "./claimSync.js?v=5fa56d3ec5";
-import { labelLanguage } from "./i18n.js?v=5fa56d3ec5";
+import { formatTimecode } from "./claimSync.js?v=84a087744f";
+import { labelLanguage } from "./i18n.js?v=84a087744f";
+import { speakerNote, speakerText } from "./speakers.js?v=84a087744f";
 
 const LABELS = {
   ru: {
@@ -133,12 +134,16 @@ export function screenBlockHtml(claim, lang = "ru") {
   const thumb = safeThumb(claim?.frame_thumb);
   const line = screenLine(claim, lang);
   const role = L.roles[claim?.speaker_role];
-  if (!thumb && !line && !isScreenClaim(claim) && !role) return "";
+  const speaker = claim?.speaker;
+  if (!thumb && !line && !isScreenClaim(claim) && !role && !speaker) return "";
   const parts = [];
   if (thumb) parts.push(`<img class="claim-frame" src="${esc(thumb)}" alt="${esc(L.frameAlt)}" loading="lazy" width="160" height="90">`);
   const lines = [];
   if (isScreenClaim(claim)) lines.push(`<span class="claim-screen-badge">${esc(L.fromScreen)}</span>`);
-  if (role) lines.push(`<span class="claim-speaker-role">${esc(role)}</span>`);
+  if (speaker) {
+    const note = speakerNote(speaker, lang);
+    lines.push(`<span class="claim-speaker" title="${esc(note)}">${esc(speakerText(speaker, lang))}</span> <small class="claim-speaker-note">${esc(note)}</small>`);
+  } else if (role) lines.push(`<span class="claim-speaker-role">${esc(role)}</span>`);
   if (line) {
     lines.push(`<span class="claim-screen-text">${esc(line.text)}${line.hires ? ` <small>(${esc(line.hires)})</small>` : ""}</span>`);
     if (line.statusNote) {

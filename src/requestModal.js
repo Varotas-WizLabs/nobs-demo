@@ -5,8 +5,8 @@
 // modal dialog. Esc, the backdrop and the close button close it and focus goes
 // back to the button that opened it; the page underneath stays where it was.
 
-import { t } from "./i18n.js?v=5fa56d3ec5";
-import { buildRequestForm, fill } from "./requestForm.js?v=5fa56d3ec5";
+import { t } from "./i18n.js?v=84a087744f";
+import { buildRequestForm, fill } from "./requestForm.js?v=84a087744f";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 

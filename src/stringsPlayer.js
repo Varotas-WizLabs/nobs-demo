@@ -3,7 +3,7 @@
 // modules they use) in Russian and English, reached through t() from i18n.js.
 // Content (claims, titles, server log lines, spoken lines) is never here.
 
-import { registerStrings } from "./i18n.js?v=5fa56d3ec5";
+import { registerStrings } from "./i18n.js?v=84a087744f";
 
 registerStrings({
   en: {
@@ -43,6 +43,7 @@ registerStrings({
     "plr.log.stage.claims": "extracting claims",
     "plr.log.stage.dedupe": "removing duplicate claims",
     "plr.log.stage.relations": "checking claims against each other",
+    "plr.log.stage.speakers": "who speaks in the video",
     "plr.log.stage.verify": "verifying claims",
     "plr.log.stage.save": "saving results",
     // Control bar (src/controlBar.js)
@@ -124,6 +125,7 @@ registerStrings({
     "plr.log.stage.claims": "поиск утверждений",
     "plr.log.stage.dedupe": "удаление повторов",
     "plr.log.stage.relations": "сверка утверждений между собой",
+    "plr.log.stage.speakers": "кто говорит в видео",
     "plr.log.stage.verify": "проверка утверждений",
     "plr.log.stage.save": "сохранение результатов",
     "plr.ctl.play": "Воспроизвести",

@@ -7171,3 +7171,12 @@ html.nobs-pseudo-fs-open body {
   .nobs-hp-end { margin: 40px 12px 0; }
 }
 
+.claim-speaker {
+  font-size: 12px;
+  color: var(--nobs-muted);
+}
+.claim-speaker-note {
+  font-size: 11px;
+  color: var(--nobs-muted);
+  opacity: 0.8;
+}
