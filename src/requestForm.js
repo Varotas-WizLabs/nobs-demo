@@ -5,9 +5,9 @@
 // Shared by the account page (src/accountPage.js) and the top bar's lightbox
 // (src/requestModal.js), so both behave the same.
 
-import { t } from "./i18n.js?v=06e433deee";
-import { youtubeVideoId } from "./youtubeId.js?v=06e433deee";
-import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=06e433deee";
+import { t } from "./i18n.js?v=3d15d8e254";
+import { youtubeVideoId } from "./youtubeId.js?v=3d15d8e254";
+import { buildEffortPicker, loadEffort, saveEffort } from "./effort.js?v=3d15d8e254";
 
 export const VISIBILITIES = ["public", "unlisted", "private"];
 

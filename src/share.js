@@ -9,8 +9,8 @@
 // whether this run is published there and says so if not yet. Inside the
 // demo itself the link is the current page's own address.
 
-import { t } from "./i18n.js?v=06e433deee";
-import { isPagePath } from "./sitePaths.js?v=06e433deee";
+import { t } from "./i18n.js?v=3d15d8e254";
+import { isPagePath } from "./sitePaths.js?v=3d15d8e254";
 
 /** The public site (the home) and its player page (clean URL, skeptium.com/player/). */
 export const PUBLIC_SITE = "https://skeptium.com/";

@@ -38,7 +38,8 @@
   --nobs-thumb-overlay: linear-gradient(135deg, #ef3442 0%, #f87b31 22%, #f8d46b 46%, #cde8c5 68%, #83dde4 100%);
   --nobs-thumb-overlay-blend: soft-light; /* ::after: colours the picture's mid-tones */
   --nobs-thumb-overlay-opacity: 0.5;
-  --nobs-thumb-overlay-tint: 0.1; /* ::before, plain: a faint wash that also reaches whites and blacks */
+  --nobs-thumb-overlay-tint: 0.06; /* ::before, plain: a faint wash that also reaches whites and blacks */
+  --nobs-thumb-overlay-contrast: contrast(1.14) saturate(1.06); /* the picture under the layers: wins back what the wash lifts */
   --nobs-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --nobs-bg: #05090b;
   --nobs-bg-deep: #020608;
@@ -7255,6 +7256,7 @@ html.nobs-pseudo-fs-open body {
   background: var(--nobs-thumb-overlay);
   pointer-events: none;
 }
+.nobs-thumb-fx img { filter: var(--nobs-thumb-overlay-contrast); }
 .nobs-thumb-fx::before { opacity: var(--nobs-thumb-overlay-tint); }
 .nobs-thumb-fx::after {
   mix-blend-mode: var(--nobs-thumb-overlay-blend);
@@ -7264,3 +7266,149 @@ html.nobs-pseudo-fs-open body {
 :root[data-thumb-overlay="off"] .nobs-thumb-fx::after,
 :root[data-theme="monochrome"] .nobs-thumb-fx::before,
 :root[data-theme="monochrome"] .nobs-thumb-fx::after { content: none; }
+:root[data-thumb-overlay="off"] .nobs-thumb-fx img,
+:root[data-theme="monochrome"] .nobs-thumb-fx img { filter: none; }
+
+/* research trace -- «Как пришли к вердикту» in the claim popup (src/trace.js).
+   Collapsed like the specialist block; a vertical timeline of the research
+   steps. Verdicts use the semantic flag colours only on a chip border, with
+   the text label beside it (never the brand spectrum as a truth scale);
+   stances and the model's own answers are plain text. */
+.claim-trace {
+  margin: 8px 0 4px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--nobs-border-strong, var(--nobs-muted));
+  font-size: 12px;
+}
+.claim-trace > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.claim-trace-body { margin-top: 6px; }
+.claim-trace-message {
+  margin: 4px 0;
+  color: var(--nobs-muted);
+}
+.claim-trace-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.claim-trace-step {
+  position: relative;
+  margin: 0;
+  padding: 0 0 10px 14px;
+  border-left: 1px solid var(--nobs-border-strong);
+  overflow-wrap: anywhere;
+}
+.claim-trace-step:last-child {
+  border-left-color: transparent;
+  padding-bottom: 2px;
+}
+.claim-trace-step::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nobs-surface);
+  box-shadow: inset 0 0 0 1.5px var(--nobs-neutral);
+}
+.claim-trace-step p { margin: 2px 0; }
+.claim-trace-head { line-height: 1.35; }
+.claim-trace-kind {
+  font-weight: 600;
+  color: var(--nobs-text);
+}
+.claim-trace-meta,
+.claim-trace-models,
+.claim-trace-pages,
+.claim-trace-reason,
+.claim-trace-summary {
+  color: var(--nobs-muted);
+}
+.claim-trace-models {
+  font-size: 11px;
+  margin-left: 4px;
+}
+.claim-trace-label {
+  color: var(--nobs-muted);
+  margin-top: 4px;
+}
+.claim-trace-quote {
+  margin: 4px 0;
+  padding: 2px 0 2px 8px;
+  border-left: 2px solid var(--nobs-note-border);
+  font-style: italic;
+}
+.claim-trace-queries,
+.claim-trace-sources,
+.claim-trace-scores {
+  margin: 2px 0 4px;
+  padding-left: 16px;
+}
+.claim-trace-queries li,
+.claim-trace-sources li,
+.claim-trace-scores li { margin: 2px 0; }
+.claim-trace-sources a { color: var(--nobs-link); }
+.claim-trace-stance {
+  color: var(--nobs-muted);
+}
+.claim-trace-stance::before { content: "· "; }
+.claim-trace-badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid var(--nobs-border-strong);
+  background: var(--nobs-note-bg);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.claim-trace-passage {
+  color: var(--nobs-muted);
+}
+.claim-trace-passage q { font-style: italic; }
+.claim-trace-omitted {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--nobs-muted);
+  font-style: italic;
+}
+.claim-trace-chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid var(--nobs-muted);
+}
+.claim-trace-chip[data-flag="green"] { border-color: var(--nobs-green); }
+.claim-trace-chip[data-flag="yellow"] { border-color: var(--nobs-yellow); }
+.claim-trace-chip[data-flag="red"] { border-color: var(--nobs-red); }
+.claim-trace-chip[data-flag="white"] { border-color: var(--nobs-white-edge, var(--nobs-muted)); }
+.popup .claim-trace-download {
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--nobs-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.popup .claim-trace-download[hidden] { display: none; }
+@media (pointer: coarse) {
+  .popup .claim-trace-download { min-height: 44px; }
+}
+/* The sticky Close button of a long popup (the trace makes popups long):
+   an opaque band of the popup's surface behind it, across the popup's width,
+   so scrolled text never shows around or through it. The popup's own
+   overflow clips the band. */
+.popup > button[data-action="close"] {
+  /* Copies of the band stepped 60px right (less than the button's width),
+     so they join without gaps. */
+  box-shadow:
+    0 0 0 12px var(--nobs-surface), 60px 0 0 12px var(--nobs-surface), 120px 0 0 12px var(--nobs-surface),
+    180px 0 0 12px var(--nobs-surface), 240px 0 0 12px var(--nobs-surface), 300px 0 0 12px var(--nobs-surface),
+    360px 0 0 12px var(--nobs-surface), 420px 0 0 12px var(--nobs-surface);
+}

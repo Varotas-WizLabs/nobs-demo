@@ -1,13 +1,14 @@
 // web/src/popup.js
-import { screenBlockHtml } from "./frames.js?v=06e433deee";
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=06e433deee";
-import { isPlayerActive } from "./controlBar.js?v=06e433deee";
-import { t } from "./i18n.js?v=06e433deee";
-import { claimState, isUnchecked } from "./progress.js?v=06e433deee";
-import { seekTarget } from "./settings.js?v=06e433deee";
-import { specialistBlockHtml } from "./specialist.js?v=06e433deee";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=06e433deee";
-import { pageHref } from "./sitePaths.js?v=06e433deee";
+import { screenBlockHtml } from "./frames.js?v=3d15d8e254";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=3d15d8e254";
+import { isPlayerActive } from "./controlBar.js?v=3d15d8e254";
+import { t } from "./i18n.js?v=3d15d8e254";
+import { claimState, isUnchecked } from "./progress.js?v=3d15d8e254";
+import { seekTarget } from "./settings.js?v=3d15d8e254";
+import { specialistBlockHtml } from "./specialist.js?v=3d15d8e254";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=3d15d8e254";
+import { pageHref } from "./sitePaths.js?v=3d15d8e254";
+import { traceSectionHtml, wireTrace } from "./trace.js?v=3d15d8e254";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;
@@ -203,7 +204,9 @@ function quoteDetails(claim, lang) {
   return html;
 }
 
-export function renderClaimPopup(claim, lang = "en") {
+// `trace`: the run has a research trace (Deep): a collapsed «Как пришли к
+// вердикту» section after the specialist block, filled by wireTrace on open.
+export function renderClaimPopup(claim, lang = "en", { trace = false } = {}) {
   const sourcesHtml = (claim.sources ?? [])
     .map(
       (source) =>
@@ -258,6 +261,7 @@ export function renderClaimPopup(claim, lang = "en") {
       ${screenBlockHtml(claim, lang)}
       ${body}
       ${specialistBlockHtml(claim, lang)}
+      ${trace ? traceSectionHtml(claim, lang) : ""}
       ${closeButtonMarkup(lang)}
     </div>
   `;
@@ -367,9 +371,14 @@ export function wireFlagIconClick(flagIcon, chainIcon, player, popupContainer, g
       closePopup();
       return;
     }
-    const { activeClaim, language } = getOverlayState();
+    const { activeClaim, language, runId, hasTrace, fetchImpl } = getOverlayState();
     if (!activeClaim) return;
-    openPopup("claim", renderClaimPopup(activeClaim, language));
+    // A claim still being checked has no trace yet.
+    const trace = hasTrace === true && activeClaim.verify_state !== "pending" && !isUnchecked(activeClaim);
+    openPopup("claim", renderClaimPopup(activeClaim, language, { trace }));
+    if (trace) {
+      wireTrace(popupContainer, { runId, fetchImpl, lang: language, verdictLabel: claimVerdictLabel(activeClaim, language) });
+    }
   });
 
   chainIcon.addEventListener("click", () => {

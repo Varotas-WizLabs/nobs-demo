@@ -41,11 +41,11 @@
 // page (commentators/). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=06e433deee";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=06e433deee";
-import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=06e433deee";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=06e433deee";
-import { PAGES, siteHref } from "./sitePaths.js?v=06e433deee";
+import { t } from "./i18n.js?v=3d15d8e254";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=3d15d8e254";
+import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=3d15d8e254";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=3d15d8e254";
+import { PAGES, siteHref } from "./sitePaths.js?v=3d15d8e254";
 
 const KEY = "nobs.settings";
 

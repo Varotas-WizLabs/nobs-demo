@@ -1,10 +1,10 @@
 // web/src/main.js
-import { withFrames } from "./frames.js?v=06e433deee";
-import { computeOverlayState, pollRunStatus } from "./overlay.js?v=06e433deee";
-import { wireFlagIconClick } from "./popup.js?v=06e433deee";
-import { t } from "./i18n.js?v=06e433deee";
-import { withSpeakers } from "./speakers.js?v=06e433deee";
-import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=06e433deee";
+import { withFrames } from "./frames.js?v=3d15d8e254";
+import { computeOverlayState, pollRunStatus } from "./overlay.js?v=3d15d8e254";
+import { wireFlagIconClick } from "./popup.js?v=3d15d8e254";
+import { t } from "./i18n.js?v=3d15d8e254";
+import { withSpeakers } from "./speakers.js?v=3d15d8e254";
+import { mergeDelta, visibleClaims, withVisibleClaims } from "./progress.js?v=3d15d8e254";
 
 const FLAG_LOOP_INTERVAL_MS = 500;
 
@@ -72,6 +72,10 @@ export function bootstrapPlayerPage({
       ...computeOverlayState(latestRun, player.getCurrentTime()),
       claims: latestRun.claims ?? [],
       language: latestRun.caption_language ?? "en",
+      // The research trace of a Deep run (popup «Как пришли к вердикту»).
+      runId,
+      hasTrace: latestRun.has_trace === true,
+      fetchImpl,
     };
   }
 

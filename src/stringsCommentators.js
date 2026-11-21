@@ -5,7 +5,7 @@
 // (src/commentators.js), in Russian and English. Persona line texts, opener
 // phrases and anything spoken stay as they are (content, not labels).
 
-import { registerStrings } from "./i18n.js?v=06e433deee";
+import { registerStrings } from "./i18n.js?v=3d15d8e254";
 
 const ru = {
   "cmui.pageTitle": "Skeptium — Комментаторы",

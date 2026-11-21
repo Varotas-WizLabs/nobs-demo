@@ -16,11 +16,11 @@
 // supabase-js; never shown on an error) and in the owner's local app (where
 // «Настройки админа» is shown).
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=06e433deee";
-import { UI_LANGUAGES, t as tr } from "./i18n.js?v=06e433deee";
-import { createAccountsClient } from "./accountsClient.js?v=06e433deee";
-import { openRequestModal } from "./requestModal.js?v=06e433deee";
-import { PAGES, rootPrefix, siteHref } from "./sitePaths.js?v=06e433deee";
+import { loadAccountsConfig } from "./accountsConfig.js?v=3d15d8e254";
+import { UI_LANGUAGES, t as tr } from "./i18n.js?v=3d15d8e254";
+import { createAccountsClient } from "./accountsClient.js?v=3d15d8e254";
+import { openRequestModal } from "./requestModal.js?v=3d15d8e254";
+import { PAGES, rootPrefix, siteHref } from "./sitePaths.js?v=3d15d8e254";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {

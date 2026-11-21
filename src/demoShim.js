@@ -192,6 +192,8 @@
     if ((m = url.match(/^\/runs\/(\d+)\/served$/))) return dataFetch(`data/runs/${m[1]}.served.json`);
     // Video frames: observations and a small set of evidence thumbnails (data/frames/).
     if ((m = url.match(/^\/runs\/(\d+)\/frames$/))) return dataFetch(`data/runs/${m[1]}.frames.json`);
+    // The public research trace of a Deep run (no cost or token keys).
+    if ((m = url.match(/^\/runs\/(\d+)\/trace$/))) return dataFetch(`data/runs/${m[1]}.trace.json`);
     if ((m = url.match(/^\/runs\/(\d+)(?:\?.*)?$/))) return dataFetch(`data/runs/${m[1]}.json`);
     if (url.startsWith("/")) return Promise.resolve(json({ detail: "not in the demo" }, 404));
     return realFetch(input, init);
