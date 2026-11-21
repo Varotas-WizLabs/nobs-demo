@@ -16,13 +16,13 @@
 // is flat. This module knows only the source and the parameter; the
 // management links come from the source (pageHref, manage_href).
 
-import { formatCost, formatDuration } from "./runStats.js?v=1cfdace93f";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=1cfdace93f";
-import { enableMenuSettings } from "./settings.js?v=1cfdace93f";
-import { t } from "./i18n.js?v=1cfdace93f";
-import { buildEffortBadge } from "./effort.js?v=1cfdace93f";
-import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=1cfdace93f";
-import { PAGES, siteHref } from "./sitePaths.js?v=1cfdace93f";
+import { formatCost, formatDuration } from "./runStats.js?v=06e433deee";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=06e433deee";
+import { enableMenuSettings } from "./settings.js?v=06e433deee";
+import { t } from "./i18n.js?v=06e433deee";
+import { buildEffortBadge } from "./effort.js?v=06e433deee";
+import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=06e433deee";
+import { PAGES, siteHref } from "./sitePaths.js?v=06e433deee";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -138,12 +138,17 @@ function renderItem(doc, run, currentRunId, { playlistId = null, inFolder = null
   }
 
   if (YOUTUBE_ID.test(run.video_id ?? "")) {
+    // A box around the picture carries the brand-gradient layer (an <img>
+    // has no ::after; admin «Вид сайта», styles.css .nobs-thumb-fx).
+    const box = doc.createElement("span");
+    box.className = "nobs-library-thumb-box nobs-thumb-fx";
     const thumb = doc.createElement("img");
     thumb.className = "nobs-library-thumb";
     thumb.src = `https://i.ytimg.com/vi/${run.video_id}/mqdefault.jpg`;
     thumb.alt = "";
     thumb.loading = "lazy";
-    link.appendChild(thumb);
+    box.appendChild(thumb);
+    link.appendChild(box);
   }
 
   const body = doc.createElement("div");

@@ -11,10 +11,10 @@
 // The link is the public one (src/share.js): on the public site the page's
 // own player/, in the local app the public site's address.
 
-import { t } from "./i18n.js?v=1cfdace93f";
-import { shareUrl } from "./share.js?v=1cfdace93f";
-import { PAGES, siteRootOf } from "./sitePaths.js?v=1cfdace93f";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=06e433deee";
+import { shareUrl } from "./share.js?v=06e433deee";
+import { PAGES, siteRootOf } from "./sitePaths.js?v=06e433deee";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=06e433deee";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

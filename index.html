@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=1cfdace93f"></script>
+    <script src="src/demoShim.js?v=06e433deee"></script>
 
-    <script src="src/uiLangEarly.js?v=1cfdace93f"></script>
+    <script src="src/uiLangEarly.js?v=06e433deee"></script>
     <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=1cfdace93f"></script>
+    <script src="src/themeEarly.js?v=06e433deee"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
     <title>Skeptium — все разборы</title>
-    <link rel="stylesheet" href="styles.css?v=1cfdace93f" />
+    <link rel="stylesheet" href="styles.css?v=06e433deee" />
   </head>
   <body class="nobs-hp">
     <a class="nobs-hp-skip" href="#home-main" data-i18n="home.grid">Все разборы</a>
@@ -144,15 +144,19 @@
     </div>
 
     <script type="module">
-      import { t } from "./src/i18n.js?v=1cfdace93f";
-      import { initUiLang } from "./src/uiLang.js?v=1cfdace93f";
-      import "./src/stringsHome.js?v=1cfdace93f";
-      import { mountRequestPage } from "./src/publicRequest.js?v=1cfdace93f";
-      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=1cfdace93f";
-      import { makeOverlay, mountHome } from "./src/homePage.js?v=1cfdace93f";
+      import { t } from "./src/i18n.js?v=06e433deee";
+      import { initUiLang } from "./src/uiLang.js?v=06e433deee";
+      import "./src/stringsHome.js?v=06e433deee";
+      import { mountRequestPage } from "./src/publicRequest.js?v=06e433deee";
+      import { buildEffortPicker, loadEffort, saveEffort } from "./src/effort.js?v=06e433deee";
+      import { makeOverlay, mountHome } from "./src/homePage.js?v=06e433deee";
+      import { initThumbOverlay } from "./src/uiConfig.js?v=06e433deee";
 
       const lang = initUiLang();
       document.documentElement.lang = lang;
+      // The brand gradient on the cards' thumbnails (admin «Вид сайта», GET
+      // /ui-config): on until the config says off, on when it can't be read.
+      initThumbOverlay(document);
       for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n, lang);
       for (const el of document.querySelectorAll("[data-i18n-aria]")) {
         el.setAttribute("aria-label", t(el.dataset.i18nAria, lang));
@@ -202,6 +206,6 @@
       });
       $("home-rail-close").addEventListener("click", () => $("home-menu").click());
     </script>
-  <script type="module" src="src/accountMenuBoot.js?v=1cfdace93f"></script>
+  <script type="module" src="src/accountMenuBoot.js?v=06e433deee"></script>
   </body>
 </html>

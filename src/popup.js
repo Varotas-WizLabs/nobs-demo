@@ -1,13 +1,13 @@
 // web/src/popup.js
-import { screenBlockHtml } from "./frames.js?v=1cfdace93f";
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=1cfdace93f";
-import { isPlayerActive } from "./controlBar.js?v=1cfdace93f";
-import { t } from "./i18n.js?v=1cfdace93f";
-import { claimState, isUnchecked } from "./progress.js?v=1cfdace93f";
-import { seekTarget } from "./settings.js?v=1cfdace93f";
-import { specialistBlockHtml } from "./specialist.js?v=1cfdace93f";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=1cfdace93f";
-import { pageHref } from "./sitePaths.js?v=1cfdace93f";
+import { screenBlockHtml } from "./frames.js?v=06e433deee";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=06e433deee";
+import { isPlayerActive } from "./controlBar.js?v=06e433deee";
+import { t } from "./i18n.js?v=06e433deee";
+import { claimState, isUnchecked } from "./progress.js?v=06e433deee";
+import { seekTarget } from "./settings.js?v=06e433deee";
+import { specialistBlockHtml } from "./specialist.js?v=06e433deee";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=06e433deee";
+import { pageHref } from "./sitePaths.js?v=06e433deee";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;

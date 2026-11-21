@@ -4,7 +4,7 @@
 // the video's own material (title, description, captions, on-screen text) and
 // is never checked independently, so the popup labels it as such.
 
-import { labelLanguage } from "./i18n.js?v=1cfdace93f";
+import { labelLanguage } from "./i18n.js?v=06e433deee";
 
 const LABELS = {
   ru: {

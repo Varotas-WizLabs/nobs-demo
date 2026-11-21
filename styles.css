@@ -32,6 +32,13 @@
   --brand-cyan: #83dde4;
   --brand-spectrum: linear-gradient(90deg, #ef3442 0%, #f87b31 22%, #f8d46b 46%, #cde8c5 68%, #83dde4 100%);
   --brand-mark: var(--brand-spectrum); /* the logo's letters and frame */
+  /* The brand-gradient layer over catalogue thumbnails (.nobs-thumb-fx;
+     admin «Вид сайта», <html data-thumb-overlay="off"> removes it). Look and
+     feel only -- never a verdict or truth scale. */
+  --nobs-thumb-overlay: linear-gradient(135deg, #ef3442 0%, #f87b31 22%, #f8d46b 46%, #cde8c5 68%, #83dde4 100%);
+  --nobs-thumb-overlay-blend: soft-light; /* ::after: colours the picture's mid-tones */
+  --nobs-thumb-overlay-opacity: 0.5;
+  --nobs-thumb-overlay-tint: 0.1; /* ::before, plain: a faint wash that also reaches whites and blacks */
   --nobs-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --nobs-bg: #05090b;
   --nobs-bg-deep: #020608;
@@ -1041,7 +1048,17 @@ main {
   box-shadow: inset 3px 0 0 var(--nobs-green);
 }
 
+.nobs-library-thumb-box {
+  flex: none;
+  display: block;
+  width: 96px;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
 .nobs-library-thumb {
+  display: block;
   flex: none;
   width: 96px;
   height: 54px;
@@ -2601,14 +2618,8 @@ button.nobs-scoop-verdict:hover {
   letter-spacing: 0.04em;
   transform: translateY(-2px);
 }
-/* A phone's player bar also holds the AI banner, the language switch and
-   the account button: the tile alone carries the brand there (the link
-   keeps aria-label="Skeptium"). */
-@media (max-width: 480px) {
-  .nobs-topbar:has(.nobs-demo-banner) .nobs-logo-word {
-    display: none;
-  }
-}
+/* The logo is never trimmed, on any page or width: a phone's player bar
+   makes room by moving the AI notice under it instead (phone layout below). */
 /* No underline on hover; keyboard focus still gets a visible ring. */
 .nobs-logo:hover {
   text-decoration: none;
@@ -4059,6 +4070,41 @@ html.nobs-pseudo-fs-open body {
     height: 48px;
     padding: 0 12px;
   }
+  /* The player's bar keeps the whole logo (tile, word, asterisk -- the same
+     as every page): the logo never shrinks, «Войти» stays on one line, the
+     right edge leaves room for the library button (absolute, below), and
+     the demo's AI notice becomes a second row under the bar, full width and
+     fully readable (a grid, so nothing else can wrap). */
+  .nobs-topbar > .nobs-logo { flex: none; }
+  /* A long badge («Deep готовится…») next to a signed-in corner gives way
+     with an ellipsis rather than push the logo or the account. */
+  .nobs-topbar > .nobs-effort-status { flex: 0 1 auto; min-width: 0; overflow: hidden; margin: 0 8px 0 10px; }
+  .nobs-topbar .nobs-effort-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .nobs-topbar .nobs-account-login { white-space: nowrap; padding: 4px 10px; }
+  body:has(.nobs-library) .nobs-topbar { padding-right: 52px; }
+  .nobs-topbar:has(.nobs-demo-banner) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 48px auto;
+    align-items: center;
+    height: auto;
+  }
+  .nobs-topbar:has(.nobs-demo-banner) > .nobs-logo { grid-area: 1 / 1; }
+  .nobs-topbar:has(.nobs-demo-banner) > .nobs-effort-status { grid-area: 1 / 2; justify-self: start; max-width: calc(100% - 18px); }
+  .nobs-topbar:has(.nobs-demo-banner) > .nobs-account-menu { grid-area: 1 / 3; margin-left: 0; }
+  .nobs-topbar .nobs-demo-banner {
+    grid-area: 2 / 1 / 3 / -1;
+    margin: -4px 0 0;
+    padding: 0 0 7px;
+    font-size: 11px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: normal;
+    display: block;
+    -webkit-line-clamp: none;
+  }
+  /* the notice's row spans the whole bar, under the library button too */
+  body:has(.nobs-library) .nobs-topbar .nobs-demo-banner { margin-right: -40px; }
   .nobs-layout,
   .nobs-layout:has(> .nobs-library[data-collapsed="true"]),
   .nobs-layout:has(> .nobs-claims-panel[data-collapsed="true"]) {
@@ -4118,7 +4164,7 @@ html.nobs-pseudo-fs-open body {
   .nobs-library[data-collapsed="true"] {
     order: 3;
     position: absolute;
-    top: 2px;
+    top: 10px; /* centred in the 48px top bar */
     right: 8px;
     max-height: none;
     padding: 0;
@@ -6595,6 +6641,9 @@ html.nobs-pseudo-fs-open body {
   font: 600 12px/16px var(--nobs-font);
   letter-spacing: 0.02em;
 }
+/* Above the brand-gradient layer (.nobs-thumb-fx::after): labels stay crisp. */
+.nobs-hp-badge,
+.nobs-hp-duration { z-index: 2; }
 .nobs-hp-badge { top: 8px; left: 8px; text-transform: uppercase; font-size: 11px; font-weight: 700; }
 .nobs-hp-badge-deep { color: #a9bcff; box-shadow: inset 0 0 0 1px rgba(169, 188, 255, 0.55); }
 .nobs-hp-badge-upgrading { color: #a9bcff; text-transform: none; }
@@ -7186,3 +7235,32 @@ html.nobs-pseudo-fs-open body {
   color: var(--nobs-muted);
   opacity: 0.8;
 }
+
+/* ---- brand gradient over catalogue thumbnails (admin «Вид сайта»: NOBS_THUMB_OVERLAY) ----
+   A look-and-feel layer of the brand spectrum on every catalogue thumbnail
+   (home cards, Deep shelf, search results and suggestions, the player's
+   library). Blended so the picture stays recognisable; under the badges
+   (z-index 2), never takes a click, never changes the box. On by default;
+   <html data-thumb-overlay="off"> (from GET /ui-config) removes it.
+   Monochrome: none -- that system has no colour gradients, and a grey ramp
+   in soft-light only shades one corner without saying anything. */
+.nobs-thumb-fx { position: relative; }
+.nobs-thumb-fx::before,
+.nobs-thumb-fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: var(--nobs-thumb-overlay);
+  pointer-events: none;
+}
+.nobs-thumb-fx::before { opacity: var(--nobs-thumb-overlay-tint); }
+.nobs-thumb-fx::after {
+  mix-blend-mode: var(--nobs-thumb-overlay-blend);
+  opacity: var(--nobs-thumb-overlay-opacity);
+}
+:root[data-thumb-overlay="off"] .nobs-thumb-fx::before,
+:root[data-thumb-overlay="off"] .nobs-thumb-fx::after,
+:root[data-theme="monochrome"] .nobs-thumb-fx::before,
+:root[data-theme="monochrome"] .nobs-thumb-fx::after { content: none; }

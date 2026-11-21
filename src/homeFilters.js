@@ -12,8 +12,8 @@
 // «white» (not checked) is left out of the shares. Colour is never the only
 // signal: every chip has a text label.
 
-import { t } from "./i18n.js?v=1cfdace93f";
-import { th } from "./stringsHome.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=06e433deee";
+import { th } from "./stringsHome.js?v=06e433deee";
 
 export const RECENT_DAYS = 7;
 // Shares of the checked claims (green + yellow + red).

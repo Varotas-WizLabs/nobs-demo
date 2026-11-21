@@ -32,10 +32,10 @@
 // a muted «No analyses match …» note with a hint, then the «Search for» row
 // (the results view's empty state).
 
-import { t } from "./i18n.js?v=1cfdace93f";
-import { counted, th } from "./stringsHome.js?v=1cfdace93f";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=1cfdace93f";
-import { channelAvatar } from "./channelAvatar.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=06e433deee";
+import { counted, th } from "./stringsHome.js?v=06e433deee";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=06e433deee";
+import { channelAvatar } from "./channelAvatar.js?v=06e433deee";
 
 const MAX_TERMS = 8;
 const SPLIT_RE = /[\s.,;:!?"'«»„“”()[\]{}<>\/\\|+*=~`^#&%@]+/u;
@@ -452,6 +452,7 @@ function lead(doc, kind, row) {
   box.setAttribute("aria-hidden", "true");
   if (kind === "analysis" && VIDEO_ID_RE.test(row.run.video_id ?? "")) {
     const img = doc.createElement("img");
+    box.classList.add("nobs-thumb-fx"); // the brand-gradient layer (admin «Вид сайта»)
     img.src = `https://i.ytimg.com/vi/${row.run.video_id}/mqdefault.jpg`;
     img.alt = "";
     img.loading = "lazy";

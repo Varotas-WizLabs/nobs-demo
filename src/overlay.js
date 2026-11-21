@@ -1,6 +1,6 @@
 // web/src/overlay.js
-import { findActiveClaim, findRelationsInvolvingClaim } from "./claimSync.js?v=1cfdace93f";
-import { claimState, isUnchecked } from "./progress.js?v=1cfdace93f";
+import { findActiveClaim, findRelationsInvolvingClaim } from "./claimSync.js?v=06e433deee";
+import { claimState, isUnchecked } from "./progress.js?v=06e433deee";
 
 // The overlay's state at `currentTimeSec`. A complete run shows its flags; a
 // streaming run that is still pending/running shows the claims it has so far

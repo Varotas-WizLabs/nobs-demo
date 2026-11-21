@@ -5,10 +5,10 @@
 // claim popup shows it under the verdict as «Второе мнение специалиста»,
 // and the sources page lists every opinion, disagreements first.
 
-import { labelLanguage, t as tr } from "./i18n.js?v=1cfdace93f";
-import "./stringsPlayer.js?v=1cfdace93f";
-import { topicLabel } from "./stringsSources.js?v=1cfdace93f";
-import { pageHref } from "./sitePaths.js?v=1cfdace93f";
+import { labelLanguage, t as tr } from "./i18n.js?v=06e433deee";
+import "./stringsPlayer.js?v=06e433deee";
+import { topicLabel } from "./stringsSources.js?v=06e433deee";
+import { pageHref } from "./sitePaths.js?v=06e433deee";
 
 const FLAG_TEXT = {
   ru: { green: "верно", yellow: "неточно", red: "неверно", white: "не проверить" },

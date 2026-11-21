@@ -13,9 +13,9 @@
 // moves, capped; popularity never counts as reliability; disagreement is
 // flagged and widens the prior; verdicts are never touched.
 
-import { t } from "./i18n.js?v=1cfdace93f";
-import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=1cfdace93f";
-import { pageHref, siteHref } from "./sitePaths.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=06e433deee";
+import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=06e433deee";
+import { pageHref, siteHref } from "./sitePaths.js?v=06e433deee";
 
 // Labels of data values, in the interface language at draw time.
 export const kindLabel = (k) => tl(`trustui.kind.${k}`, k);

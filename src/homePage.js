@@ -33,14 +33,14 @@
 // Everything is built with DOM APIs and textContent: titles, channels and
 // claims come from YouTube and the analyses and are never parsed as HTML.
 
-import { t } from "./i18n.js?v=1cfdace93f";
-import { counted, th } from "./stringsHome.js?v=1cfdace93f";
-import { buildSearchIndex, highlightInto, mountSearchBox, queryTerms, search, snippet } from "./homeSearch.js?v=1cfdace93f";
-import { chipsFor, filterRuns, mountChipScroller, renderChips, renderFilterMenu } from "./homeFilters.js?v=1cfdace93f";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=1cfdace93f";
-import { channelAvatar } from "./channelAvatar.js?v=1cfdace93f";
-import { moreButton, mountCardMenu } from "./cardMenu.js?v=1cfdace93f";
-import { PAGES, pageHref } from "./sitePaths.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=06e433deee";
+import { counted, th } from "./stringsHome.js?v=06e433deee";
+import { buildSearchIndex, highlightInto, mountSearchBox, queryTerms, search, snippet } from "./homeSearch.js?v=06e433deee";
+import { chipsFor, filterRuns, mountChipScroller, renderChips, renderFilterMenu } from "./homeFilters.js?v=06e433deee";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=06e433deee";
+import { channelAvatar } from "./channelAvatar.js?v=06e433deee";
+import { moreButton, mountCardMenu } from "./cardMenu.js?v=06e433deee";
+import { PAGES, pageHref } from "./sitePaths.js?v=06e433deee";
 
 const FLAGS = ["green", "yellow", "red", "white"];
 const DRAWER_QUERY = "(max-width: 1099px)";
@@ -86,7 +86,8 @@ function el(doc, tag, cls, text) {
 }
 
 function thumb(doc, run, lang, { deepBadge = true } = {}) {
-  const box = el(doc, "div", "nobs-hp-thumb");
+  // nobs-thumb-fx: the brand-gradient layer (admin «Вид сайта», styles.css).
+  const box = el(doc, "div", "nobs-hp-thumb nobs-thumb-fx");
   if (VIDEO_ID_RE.test(run.video_id ?? "")) {
     const img = doc.createElement("img");
     img.src = `https://i.ytimg.com/vi/${run.video_id}/hqdefault.jpg`;
