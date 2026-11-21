@@ -6,8 +6,8 @@
 // processing line «Проанализировано 7:40 / 41:20 · 23 утверждения · 5
 // проверяются». Pure functions; no DOM.
 
-import { formatTimecode } from "./claimSync.js?v=84a087744f";
-import { labelLanguage, t } from "./i18n.js?v=84a087744f";
+import { formatTimecode } from "./claimSync.js?v=78dbe39118";
+import { labelLanguage, t } from "./i18n.js?v=78dbe39118";
 
 const STATES = new Set(["pending", "checking", "done", "failed", "superseded"]);
 

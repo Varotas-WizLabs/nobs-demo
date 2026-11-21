@@ -2555,6 +2555,10 @@ button.nobs-scoop-verdict:hover {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   padding-bottom: 0.08em; /* keeps the descender of «p» inside the painted box */
+  /* the raised asterisk reaches above the line box; grow the painted box up
+     without moving the word */
+  padding-top: 0.35em;
+  margin-top: -0.35em;
 }
 /* The brand asterisk after the word: «Skeptium*», raised like a footnote mark.
    It is inline text, so the spectrum (or the solid mark colour) covers it too. */
