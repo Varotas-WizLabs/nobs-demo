@@ -9,14 +9,14 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=db20e9f4e2";
-import { pickLang } from "./publicRequest.js?v=db20e9f4e2";
-import { VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=db20e9f4e2";
-import { applyTheme, setSetting, themeSetting } from "./settings.js?v=db20e9f4e2";
-import { loadAccountsConfig } from "./accountsConfig.js?v=db20e9f4e2";
-import { createAccountsClient } from "./accountsClient.js?v=db20e9f4e2";
-import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=db20e9f4e2";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=db20e9f4e2";
+import { t } from "./i18n.js?v=d9665ac097";
+import { pickLang } from "./publicRequest.js?v=d9665ac097";
+import { VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=d9665ac097";
+import { applyTheme, setSetting, themeSetting } from "./settings.js?v=d9665ac097";
+import { loadAccountsConfig } from "./accountsConfig.js?v=d9665ac097";
+import { createAccountsClient } from "./accountsClient.js?v=d9665ac097";
+import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=d9665ac097";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=d9665ac097";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;

@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script src="../src/uiLangEarly.js"></script>
+    <script src="../src/themeEarly.js?v=d9665ac097"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
+    <title>Skeptium — Brand guidelines</title>
+    <link rel="stylesheet" href="../styles.css?v=d9665ac097" />
+    <link rel="stylesheet" href="brand.css?v=d9665ac097" />
+  </head>
+  <body class="bb-page">
+    <header class="nobs-topbar">
+      <a class="nobs-logo" href="../index.html" aria-label="Skeptium">
+        <svg class="nobs-logo-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="nobs-logo-spectrum" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0"><stop offset="0%" stop-color="#EF3442"/><stop offset="22%" stop-color="#F87B31"/><stop offset="46%" stop-color="#F8D46B"/><stop offset="68%" stop-color="#CDE8C5"/><stop offset="100%" stop-color="#83DDE4"/></linearGradient></defs><rect class="nobs-logo-frame" x="4" y="4" width="92" height="92" rx="20" fill="none" stroke="url(#nobs-logo-spectrum)" stroke-width="7"/><path class="nobs-logo-ink" fill="url(#nobs-logo-spectrum)" d="M29.69 66.37Q25.72 66.37 22.75 65.19Q19.79 64.01 18.15 61.55Q16.51 59.09 16.49 55.25H24.36Q24.44 56.65 25.07 57.61Q25.7 58.58 26.83 59.07Q27.97 59.56 29.57 59.56Q30.9 59.56 31.81 59.23Q32.71 58.9 33.17 58.32Q33.63 57.74 33.63 56.98Q33.63 56.28 33.19 55.76Q32.75 55.23 31.75 54.8Q30.74 54.37 29.04 54.02L25.96 53.37Q21.92 52.51 19.59 50.42Q17.27 48.34 17.27 44.75Q17.27 41.84 18.85 39.66Q20.43 37.47 23.2 36.25Q25.98 35.03 29.61 35.03Q33.32 35.03 36.02 36.27Q38.72 37.51 40.18 39.76Q41.65 42.01 41.67 45H33.71Q33.61 43.5 32.62 42.67Q31.62 41.84 29.61 41.84Q28.34 41.84 27.52 42.14Q26.7 42.44 26.31 42.97Q25.92 43.5 25.92 44.18Q25.92 44.9 26.34 45.44Q26.76 45.98 27.67 46.38Q28.59 46.78 30.02 47.09L32.52 47.62Q35.05 48.16 36.86 49.04Q38.68 49.92 39.84 51.1Q40.99 52.28 41.54 53.76Q42.08 55.23 42.08 56.98Q42.08 59.99 40.59 62.09Q39.11 64.2 36.34 65.28Q33.57 66.37 29.69 66.37ZM51.91 60.59V50.78H53.05L58.59 43.07H67.86L58.55 55.09H56.21ZM44.52 66V35.44H52.77V66ZM58.67 66 53.42 56.94 58.8 51.07 68.07 66ZM78.64 34.17L78.64 50.13L74.81 50.13L74.81 34.17ZM84.59 39.82L70.77 47.80L68.85 44.48L82.67 36.50ZM70.77 36.50L84.59 44.48L82.67 47.80L68.85 39.82Z"/></svg>
+        <span class="nobs-logo-word">Skeptium</span>
+      </a>
+    </header>
+
+    <!-- Shared drawing parts of this page: the Sk letters and the radical
+         asterisk (the outlines of web/brand/topbar-mark.svg, viewBox 0 0 100 100)
+         and the two spectrum fills. Kept out of layout, not display:none, so
+         the gradients stay paintable. -->
+    <svg class="bb-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="bb-spec" gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="90" y2="0"><stop offset="0%" stop-color="#EF3442"/><stop offset="22%" stop-color="#F87B31"/><stop offset="46%" stop-color="#F8D46B"/><stop offset="68%" stop-color="#CDE8C5"/><stop offset="100%" stop-color="#83DDE4"/></linearGradient>
+        <linearGradient id="bb-spec-box" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#EF3442"/><stop offset="22%" stop-color="#F87B31"/><stop offset="46%" stop-color="#F8D46B"/><stop offset="68%" stop-color="#CDE8C5"/><stop offset="100%" stop-color="#83DDE4"/></linearGradient>
+        <linearGradient id="bb-spec-rev" gradientUnits="userSpaceOnUse" x1="90" y1="0" x2="10" y2="0"><stop offset="0%" stop-color="#EF3442"/><stop offset="22%" stop-color="#F87B31"/><stop offset="46%" stop-color="#F8D46B"/><stop offset="68%" stop-color="#CDE8C5"/><stop offset="100%" stop-color="#83DDE4"/></linearGradient>
+        <symbol id="bb-sk-letters" viewBox="0 0 100 100"><path d="M29.69 66.37Q25.72 66.37 22.75 65.19Q19.79 64.01 18.15 61.55Q16.51 59.09 16.49 55.25H24.36Q24.44 56.65 25.07 57.61Q25.7 58.58 26.83 59.07Q27.97 59.56 29.57 59.56Q30.9 59.56 31.81 59.23Q32.71 58.9 33.17 58.32Q33.63 57.74 33.63 56.98Q33.63 56.28 33.19 55.76Q32.75 55.23 31.75 54.8Q30.74 54.37 29.04 54.02L25.96 53.37Q21.92 52.51 19.59 50.42Q17.27 48.34 17.27 44.75Q17.27 41.84 18.85 39.66Q20.43 37.47 23.2 36.25Q25.98 35.03 29.61 35.03Q33.32 35.03 36.02 36.27Q38.72 37.51 40.18 39.76Q41.65 42.01 41.67 45H33.71Q33.61 43.5 32.62 42.67Q31.62 41.84 29.61 41.84Q28.34 41.84 27.52 42.14Q26.7 42.44 26.31 42.97Q25.92 43.5 25.92 44.18Q25.92 44.9 26.34 45.44Q26.76 45.98 27.67 46.38Q28.59 46.78 30.02 47.09L32.52 47.62Q35.05 48.16 36.86 49.04Q38.68 49.92 39.84 51.1Q40.99 52.28 41.54 53.76Q42.08 55.23 42.08 56.98Q42.08 59.99 40.59 62.09Q39.11 64.2 36.34 65.28Q33.57 66.37 29.69 66.37ZM51.91 60.59V50.78H53.05L58.59 43.07H67.86L58.55 55.09H56.21ZM44.52 66V35.44H52.77V66ZM58.67 66 53.42 56.94 58.8 51.07 68.07 66Z"/></symbol>
+        <symbol id="bb-sk-star" viewBox="0 0 100 100"><path d="M78.64 34.17L78.64 50.13L74.81 50.13L74.81 34.17ZM84.59 39.82L70.77 47.80L68.85 44.48L82.67 36.50ZM70.77 36.50L84.59 44.48L82.67 47.80L68.85 39.82Z"/></symbol>
+        <symbol id="bb-sk" viewBox="0 0 100 100"><path d="M29.69 66.37Q25.72 66.37 22.75 65.19Q19.79 64.01 18.15 61.55Q16.51 59.09 16.49 55.25H24.36Q24.44 56.65 25.07 57.61Q25.7 58.58 26.83 59.07Q27.97 59.56 29.57 59.56Q30.9 59.56 31.81 59.23Q32.71 58.9 33.17 58.32Q33.63 57.74 33.63 56.98Q33.63 56.28 33.19 55.76Q32.75 55.23 31.75 54.8Q30.74 54.37 29.04 54.02L25.96 53.37Q21.92 52.51 19.59 50.42Q17.27 48.34 17.27 44.75Q17.27 41.84 18.85 39.66Q20.43 37.47 23.2 36.25Q25.98 35.03 29.61 35.03Q33.32 35.03 36.02 36.27Q38.72 37.51 40.18 39.76Q41.65 42.01 41.67 45H33.71Q33.61 43.5 32.62 42.67Q31.62 41.84 29.61 41.84Q28.34 41.84 27.52 42.14Q26.7 42.44 26.31 42.97Q25.92 43.5 25.92 44.18Q25.92 44.9 26.34 45.44Q26.76 45.98 27.67 46.38Q28.59 46.78 30.02 47.09L32.52 47.62Q35.05 48.16 36.86 49.04Q38.68 49.92 39.84 51.1Q40.99 52.28 41.54 53.76Q42.08 55.23 42.08 56.98Q42.08 59.99 40.59 62.09Q39.11 64.2 36.34 65.28Q33.57 66.37 29.69 66.37ZM51.91 60.59V50.78H53.05L58.59 43.07H67.86L58.55 55.09H56.21ZM44.52 66V35.44H52.77V66ZM58.67 66 53.42 56.94 58.8 51.07 68.07 66ZM78.64 34.17L78.64 50.13L74.81 50.13L74.81 34.17ZM84.59 39.82L70.77 47.80L68.85 44.48L82.67 36.50ZM70.77 36.50L84.59 44.48L82.67 47.80L68.85 39.82Z"/></symbol>
+      </defs>
+    </svg>
+
+    <main class="bb">
+      <!-- ============ HERO ============ -->
+      <section class="bb-hero" aria-labelledby="bb-title">
+        <div class="bb-hero-copy">
+          <p class="bb-kicker">Skeptium brand guidelines · version 1.0</p>
+          <h1 id="bb-title" class="bb-statement bb-spectrum-text">Between what we think and what we know.</h1>
+          <p class="bb-lede">
+            Skeptium is a fictional 119th element — a symbol for critical thinking, curiosity and the pursuit of
+            better questions. This book is the single reference for how the brand looks, speaks and behaves:
+            in full colour, in radical monochrome and inside the product.
+          </p>
+          <p class="bb-brandline"><strong>Skeptium</strong> — Where ideas meet evidence.</p>
+        </div>
+        <figure class="bb-hero-logo">
+          <img class="bb-when-dark" src="skeptium-logo-full-color.svg" width="440" height="440" alt="Skeptium primary logo: 119, Sk*, Skeptium, Element of doubt — spectrum on near-black" />
+          <img class="bb-when-light" src="skeptium-logo-full-inverse.svg" width="440" height="440" alt="Skeptium primary logo, inverse: near-black on white" />
+          <img class="bb-when-mono" src="skeptium-logo-full-mono.svg" width="440" height="440" alt="Skeptium primary logo, radical monochrome: white on black" />
+          <figcaption>The primary logo follows the page's theme: spectrum on dark, solid ink on light, white on black in monochrome.</figcaption>
+        </figure>
+      </section>
+
+      <nav class="bb-toc" aria-label="Contents">
+        <ol>
+          <li><a href="#idea">Idea</a></li>
+          <li><a href="#logo">Logo</a></li>
+          <li><a href="#construction">Construction</a></li>
+          <li><a href="#asterisk">Asterisk</a></li>
+          <li><a href="#square">Square</a></li>
+          <li><a href="#colour">Colour</a></li>
+          <li><a href="#monochrome">Monochrome</a></li>
+          <li><a href="#type">Typography</a></li>
+          <li><a href="#usage">Usage</a></li>
+          <li><a href="#dont">Do &amp; don't</a></li>
+          <li><a href="#voice">Voice</a></li>
+          <li><a href="#product">In the product</a></li>
+          <li><a href="#references">References</a></li>
+          <li><a href="#downloads">Downloads</a></li>
+        </ol>
+      </nav>
+
+      <!-- ============ 01 IDEA ============ -->
+      <section id="idea" class="bb-section" aria-labelledby="idea-h">
+        <header class="bb-head"><span class="bb-num">01</span><h2 id="idea-h">Brand idea</h2></header>
+        <div class="bb-cols">
+          <div>
+            <p class="bb-big">An imagined <em>element of critical thinking</em>: an instrument for asking better questions,
+              examining claims, comparing interpretations and testing ideas against evidence.</p>
+            <p>
+              Skeptium takes the shape of a tile from the periodic table. Its symbol is <strong>Sk*</strong>, its
+              number is <strong>119</strong> — one higher than the highest officially recognised element (118) when
+              the brand was created. It is the next element beyond what is currently established: the place where
+              what we think is examined against what we know.
+            </p>
+            <p>
+              Skeptium is a <strong>fictional brand metaphor</strong>. It is not a real chemical element and not an
+              IUPAC symbol, and nothing we publish should suggest otherwise.
+            </p>
+          </div>
+          <dl class="bb-facts">
+            <div><dt>Name</dt><dd>Skeptium — capital S, the rest lowercase. Never “Skepticum”.</dd></div>
+            <div><dt>Symbol</dt><dd>Sk* — with the raised, bold six-spoke asterisk.</dd></div>
+            <div><dt>Number</dt><dd>119. It may become <em>highest recognised element + 1</em> only after a verified
+              recognition, and then in every asset at once. Never in response to unconfirmed discovery claims.</dd></div>
+            <div><dt>Core statement</dt><dd>“Between what we think and what we know.”</dd></div>
+            <div><dt>Brand line</dt><dd>“Where ideas meet evidence.”</dd></div>
+            <div><dt>Descriptor</dt><dd>ELEMENT OF DOUBT — optional, inside the primary logo only.</dd></div>
+            <div><dt>Values</dt><dd>Curiosity / Reason / Better Questions</dd></div>
+            <div><dt>Tone</dt><dd>Precise, thoughtful, curious, non-dogmatic, modern — confident about the method,
+              not about the certainty of conclusions.</dd></div>
+          </dl>
+        </div>
+        <div class="bb-values" role="list">
+          <div role="listitem"><span>Curiosity</span><p>Start from the question, not from the answer.</p></div>
+          <div role="listitem"><span>Reason</span><p>Compare interpretations; follow the evidence.</p></div>
+          <div role="listitem"><span>Better questions</span><p>Every statement may need more context.</p></div>
+        </div>
+      </section>
+
+      <!-- ============ 02 LOGO ============ -->
+      <section id="logo" class="bb-section" aria-labelledby="logo-h">
+        <header class="bb-head"><span class="bb-num">02</span><h2 id="logo-h">Logo system</h2></header>
+        <p class="bb-intro">
+          The logo is an element tile: a rounded square frame, the number 119 at top left, the oversized Sk* and the
+          wordmark beneath. Both colour systems carry two master lockups — with and without the tagline. The
+          no-tagline version is an independently balanced layout, never a crop of the full one.
+        </p>
+        <div class="bb-logo-grid">
+          <figure class="bb-logo-card">
+            <img src="skeptium-logo-full-color.svg" width="440" height="440" loading="lazy" alt="Primary logo with tagline, full colour" />
+            <figcaption><b>Primary logo</b><span>With tagline. Hero, brand book, posters, launch materials.</span></figcaption>
+          </figure>
+          <figure class="bb-logo-card">
+            <img src="skeptium-logo-compact-color.svg" width="440" height="440" loading="lazy" alt="Secondary logo without tagline, full colour" />
+            <figcaption><b>Secondary logo</b><span>Without tagline. Product identity, website, medium and large app contexts.</span></figcaption>
+          </figure>
+          <figure class="bb-logo-card">
+            <img src="skeptium-logo-full-mono.svg" width="440" height="440" loading="lazy" alt="Primary logo, radical monochrome" />
+            <figcaption><b>Radical monochrome</b><span>White on Void Black. A primary option, not a fallback.</span></figcaption>
+          </figure>
+          <figure class="bb-logo-card">
+            <img src="skeptium-logo-compact-mono.svg" width="440" height="440" loading="lazy" alt="Secondary logo, radical monochrome" />
+            <figcaption><b>Monochrome, no tagline</b><span>Everyday brand presence where vertical space is short.</span></figcaption>
+          </figure>
+          <figure class="bb-logo-card bb-logo-card--light">
+            <img src="skeptium-logo-compact-inverse.svg" width="440" height="440" loading="lazy" alt="Inverse logo, near-black on white" />
+            <figcaption><b>Inverse</b><span>Near-black on white: print, slides, light interfaces. No gradient.</span></figcaption>
+          </figure>
+          <figure class="bb-logo-card">
+            <div class="bb-icon-stage">
+              <span class="bb-tile bb-tile--spectrum bb-tile--xl"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span>
+            </div>
+            <figcaption><b>App icon</b><span>Sk* only, the full five-stop spectrum on near-black. Frame optional at the smallest sizes.</span></figcaption>
+          </figure>
+        </div>
+
+        <h3 class="bb-sub">The product wordmark — Skeptium*</h3>
+        <p>
+          Inside the product the tile shrinks to a 26&nbsp;px mark next to the wordmark, which carries the asterisk
+          as a raised footnote: <b>Skeptium*</b>. At this size the 119 is left out. The mark and the word follow
+          the theme: spectrum on dark, solid #111317 on light, solid white in monochrome.
+        </p>
+        <div class="bb-wm-row">
+          <div class="bb-wm-stage bb-surface-dark"><span class="bb-wm bb-wm--spectrum"><span class="bb-wm-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><span class="bb-wm-word">Skeptium</span></span><small>Dark</small></div>
+          <div class="bb-wm-stage bb-surface-light"><span class="bb-wm bb-wm--ink"><span class="bb-wm-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><span class="bb-wm-word">Skeptium</span></span><small>Light</small></div>
+          <div class="bb-wm-stage bb-surface-mono"><span class="bb-wm bb-wm--white"><span class="bb-wm-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><span class="bb-wm-word">Skeptium</span></span><small>Monochrome</small></div>
+        </div>
+
+        <h3 class="bb-sub">Simplification ladder</h3>
+        <p>As the space shrinks, remove lower-priority parts before the asterisk ever loses legibility.</p>
+        <ol class="bb-ladder">
+          <li><span class="bb-ladder-art"><img src="skeptium-logo-full-color.svg" width="96" height="96" alt="" loading="lazy" /></span><b>Full</b><span>119 · Sk* · Skeptium · ELEMENT OF DOUBT</span></li>
+          <li><span class="bb-ladder-art"><img src="skeptium-logo-compact-color.svg" width="96" height="96" alt="" loading="lazy" /></span><b>Compact</b><span>Tagline removed</span></li>
+          <li><span class="bb-ladder-art"><span class="bb-tile bb-tile--spectrum bb-tile--md"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span></span><b>Icon</b><span>Wordmark and number removed</span></li>
+          <li><span class="bb-ladder-art"><svg class="bb-micro" viewBox="12 28 78 44" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><b>Micro</b><span>Sk* alone. The asterisk always stays.</span></li>
+        </ol>
+      </section>
+
+      <!-- ============ 03 CONSTRUCTION ============ -->
+      <section id="construction" class="bb-section" aria-labelledby="cons-h">
+        <header class="bb-head"><span class="bb-num">03</span><h2 id="cons-h">Construction, clear space &amp; minimum sizes</h2></header>
+        <div class="bb-cols bb-cols--diagram">
+          <figure class="bb-diagram bb-surface-dark">
+            <svg viewBox="-36 -36 512 512" role="img" aria-label="Construction of the primary logo on a 400-unit tile">
+              <image href="skeptium-logo-full-color.svg" x="0" y="0" width="440" height="440" />
+              <g class="bb-guide">
+                <rect x="-26" y="-26" width="492" height="492" rx="10" class="bb-guide-clear" />
+                <line x1="220" y1="-30" x2="220" y2="470" />
+                <line x1="54" y1="-30" x2="54" y2="470" />
+                <line x1="-30" y1="54" x2="470" y2="54" />
+                <line x1="-30" y1="246" x2="470" y2="246" />
+                <line x1="-30" y1="320" x2="470" y2="320" />
+                <line x1="-30" y1="368" x2="470" y2="368" />
+                <circle cx="374" cy="374" r="46" class="bb-guide-arc" />
+              </g>
+              <g class="bb-mark">
+                <circle cx="-13" cy="-13" r="11" /><text x="-13" y="-9">A</text>
+                <circle cx="404" cy="404" r="11" /><text x="404" y="408">B</text>
+                <circle cx="433" cy="140" r="11" /><text x="433" y="144">C</text>
+                <circle cx="54" cy="-13" r="11" /><text x="54" y="-9">D</text>
+                <circle cx="220" cy="-13" r="11" /><text x="220" y="-9">E</text>
+                <circle cx="-13" cy="246" r="11" /><text x="-13" y="250">F</text>
+              </g>
+            </svg>
+          </figure>
+          <div>
+            <ul class="bb-legend">
+              <li><b>A</b><span><strong>Clear space</strong> — keep at least one corner radius (R ≈ 11.5% of the tile width) free on every side. The SVG files already include 5%; add the rest in layout.</span></li>
+              <li><b>B</b><span><strong>Corner radius</strong> — 10–13% of the tile width (files: 46 on 400 = 11.5%). Visibly rounded, never a circle, never a sharp box.</span></li>
+              <li><b>C</b><span><strong>Frame stroke</strong> — 2–3% of the tile width (files: 9 on 400 = 2.25%), one consistent weight.</span></li>
+              <li><b>D</b><span><strong>Inset</strong> — at least 5–8% from the frame to the text; 119 sits top-left on this line.</span></li>
+              <li><b>E</b><span><strong>Central axis</strong> — Sk*, the wordmark and the tagline are centred as groups.</span></li>
+              <li><b>F</b><span><strong>Baselines</strong> — Sk*, Skeptium, ELEMENT OF DOUBT (top to bottom).</span></li>
+            </ul>
+            <p class="bb-note">Construction guides are for this book only — they never ship in a logo file.</p>
+          </div>
+        </div>
+
+        <h3 class="bb-sub">Scale hierarchy on a 400-unit tile</h3>
+        <div class="bb-table-wrap">
+          <table class="bb-table">
+            <thead><tr><th>Element</th><th>Docs starting point</th><th>Production files</th><th>Weight</th></tr></thead>
+            <tbody>
+              <tr><td>Frame stroke</td><td>7</td><td>9</td><td>—</td></tr>
+              <tr><td>Corner radius</td><td>36</td><td>46</td><td>—</td></tr>
+              <tr><td>Inset / padding</td><td>29</td><td>34</td><td>—</td></tr>
+              <tr><td>119</td><td>~44</td><td>46</td><td>Extra Bold 800</td></tr>
+              <tr><td>Sk</td><td>~170</td><td>162</td><td>Black 900</td></tr>
+              <tr><td>Asterisk (diameter)</td><td>~75</td><td>62 (0.38 × Sk)</td><td>bars 24% of diameter</td></tr>
+              <tr><td>Skeptium</td><td>~43</td><td>46</td><td>Extra Bold 800</td></tr>
+              <tr><td>ELEMENT OF DOUBT</td><td>~12, tracking 0.2–0.3em</td><td>14, tracking 0.32em</td><td>Bold 700</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="bb-sub">Minimum sizes</h3>
+        <div class="bb-table-wrap">
+          <table class="bb-table">
+            <thead><tr><th>Lockup</th><th>Screen</th><th>Print</th><th>Below that</th></tr></thead>
+            <tbody>
+              <tr><td>Primary (with tagline)</td><td>200 px wide</td><td>60 mm</td><td>use the secondary logo</td></tr>
+              <tr><td>Secondary (no tagline)</td><td>96 px</td><td>25 mm</td><td>use the icon</td></tr>
+              <tr><td>Icon (frame + Sk*)</td><td>24 px</td><td>8 mm</td><td>use Sk* alone</td></tr>
+              <tr><td>Product wordmark (tile + Skeptium*)</td><td>tile 20 px, word 16 px</td><td>—</td><td>tile alone</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="bb-note">Sizes are recommendations derived from the rule “remove rather than reduce below legibility”; the tagline must never fall under ~7 px.</p>
+      </section>
+
+      <!-- ============ 04 ASTERISK ============ -->
+      <section id="asterisk" class="bb-section" aria-labelledby="ast-h">
+        <header class="bb-head"><span class="bb-num">04</span><h2 id="ast-h">The radical ( * ) — the element of doubt</h2></header>
+        <div class="bb-cols bb-cols--diagram">
+          <figure class="bb-ast-figure">
+            <svg viewBox="64.2 29.6 25 25" role="img" aria-label="Construction of the six-spoke asterisk">
+              <g class="bb-ast-guide">
+                <circle cx="76.725" cy="42.15" r="7.98" />
+                <line x1="76.725" y1="31" x2="76.725" y2="53.3" />
+                <line x1="67.07" y1="36.57" x2="86.38" y2="47.73" />
+                <line x1="67.07" y1="47.73" x2="86.38" y2="36.57" />
+              </g>
+              <use width="100" height="100" href="#bb-sk-star" class="bb-ast-ink" />
+            </svg>
+          </figure>
+          <div>
+            <blockquote class="bb-quote">The asterisk is Skeptium's radical — a symbol of inquiry, openness and the
+              multiplication of perspectives. It marks the active question: a prompt to examine, compare and test
+              commonly accepted views.</blockquote>
+            <p>It works as a footnote, a caveat, a sign that context exists beyond what is stated — and, alone, as an
+              icon. It is <strong>not</strong> a sparkle suggesting automatic AI magic.</p>
+            <ul class="bb-list">
+              <li>Six spokes: three bars through one centre at 90°, 30° and 150°, flat ends.</li>
+              <li>Bar thickness 24% of the diameter; diameter 38% of the Sk size.</li>
+              <li>Raised to the upper right of the k, like a superscript, tucked close to the letter.</li>
+              <li>Sturdy enough to stay distinct at 16 px; never a thin punctuation glyph.</li>
+              <li>Same colour treatment as the letters; no unrelated colours, glows or effects.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 05 SQUARE ============ -->
+      <section id="square" class="bb-section" aria-labelledby="sq-h">
+        <header class="bb-head"><span class="bb-num">05</span><h2 id="sq-h">The square: a reference frame</h2></header>
+        <div class="bb-cols bb-cols--diagram">
+          <figure class="bb-square-figure">
+            <svg viewBox="-8 -8 116 116" role="img" aria-label="The rounded square with its corner-radius construction">
+              <g class="bb-sq-guide">
+                <circle cx="24" cy="24" r="20" /><circle cx="76" cy="24" r="20" />
+                <circle cx="24" cy="76" r="20" /><circle cx="76" cy="76" r="20" />
+                <line x1="-6" y1="4" x2="106" y2="4" /><line x1="-6" y1="96" x2="106" y2="96" />
+                <line x1="4" y1="-6" x2="4" y2="106" /><line x1="96" y1="-6" x2="96" y2="106" />
+              </g>
+              <rect x="7.5" y="7.5" width="85" height="85" rx="16.5" class="bb-sq-frame" />
+              <use width="100" height="100" href="#bb-sk" class="bb-sq-ink" />
+            </svg>
+          </figure>
+          <div>
+            <blockquote class="bb-quote">The square represents a “box” — the commonly accepted view, a prevailing
+              narrative or a reference framework that we examine and compare against new evidence.</blockquote>
+            <blockquote class="bb-quote">Its rounded corners are intentional: even within an apparent box, knowledge is
+              not absolute. Certainty has boundaries, and what seems fixed can change with better evidence.</blockquote>
+            <p>Skeptium checks what is inside the frame and questions the frame itself when necessary. The frame is
+              <strong>not</strong> a sign that any prevailing view is automatically false. Keep the interior open: the frame
+              surrounds the statement without choking it.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 06 COLOUR ============ -->
+      <section id="colour" class="bb-section" aria-labelledby="col-h">
+        <header class="bb-head"><span class="bb-num">06</span><h2 id="col-h">Colour — the spectrum</h2></header>
+        <p class="bb-intro">Five colours, always in this order, always together. The spectrum belongs to the letters
+          and the frame of the mark, to short display headings and to select accents — on a neutral near-black stage.</p>
+        <div class="bb-swatches">
+          <article class="bb-swatch"><div class="bb-chip" style="background:#EF3442"></div><h3>Red</h3><p class="bb-meaning">Passion / Emotion</p><dl><dt>HEX</dt><dd>#EF3442</dd><dt>RGB</dt><dd>239 52 66</dd><dt>CMYK*</dt><dd>0 78 72 0</dd></dl><p class="bb-role">Left end; the energy of the human, observable world.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#F87B31"></div><h3>Orange</h3><p class="bb-meaning">Energy / Fire</p><dl><dt>HEX</dt><dd>#F87B31</dd><dt>RGB</dt><dd>248 123 49</dd><dt>CMYK*</dt><dd>0 66 91 0</dd></dl><p class="bb-role">Transition from perception to exploration.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#F8D46B"></div><h3>Gold</h3><p class="bb-meaning">Illumination / Insight</p><dl><dt>HEX</dt><dd>#F8D46B</dd><dt>RGB</dt><dd>248 212 107</dd><dt>CMYK*</dt><dd>0 14 57 0</dd></dl><p class="bb-role">The turning point; ideas connect with evidence.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#CDE8C5"></div><h3>Mint</h3><p class="bb-meaning">Renewal / Balance</p><dl><dt>HEX</dt><dd>#CDE8C5</dd><dt>RGB</dt><dd>205 232 197</dd><dt>CMYK*</dt><dd>12 0 15 0</dd></dl><p class="bb-role">Nuance, openness, transition to reflection.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#83DDE4"></div><h3>Cyan</h3><p class="bb-meaning">Openness / Perspective</p><dl><dt>HEX</dt><dd>#83DDE4</dd><dt>RGB</dt><dd>131 221 228</dd><dt>CMYK*</dt><dd>43 0 16 0</dd></dl><p class="bb-role">Right end; abstraction, possibility, broader perspective.</p></article>
+        </div>
+        <p class="bb-note">* CMYK values are the approximations printed on the reference board, not a colour-managed
+          specification. For print, convert the HEX/sRGB values with the chosen ICC profile, proof, and record the
+          press-specific CMYK separately.</p>
+
+        <h3 class="bb-sub">Gradient specification</h3>
+        <div class="bb-gradient-spec">
+          <div class="bb-gradient-bar bb-gradient-bar--spectrum" role="img" aria-label="The Skeptium spectrum, left to right"></div>
+          <ol class="bb-stops">
+            <li style="--at:0%"><i style="background:#EF3442"></i><b>#EF3442</b><span>0%</span></li>
+            <li style="--at:22%"><i style="background:#F87B31"></i><b>#F87B31</b><span>22%</span></li>
+            <li style="--at:46%"><i style="background:#F8D46B"></i><b>#F8D46B</b><span>46%</span></li>
+            <li style="--at:68%"><i style="background:#CDE8C5"></i><b>#CDE8C5</b><span>68%</span></li>
+            <li style="--at:100%"><i style="background:#83DDE4"></i><b>#83DDE4</b><span>100%</span></li>
+          </ol>
+        </div>
+        <div class="bb-cols">
+          <ul class="bb-list">
+            <li>Horizontal, left to right (CSS <code>90deg</code>); five stops, in order, never reversed or truncated.</li>
+            <li>Continuous and smooth — no hard bands, no skipped stop.</li>
+            <li>Within one badge every gradient element runs in the same left-to-right direction.</li>
+            <li>No cyan-only or blue-only versions, no muted or lowered-opacity versions.</li>
+            <li>The dark background stays neutral: the gradient lives on the letters and the frame, not behind a white mark.</li>
+          </ul>
+<pre class="bb-code"><code>--sk-gradient: linear-gradient(90deg,
+  #EF3442 0%,  #F87B31 22%,
+  #F8D46B 46%, #CDE8C5 68%,
+  #83DDE4 100%);</code></pre>
+        </div>
+
+        <h3 class="bb-sub">Neutral companions</h3>
+        <div class="bb-neutrals">
+          <div><i style="background:#05090B"></i><b>#05090B</b><span>surface.dark — default logo backdrop, canvas</span></div>
+          <div><i style="background:#020608"></i><b>#020608</b><span>surface.deep — dramatic hero background</span></div>
+          <div><i style="background:#FAFAFA"></i><b>#FAFAFA</b><span>surface.light — light areas</span></div>
+          <div><i style="background:#F5F7F8"></i><b>#F5F7F8</b><span>text.on-dark — body text on dark</span></div>
+          <div><i style="background:#111317"></i><b>#111317</b><span>text.on-light — text and inverse logo on light</span></div>
+          <div><i style="background:#5F666C"></i><b>#5F666C</b><span>line.subtle — grids and dividers</span></div>
+        </div>
+        <p class="bb-note">The neutrals are implementation recommendations, not values printed on the board.</p>
+
+        <h3 class="bb-sub">Meaning of the gradient — Aristotle ↔ Plato</h3>
+        <figure class="bb-roots">
+          <img src="skeptium-board-philosophers.webp" width="500" height="186" loading="lazy" alt="Aristotle in warm red on the left, Plato in cyan on the right — detail of the colour reference board" />
+        </figure>
+        <div class="bb-roots-axis">
+          <div class="bb-gradient-bar bb-gradient-bar--spectrum bb-gradient-bar--thin" aria-hidden="true"></div>
+          <div class="bb-roots-grid">
+            <div><b class="bb-roots-name bb-roots-name--left">Aristotle</b><span class="bb-roots-sub">The observable world</span><span>Experience · Evidence · The Real</span><small>Red → Orange</small></div>
+            <div class="bb-roots-mid"><b class="bb-roots-name">Dialogue</b><span class="bb-roots-sub">Between experience and ideas</span><span>Illumination · Insight · Testing</span><small>Gold</small></div>
+            <div class="bb-roots-right"><b class="bb-roots-name bb-roots-name--right">Plato</b><span class="bb-roots-sub">The realm of ideas</span><span>Abstraction · Meaning · The Ideal</span><small>Mint → Cyan</small></div>
+          </div>
+        </div>
+        <p>The Skeptium colour palette is inspired by the enduring dialogue between Aristotle and Plato — two foundational
+          perspectives in Western thought. Skeptium's gradient unites these complementary traditions, from tangible
+          experience to abstract understanding, to represent a balanced approach to knowledge: questioning, connecting,
+          and testing ideas against reality.</p>
+        <p class="bb-note">This pairing is Skeptium's own creative mapping, not a classical colour code; Aristotle is not
+          “only science” and Plato not “only spirit”. The gradient is a journey from first perception to fuller
+          reflection — never from “wrong” to “right”, from “emotional” to “intelligent”, or from “false” to “true”.
+          Historical symbolism belongs to the colour system only.</p>
+      </section>
+
+      <!-- ============ 07 MONOCHROME ============ -->
+      <section id="monochrome" class="bb-section" aria-labelledby="mono-h">
+        <header class="bb-head"><span class="bb-num">07</span><h2 id="mono-h">Monochrome — black, white and the space between</h2></header>
+        <p class="bb-intro">Monochrome is a deliberate identity, not a desaturated copy of the spectrum logo. It speaks
+          through contrast and balance, without colour and without the philosophers.</p>
+        <div class="bb-swatches bb-swatches--mono">
+          <article class="bb-swatch"><div class="bb-chip" style="background:#090909"></div><h3>Void Black</h3><p class="bb-meaning">Depth / Focus</p><dl><dt>HEX</dt><dd>#090909</dd><dt>RGB</dt><dd>9 9 9</dd><dt>CMYK*</dt><dd>0 0 0 96</dd></dl><p class="bb-role">Brand canvas, dark app icon.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#383838"></div><h3>Graphite</h3><p class="bb-meaning">Context / Structure</p><dl><dt>HEX</dt><dd>#383838</dd><dt>RGB</dt><dd>56 56 56</dd><dt>CMYK*</dt><dd>0 0 0 78</dd></dl><p class="bb-role">Dividers, diagrams, grey surfaces.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#979797"></div><h3>Mid Gray</h3><p class="bb-meaning">Inquiry / Nuance</p><dl><dt>HEX</dt><dd>#979797</dd><dt>RGB</dt><dd>151 151 151</dd><dt>CMYK*</dt><dd>0 0 0 41</dd></dl><p class="bb-role">Editorial midtone.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#D4D4D4"></div><h3>Silver</h3><p class="bb-meaning">Evidence / Clarity</p><dl><dt>HEX</dt><dd>#D4D4D4</dd><dt>RGB</dt><dd>212 212 212</dd><dt>CMYK*</dt><dd>0 0 0 17</dd></dl><p class="bb-role">Light end of grey treatments.</p></article>
+          <article class="bb-swatch"><div class="bb-chip" style="background:#FFFFFF"></div><h3>Pure White</h3><p class="bb-meaning">Knowledge / Result</p><dl><dt>HEX</dt><dd>#FFFFFF</dd><dt>RGB</dt><dd>255 255 255</dd><dt>CMYK*</dt><dd>0 0 0 0</dd></dl><p class="bb-role">Glyphs, borders, text.</p></article>
+        </div>
+        <div class="bb-gradient-spec">
+          <div class="bb-gradient-bar bb-gradient-bar--mono" role="img" aria-label="Monochrome gradient, Void Black to Pure White"></div>
+          <ol class="bb-stops">
+            <li style="--at:0%"><i style="background:#090909"></i><b>#090909</b><span>0%</span></li>
+            <li style="--at:25%"><i style="background:#383838"></i><b>#383838</b><span>25%</span></li>
+            <li style="--at:50%"><i style="background:#979797"></i><b>#979797</b><span>50%</span></li>
+            <li style="--at:75%"><i style="background:#D4D4D4"></i><b>#D4D4D4</b><span>75%</span></li>
+            <li style="--at:100%"><i style="background:#FFFFFF"></i><b>#FFFFFF</b><span>100%</span></li>
+          </ol>
+        </div>
+
+        <div class="bb-two">
+          <div class="bb-card">
+            <p class="bb-card-kicker">Primary</p>
+            <h3>Radical monochrome</h3>
+            <p>Pure black against pure white, maximum legibility. Precision, direct questioning, the clarity of a
+              well-supported conclusion — the discipline of investigation, not a claim that every question is binary.
+              The master logo is always white on black or black on white, never a mid-grey mark.</p>
+          </div>
+          <div class="bb-card">
+            <p class="bb-card-kicker">Secondary · expressive</p>
+            <h3>Epistemic greyscale</h3>
+            <p>A continuous dark-to-light range: an editorial metaphor for uncertainty, nuance and the journey of
+              inquiry. For supporting illustrations and controlled contexts — not a replacement for crisp logo text,
+              not a truth label and not an uncertainty metric.</p>
+          </div>
+        </div>
+
+        <h3 class="bb-sub">Monochrome philosophy</h3>
+        <div class="bb-philo">
+          <div class="bb-gradient-bar bb-gradient-bar--mono" aria-hidden="true"></div>
+          <div class="bb-philo-grid">
+            <div><b>Unknown</b><span>What we don't yet know</span><small>questions, hypotheses</small></div>
+            <div><b>Inquiry</b><span>The space of analysis</span><small>evaluation, comparison</small></div>
+            <div><b>Established</b><span>What we currently know</span><small>evidence, conclusions</small></div>
+          </div>
+        </div>
+        <p class="bb-note">“Established” means best supported by evidence so far — not eternal truth. A revision can move
+          understanding back into inquiry. Black is not “false”, white is not “infallibly true”.</p>
+      </section>
+
+      <!-- ============ 08 TYPE ============ -->
+      <section id="type" class="bb-section" aria-labelledby="type-h">
+        <header class="bb-head"><span class="bb-num">08</span><h2 id="type-h">Typography</h2></header>
+        <div class="bb-cols">
+          <div class="bb-type-hero">
+            <p class="bb-type-face">Inter</p>
+            <p class="bb-type-glyphs">Aa Bb Cc 0123456789 * — “ ”</p>
+            <p class="bb-note">A modern neo-grotesk, highly legible, with a heavy end for the mark. The reference
+              artwork does not identify a font; Inter is the production choice, with system-ui as fallback.</p>
+          </div>
+          <ul class="bb-weights">
+            <li style="font-weight:900"><span>900 Black</span>Sk* — the element symbol</li>
+            <li style="font-weight:800"><span>800 Extra Bold</span>Skeptium — the wordmark</li>
+            <li style="font-weight:700"><span>700 Bold</span>Headlines and section titles</li>
+            <li style="font-weight:600"><span>600 Semi Bold</span>Uppercase labels, tagline</li>
+            <li style="font-weight:500"><span>500 Medium</span>Interface controls</li>
+            <li style="font-weight:400"><span>400 Regular</span>Body text and explanations</li>
+          </ul>
+        </div>
+        <div class="bb-table-wrap">
+          <table class="bb-table">
+            <thead><tr><th>Role</th><th>Setting</th></tr></thead>
+            <tbody>
+              <tr><td>Element symbol Sk*</td><td>800–900, compact spacing, careful kerning</td></tr>
+              <tr><td>Wordmark Skeptium</td><td>700–800, tracking −0.02em; substantial but subordinate to Sk*</td></tr>
+              <tr><td>Tagline</td><td>ALL CAPS, small, wide tracking 0.2–0.32em; remove rather than shrink below legibility</td></tr>
+              <tr><td>Editorial titles</td><td>Bold, clean, concise, sentence case</td></tr>
+              <tr><td>Section headings</td><td>UPPERCASE, medium/bold, separated by fine horizontal rules</td></tr>
+              <tr><td>Body</td><td>400, 15–17 px, line-height ~1.55, solid high-contrast neutrals — never gradient text</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 09 USAGE ============ -->
+      <section id="usage" class="bb-section" aria-labelledby="use-h">
+        <header class="bb-head"><span class="bb-num">09</span><h2 id="use-h">Usage on dark, light &amp; grey</h2></header>
+        <div class="bb-usage">
+          <figure><span class="bb-tile bb-tile--spectrum bb-tile--lg"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span>
+            <figcaption><b>Near-black — preferred</b>Neutral near-black field; the full spectrum on Sk*, wordmark, number and frame.</figcaption></figure>
+          <figure><span class="bb-tile bb-tile--ink bb-tile--lg"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span>
+            <figcaption><b>Light</b>Solid near-black mark and frame for strong contrast; the spectrum only as a small accent.</figcaption></figure>
+          <figure><span class="bb-tile bb-tile--white bb-tile--lg"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span>
+            <figcaption><b>Radical app icon</b>White Sk* on Void Black — the maximum-contrast small-size icon.</figcaption></figure>
+          <figure><span class="bb-tile bb-tile--paper bb-tile--lg"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span>
+            <figcaption><b>Inverse monochrome</b>Void Black on white: print, documents, slides.</figcaption></figure>
+          <figure><span class="bb-tile bb-tile--greys bb-tile--lg"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span>
+            <figcaption><b>Greyscale illustration</b>The process of inquiry, from uncertainty toward clearer understanding. Supporting art only.</figcaption></figure>
+          <figure><span class="bb-tile bb-tile--field bb-tile--lg"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span>
+            <figcaption><b>Spectrum field — editorial only</b>White mark on a full-spectrum surface. An alternate exploration from the board, never the standard dark logo.</figcaption></figure>
+        </div>
+        <div class="bb-callout">
+          <b>Contrast.</b> Target WCAG AA — 4.5:1 for normal text, 3:1 for large text — and check every relevant point of
+          a gradient, not just its ends. Explanatory copy and small captions stay in solid neutrals. Where the full
+          palette cannot be rendered legibly (one-colour print, constrained UI), switch to the monochrome system rather
+          than simulating the gradient with greys.
+        </div>
+      </section>
+
+      <!-- ============ 10 DO / DON'T ============ -->
+      <section id="dont" class="bb-section" aria-labelledby="dont-h">
+        <header class="bb-head"><span class="bb-num">10</span><h2 id="dont-h">Do &amp; don't</h2></header>
+        <div class="bb-dd">
+          <figure class="bb-do"><span class="bb-tile bb-tile--spectrum"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><figcaption>Spectrum on letters and frame, neutral near-black ground.</figcaption></figure>
+          <figure class="bb-do"><span class="bb-tile bb-tile--ink"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><figcaption>Solid dark mark on light surfaces.</figcaption></figure>
+          <figure class="bb-do"><span class="bb-tile bb-tile--white"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><figcaption>Radical white on black when colour is not available.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--field"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><figcaption>Don't move the spectrum into the background behind a white mark as the standard logo.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--cyan"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><figcaption>Don't fade to a cyan-only or blue-only mark.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--spectrum bb-tile--faded"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><figcaption>Don't lower the opacity or mute the colours.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--spectrum bb-tile--reversed"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec-rev)"/></svg></span><figcaption>Don't reverse, truncate or reorder the spectrum.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--spectrum bb-tile--glow"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><figcaption>No glow, bloom, bevel, gloss, texture or heavy shadow.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--spectrum bb-tile--round"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><figcaption>Don't turn the frame into a circle — or into a sharp box.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--spectrum"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk-letters" fill="url(#bb-spec)" x="8"/></svg></span><figcaption>Never drop the asterisk, or swap it for an AI sparkle.</figcaption></figure>
+          <figure class="bb-dont"><span class="bb-tile bb-tile--paper bb-tile--pale"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><figcaption>Don't set pale spectrum text directly on white.</figcaption></figure>
+          <figure class="bb-dont bb-dont--text"><span class="bb-wrong-copy"><s>Skepticum</s><s>ELEMENT OF A DOUBT</s></span><figcaption>Spell it Skeptium; the descriptor is ELEMENT OF DOUBT.</figcaption></figure>
+        </div>
+
+        <h3 class="bb-sub">The spectrum is not a truth scale</h3>
+        <div class="bb-two">
+          <div class="bb-card bb-card--dont">
+            <p class="bb-card-kicker">Never</p>
+            <div class="bb-truth-bar" aria-hidden="true"><span>False</span><span>True</span></div>
+            <p>Reusing the brand gradient to rate claims turns a metaphor of inquiry into a verdict — and makes red
+              “wrong” and cyan “right”, which the brand explicitly rejects.</p>
+          </div>
+          <div class="bb-card bb-card--do">
+            <p class="bb-card-kicker">Always</p>
+            <ul class="bb-verdicts">
+              <li><i class="bb-v bb-v--green"></i>Supported</li>
+              <li><i class="bb-v bb-v--yellow"></i>Partly supported</li>
+              <li><i class="bb-v bb-v--red"></i>Contradicted</li>
+              <li><i class="bb-v bb-v--insufficient"></i>Not supported</li>
+              <li><i class="bb-v bb-v--white"></i>Not checked</li>
+              <li><i class="bb-v bb-v--pending"></i>Being checked</li>
+            </ul>
+            <p>Verdicts use their own semantic colours, always paired with a written label (and shape where it helps).
+              Never by hue alone, never with brand-spectrum colours.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 11 VOICE ============ -->
+      <section id="voice" class="bb-section" aria-labelledby="voice-h">
+        <header class="bb-head"><span class="bb-num">11</span><h2 id="voice-h">Voice &amp; copy</h2></header>
+        <div class="bb-lines">
+          <p class="bb-line bb-spectrum-text">Between what we think and what we know.</p>
+          <p class="bb-line">Where ideas meet evidence.</p>
+          <p class="bb-line bb-line--tag">ELEMENT OF DOUBT</p>
+          <p class="bb-line bb-line--small">CURIOSITY / REASON / BETTER QUESTIONS</p>
+        </div>
+        <div class="bb-cols">
+          <div>
+            <h3 class="bb-sub bb-sub--flush">How we sound</h3>
+            <ul class="bb-list">
+              <li><b>Concrete.</b> Name the claim, the source and what it says.</li>
+              <li><b>Questioning.</b> Show the method; invite the reader to check.</li>
+              <li><b>Evidence-aware.</b> Say how strong the support is, and what is missing.</li>
+              <li><b>Non-dogmatic.</b> Confident about the method, not about the certainty of conclusions.</li>
+              <li><b>Calm.</b> No outrage, no mockery of people — we examine claims.</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="bb-sub bb-sub--flush">In practice <small>(examples)</small></h3>
+            <div class="bb-say">
+              <p class="bb-say-do">The sources we found contradict this claim.</p>
+              <p class="bb-say-dont">This is a lie.</p>
+              <p class="bb-say-do">Partly supported: the figure is right, the trend is not.</p>
+              <p class="bb-say-dont">Busted!</p>
+              <p class="bb-say-do">Skeptium helps you test claims against evidence.</p>
+              <p class="bb-say-dont">Skeptium always finds the truth.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 12 PRODUCT ============ -->
+      <section id="product" class="bb-section" aria-labelledby="prod-h">
+        <header class="bb-head"><span class="bb-num">12</span><h2 id="prod-h">In the product</h2></header>
+        <p class="bb-intro">The site offers three themes (Settings → Theme). Each is a direct application of one part of this book;
+          the verdict colours keep their meaning in all three.</p>
+        <div class="bb-themes">
+          <div class="bb-theme bb-surface-dark">
+            <div class="bb-theme-bar"><span class="bb-wm bb-wm--spectrum bb-wm--sm"><span class="bb-wm-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk" fill="url(#bb-spec)"/></svg></span><span class="bb-wm-word">Skeptium</span></span></div>
+            <div class="bb-theme-body"><b>Dark · default</b><span>Canvas #05090B · text #F5F7F8 · lines #5F666C</span><span>Mark: the five-stop spectrum</span>
+              <span class="bb-theme-dots"><i class="bb-v bb-v--green"></i><i class="bb-v bb-v--yellow"></i><i class="bb-v bb-v--red"></i><i class="bb-v bb-v--white"></i></span></div>
+          </div>
+          <div class="bb-theme bb-surface-light">
+            <div class="bb-theme-bar bb-theme-bar--hairline"><span class="bb-wm bb-wm--ink bb-wm--sm"><span class="bb-wm-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><span class="bb-wm-word">Skeptium</span></span></div>
+            <div class="bb-theme-body"><b>Light</b><span>Canvas #FAFAFA · text #111317</span><span>Mark: solid #111317; spectrum as a 2 px hairline under the top bar</span>
+              <span class="bb-theme-dots bb-theme-dots--light"><i class="bb-v bb-v--green"></i><i class="bb-v bb-v--yellow"></i><i class="bb-v bb-v--red"></i><i class="bb-v bb-v--white"></i></span></div>
+          </div>
+          <div class="bb-theme bb-surface-mono">
+            <div class="bb-theme-bar"><span class="bb-wm bb-wm--white bb-wm--sm"><span class="bb-wm-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><use width="100" height="100" href="#bb-sk"/></svg></span><span class="bb-wm-word">Skeptium</span></span></div>
+            <div class="bb-theme-body"><b>Monochrome</b><span>#090909 · #FFFFFF · graphite #383838 · mid #979797 · silver #D4D4D4</span><span>Mark: solid white, no gradient</span>
+              <span class="bb-theme-dots"><i class="bb-v bb-v--green"></i><i class="bb-v bb-v--yellow"></i><i class="bb-v bb-v--red"></i><i class="bb-v bb-v--white"></i></span></div>
+          </div>
+        </div>
+        <ul class="bb-list">
+          <li>Tokens live in <code>styles.css</code> (<code>--brand-spectrum</code>, <code>--brand-mark</code>, <code>--nobs-*</code>), switched by <code>&lt;html data-theme&gt;</code>.</li>
+          <li>Favicon: Sk* in the spectrum inside a spectrum frame on #05090B; touch icon: the same at 180 px.</li>
+          <li>Verdict colours (green / yellow / red / white / pending) are semantic tokens with text labels — never the brand spectrum.</li>
+          <li>Colours drawn over the video (control bar, timeline marks) stay the same in every theme.</li>
+          <li>Section headings in the product are bold and concise; small text stays in solid neutrals.</li>
+        </ul>
+      </section>
+
+      <!-- ============ 13 REFERENCES ============ -->
+      <section id="references" class="bb-section" aria-labelledby="ref-h">
+        <header class="bb-head"><span class="bb-num">13</span><h2 id="ref-h">Reference boards &amp; renders</h2></header>
+        <p class="bb-intro">The source artwork behind this book. The boards are references for composition and editorial
+          style; where they differ from the rules above, the rules win (see Known inconsistencies).</p>
+        <div class="bb-boards">
+          <figure><a href="skeptium-board-color.webp"><img src="skeptium-board-color.webp" width="1536" height="1024" loading="lazy" alt="Skeptium brand guidelines board: Ideas meet evidence (full colour)" /></a><figcaption>Full-colour board — “Ideas meet evidence”</figcaption></figure>
+          <figure><a href="skeptium-board-mono.webp"><img src="skeptium-board-mono.webp" width="1536" height="1024" loading="lazy" alt="Skeptium monochrome brand guidelines board" /></a><figcaption>Monochrome board</figcaption></figure>
+        </div>
+        <div class="bb-renders">
+          <figure><img src="skeptium-render-gradient-emblem.webp" width="1000" height="1000" loading="lazy" alt="Gradient emblem render: 119, Sk*, Skeptium, Element of doubt" /><figcaption>Gradient emblem</figcaption></figure>
+          <figure><img src="skeptium-render-element-tile.webp" width="1000" height="1000" loading="lazy" alt="Element tile render in white on black, with the descriptor reading Element of a doubt" /><figcaption>Element tile — its descriptor reads “ELEMENT OF A DOUBT”; use “ELEMENT OF DOUBT”.</figcaption></figure>
+        </div>
+      </section>
+
+      <!-- ============ 14 DOWNLOADS ============ -->
+      <section id="downloads" class="bb-section" aria-labelledby="dl-h">
+        <header class="bb-head"><span class="bb-num">14</span><h2 id="dl-h">Downloads</h2></header>
+        <p class="bb-intro">Vector SVG is the source of truth for every mark; PNGs are 1320 px renders of the same files.</p>
+        <div class="bb-downloads">
+          <div class="bb-dl"><img src="skeptium-logo-full-color.svg" width="440" height="440" alt="" loading="lazy" /><b>Primary · colour</b><span><a href="skeptium-logo-full-color.svg" download>SVG</a><a href="skeptium-logo-full-color.png" download>PNG</a></span></div>
+          <div class="bb-dl"><img src="skeptium-logo-compact-color.svg" width="440" height="440" alt="" loading="lazy" /><b>Secondary · colour</b><span><a href="skeptium-logo-compact-color.svg" download>SVG</a><a href="skeptium-logo-compact-color.png" download>PNG</a></span></div>
+          <div class="bb-dl"><img src="skeptium-logo-full-mono.svg" width="440" height="440" alt="" loading="lazy" /><b>Primary · mono</b><span><a href="skeptium-logo-full-mono.svg" download>SVG</a><a href="skeptium-logo-full-mono.png" download>PNG</a></span></div>
+          <div class="bb-dl"><img src="skeptium-logo-compact-mono.svg" width="440" height="440" alt="" loading="lazy" /><b>Secondary · mono</b><span><a href="skeptium-logo-compact-mono.svg" download>SVG</a><a href="skeptium-logo-compact-mono.png" download>PNG</a></span></div>
+          <div class="bb-dl"><img src="skeptium-logo-full-inverse.svg" width="440" height="440" alt="" loading="lazy" /><b>Primary · inverse</b><span><a href="skeptium-logo-full-inverse.svg" download>SVG</a><a href="skeptium-logo-full-inverse.png" download>PNG</a></span></div>
+          <div class="bb-dl"><img src="skeptium-logo-compact-inverse.svg" width="440" height="440" alt="" loading="lazy" /><b>Secondary · inverse</b><span><a href="skeptium-logo-compact-inverse.svg" download>SVG</a><a href="skeptium-logo-compact-inverse.png" download>PNG</a></span></div>
+          <div class="bb-dl"><img src="favicon.svg" width="64" height="64" alt="" loading="lazy" /><b>App icon</b><span><a href="favicon.svg" download>SVG</a><a href="skeptium-app-icon-1024.png" download>PNG 1024</a><a href="apple-touch-icon.png" download>PNG 180</a></span></div>
+          <div class="bb-dl bb-dl--mark"><span class="bb-dl-mark"><img src="topbar-mark.svg" width="100" height="100" alt="" loading="lazy" /></span><b>Top-bar tile</b><span><a href="topbar-mark.svg" download>SVG</a></span></div>
+        </div>
+        <p class="bb-note">Reference artwork: <a href="skeptium-board-color.webp" download>colour board</a> ·
+          <a href="skeptium-board-mono.webp" download>monochrome board</a> ·
+          <a href="skeptium-render-gradient-emblem.webp" download>gradient emblem</a> ·
+          <a href="skeptium-render-element-tile.webp" download>element tile</a>. Written specifications:
+          <code>docs/brand/</code> in the repository (master, colour and monochrome systems).</p>
+      </section>
+
+      <!-- ============ KNOWN INCONSISTENCIES ============ -->
+      <section class="bb-section bb-issues" aria-labelledby="iss-h">
+        <header class="bb-head"><span class="bb-num">!</span><h2 id="iss-h">Known inconsistencies</h2></header>
+        <ul class="bb-list">
+          <li><b>Descriptor wording.</b> The element tile render reads “ELEMENT OF A DOUBT”; the written system specifies
+            “ELEMENT OF DOUBT” (no article). This book and every production file follow the docs.</li>
+          <li><b>“Dark background” card on the colour board</b> shows a white Sk* on a full-spectrum surface. It is an
+            editorial exploration; the canonical dark logo keeps a neutral ground with the spectrum on letters and frame.</li>
+          <li><b>“Light background” card on the colour board</b> shows the spectrum Sk* on a near-white tile, while the rules
+            ask for a solid dark mark on light surfaces. Follow the rules.</li>
+          <li><b>CMYK values</b> printed on both boards are approximations, not a print specification.</li>
+          <li><b>Reduction order.</b> The monochrome system lists “remove number, wordmark and tagline in that order” for
+            the smallest icon; the lockups themselves drop the tagline first. This book uses tagline → wordmark → number,
+            keeping the asterisk always.</li>
+          <li><b>Product wordmark “Skeptium*”</b> (the word with a raised asterisk, used in the top bar) is a product
+            application, not described in the brand docs.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="bb-footer">
+      <span>Skeptium brand guidelines</span>
+      <span>Curiosity / Reason / Better questions</span>
+    </footer>
+  <script type="module" src="../src/accountMenuBoot.js"></script>
+  </body>
+</html>

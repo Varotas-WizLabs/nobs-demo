@@ -10,11 +10,16 @@
 // (key sb-<project ref>-auth-token) instead of loading supabase-js on every
 // page; account.html, which does load it, refreshes the session. «Выход»
 // revokes the session on Supabase (best effort) and forgets it locally.
+//
+// «Брендбук» (brand/, web/brand/index.html) is in the menu only for the roles in BRAND_ROLES
+// (my_role(), asked after the menu is drawn, so a signed-in page then loads
+// supabase-js; never shown on an error) and in the owner's local app (where
+// «Настройки админа» is shown).
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=db20e9f4e2";
-import { UI_LANGUAGES, t as tr } from "./i18n.js?v=db20e9f4e2";
-import { createAccountsClient } from "./accountsClient.js?v=db20e9f4e2";
-import { openRequestModal } from "./requestModal.js?v=db20e9f4e2";
+import { loadAccountsConfig } from "./accountsConfig.js?v=d9665ac097";
+import { UI_LANGUAGES, t as tr } from "./i18n.js?v=d9665ac097";
+import { createAccountsClient } from "./accountsClient.js?v=d9665ac097";
+import { openRequestModal } from "./requestModal.js?v=d9665ac097";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {
@@ -73,6 +78,53 @@ export async function signOut(config, storage, fetchImpl) {
   }
 }
 
+// The site root is the folder above this module (<root>/src/accountMenu.js), wherever the site
+// is served (127.0.0.1:8742/, skeptium.com/, a demo under a sub-path).
+const SITE_ROOT = new URL("../", import.meta.url);
+
+/**
+ * "../" per folder between the page and the site root ("" on a page at the root, "../" on
+ * /brand/ or /brand/index.html), so relative menu links work from every page. "" when the page
+ * is not under the root (another origin, tests).
+ */
+export function rootPrefix(doc, root = SITE_ROOT) {
+  let page;
+  try {
+    page = new URL(doc?.baseURI ?? doc?.location?.href ?? "");
+  } catch {
+    return "";
+  }
+  const base = new URL(root);
+  if (page.origin !== base.origin || !page.pathname.startsWith(base.pathname)) return "";
+  const depth = page.pathname.slice(base.pathname.length).split("/").length - 1;
+  return "../".repeat(Math.max(0, depth));
+}
+
+/** A site-root-relative page path ("account.html", "brand/") as an href for this page. */
+export function siteHref(doc, path, root = SITE_ROOT) {
+  if (/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(path)) return path;
+  return rootPrefix(doc, root) + path;
+}
+
+/** The brand book (web/brand/index.html), relative to the site root. */
+export const BRAND_PAGE = "brand/";
+
+/** Roles that see the «Брендбук» link. */
+export const BRAND_ROLES = new Set(["admin", "master_admin"]);
+
+/** True when the local app registered its admin page (never in the demo). */
+function localAdmin(doc) {
+  return Boolean(doc.documentElement?.dataset.adminHref) && doc.documentElement?.dataset.demo !== "1";
+}
+
+/** Add the «Брендбук» item (once) before «Выход» in a rendered signed-in corner. */
+export function addBrandLink(doc, root) {
+  const menu = root?.querySelector(".nobs-account-dropdown");
+  if (!menu || menu.querySelector(".nobs-account-brand")) return;
+  const link = el(doc, "a", { role: "menuitem", class: "nobs-account-brand", href: siteHref(doc, BRAND_PAGE) }, tr("menu.brand", pageLang(doc)));
+  menu.insertBefore(link, menu.querySelector(".nobs-account-signout"));
+}
+
 function el(doc, tag, attrs = {}, text = "") {
   const node = doc.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
@@ -88,7 +140,7 @@ export function pageLang(doc) {
 }
 
 /** Render the corner into `bar` (the .nobs-topbar). Returns the root node. */
-export function renderAccountMenu(doc, bar, { session, accountHref = "account.html", askHref = null, onAsk = null, onSignOut }) {
+export function renderAccountMenu(doc, bar, { session, accountHref = siteHref(doc, "account.html"), askHref = null, onAsk = null, onSignOut, showBrand = false }) {
   bar.querySelector(".nobs-account-menu")?.remove();
   const root = el(doc, "div", { class: "nobs-account-menu" });
   const lang = pageLang(doc);
@@ -138,7 +190,7 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
   menu.hidden = true;
   if (session.email) menu.append(el(doc, "div", { class: "nobs-account-dropdown-who" }, session.email));
   const settings = el(doc, "a", { role: "menuitem", href: accountHref }, t("menu.settings"));
-  const exit = el(doc, "button", { type: "button", role: "menuitem" }, t("menu.signOut"));
+  const exit = el(doc, "button", { type: "button", role: "menuitem", class: "nobs-account-signout" }, t("menu.signOut"));
   menu.append(settings);
   // The player's settings dialog (src/settings.js enableMenuSettings).
   if (doc.documentElement?.dataset.settings === "1") {
@@ -150,9 +202,8 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
     menu.append(prefs);
   }
   // The local app's admin entry: present only when the local-only module set the href (never in the demo).
-  const adminHref = doc.documentElement?.dataset.adminHref;
-  if (adminHref && doc.documentElement?.dataset.demo !== "1") {
-    menu.append(el(doc, "a", { role: "menuitem", href: adminHref, class: "nobs-account-admin" }, t("menu.adminSettings")));
+  if (localAdmin(doc)) {
+    menu.append(el(doc, "a", { role: "menuitem", href: siteHref(doc, doc.documentElement.dataset.adminHref), class: "nobs-account-admin" }, t("menu.adminSettings")));
   }
   menu.append(exit);
 
@@ -176,12 +227,13 @@ export function renderAccountMenu(doc, bar, { session, accountHref = "account.ht
     await onSignOut?.();
   });
   root.append(ask, button, menu);
+  if (showBrand || localAdmin(doc)) addBrandLink(doc, root);
   bar.append(root);
   return root;
 }
 
 /** supabase-js is loaded by account.html only; other pages load it on demand. */
-export function ensureSupabase(doc, src = "vendor/supabase.js") {
+export function ensureSupabase(doc, src = siteHref(doc, "vendor/supabase.js")) {
   if (globalThis.supabase?.createClient) return Promise.resolve(true);
   return new Promise((resolve) => {
     const script = doc.createElement("script");
@@ -202,6 +254,7 @@ export async function mountAccountMenu({
   loadSupabase = () => ensureSupabase(doc),
   makeClient = createAccountsClient,
   navigate = (url) => globalThis.location?.assign(url),
+  fetchRole = null,
 } = {}) {
   const bar = doc?.querySelector(".nobs-topbar");
   if (!bar) return null;
@@ -211,18 +264,46 @@ export async function mountAccountMenu({
   // The lightbox needs the accounts client; when it cannot be made, go to the account page.
   const onAsk = async (opener, lang) => {
     if (!client && (await loadSupabase())) client = makeClient(config);
-    if (!client) return navigate("account.html");
-    openRequestModal({ doc, client, lang, opener, storage });
+    if (!client) return navigate(siteHref(doc, "account.html"));
+    openRequestModal({ doc, client, lang, opener, storage, accountHref: siteHref(doc, "account.html") });
   };
-  const draw = () =>
-    renderAccountMenu(doc, bar, {
-      session: readSession(storage, config.url),
+  // The caller's role (my_role()) for the «Брендбук» link: asked once per access token, after the
+  // corner is drawn; any failure (no supabase-js, offline, an old database) leaves it hidden.
+  const askRole =
+    fetchRole ??
+    (async () => {
+      if (!client && (await loadSupabase())) client = makeClient(config);
+      return client ? client.myRole() : null;
+    });
+  const role = { token: null, value: null };
+  const checkRole = (session) => {
+    if (!session || role.token === session.accessToken) return;
+    role.token = session.accessToken;
+    role.value = null;
+    const token = session.accessToken;
+    Promise.resolve()
+      .then(() => askRole())
+      .catch(() => null)
+      .then((value) => {
+        if (role.token !== token) return;
+        role.value = typeof value === "string" ? value : null;
+        if (BRAND_ROLES.has(role.value)) addBrandLink(doc, bar.querySelector(".nobs-account-menu"));
+      });
+  };
+  const draw = () => {
+    const session = readSession(storage, config.url);
+    const node = renderAccountMenu(doc, bar, {
+      session,
       onAsk,
+      showBrand: Boolean(session) && role.token === session.accessToken && BRAND_ROLES.has(role.value),
       onSignOut: async () => {
         await signOut(config, storage, fetchImpl);
         reload();
       },
     });
+    checkRole(session);
+    return node;
+  };
   const root = draw();
   // Signed in or out in another tab (or on account.html): follow it.
   globalThis.addEventListener?.("storage", (e) => {

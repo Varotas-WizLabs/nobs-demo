@@ -10,11 +10,11 @@
 // counted among the claims "with phrasing notes"; a tag the speaker
 // qualifies elsewhere carries the line «Дальше — оговорка автора: «…» (mm:ss)».
 
-import { formatTimecode } from "./claimSync.js?v=db20e9f4e2";
-import { labelLanguage, t } from "./i18n.js?v=db20e9f4e2";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=db20e9f4e2";
-import { isNote, isPossible, qualifierLine, segmentSource, tagLabel, visibleTags } from "./tags.js?v=db20e9f4e2";
-import { formatScoopTotals, formatScore, rejectedSummary, scoopAnchors, shownScoops } from "./scoopList.js?v=db20e9f4e2";
+import { formatTimecode } from "./claimSync.js?v=d9665ac097";
+import { labelLanguage, t } from "./i18n.js?v=d9665ac097";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=d9665ac097";
+import { isNote, isPossible, qualifierLine, segmentSource, tagLabel, visibleTags } from "./tags.js?v=d9665ac097";
+import { formatScoopTotals, formatScore, rejectedSummary, scoopAnchors, shownScoops } from "./scoopList.js?v=d9665ac097";
 
 const VERDICT_ORDER = ["green", "yellow", "red", "insufficient", "white"];
 

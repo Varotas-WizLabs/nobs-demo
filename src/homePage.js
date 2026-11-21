@@ -33,13 +33,13 @@
 // Everything is built with DOM APIs and textContent: titles, channels and
 // claims come from YouTube and the analyses and are never parsed as HTML.
 
-import { t } from "./i18n.js?v=db20e9f4e2";
-import { counted, th } from "./stringsHome.js?v=db20e9f4e2";
-import { buildSearchIndex, highlightInto, mountSearchBox, queryTerms, search, snippet } from "./homeSearch.js?v=db20e9f4e2";
-import { chipsFor, filterRuns, mountChipScroller, renderChips, renderFilterMenu } from "./homeFilters.js?v=db20e9f4e2";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=db20e9f4e2";
-import { channelAvatar } from "./channelAvatar.js?v=db20e9f4e2";
-import { moreButton, mountCardMenu } from "./cardMenu.js?v=db20e9f4e2";
+import { t } from "./i18n.js?v=d9665ac097";
+import { counted, th } from "./stringsHome.js?v=d9665ac097";
+import { buildSearchIndex, highlightInto, mountSearchBox, queryTerms, search, snippet } from "./homeSearch.js?v=d9665ac097";
+import { chipsFor, filterRuns, mountChipScroller, renderChips, renderFilterMenu } from "./homeFilters.js?v=d9665ac097";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=d9665ac097";
+import { channelAvatar } from "./channelAvatar.js?v=d9665ac097";
+import { moreButton, mountCardMenu } from "./cardMenu.js?v=d9665ac097";
 
 const FLAGS = ["green", "yellow", "red", "white"];
 const DRAWER_QUERY = "(max-width: 1099px)";

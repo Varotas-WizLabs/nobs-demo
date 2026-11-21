@@ -3,7 +3,7 @@
 // modules they use) in Russian and English, reached through t() from i18n.js.
 // Content (claims, titles, server log lines, spoken lines) is never here.
 
-import { registerStrings } from "./i18n.js?v=db20e9f4e2";
+import { registerStrings } from "./i18n.js?v=d9665ac097";
 
 registerStrings({
   en: {

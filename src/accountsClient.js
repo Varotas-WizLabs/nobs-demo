@@ -119,6 +119,12 @@ export function createAccountsClient(config, { createClient = globalThis.supabas
     myPlan() {
       return rpc("my_plan");
     },
+    // The caller's role (profiles.role via my_role()): 'master_admin' | 'admin' | ... | 'user', or
+    // null on any error (signed out, offline, function missing). Never throws.
+    async myRole() {
+      const r = await rpc("my_role");
+      return !r.error && typeof r.data === "string" && r.data ? r.data : null;
+    },
     async myVideos() {
       const r = await rpc("my_videos");
       return r.error ? r : { data: Array.isArray(r.data) ? r.data : [] };
