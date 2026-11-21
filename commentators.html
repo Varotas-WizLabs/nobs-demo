@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ru">
   <head>
-    <script src="src/demoShim.js?v=78dbe39118"></script>
+    <script src="src/demoShim.js?v=cd9defe92d"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=78dbe39118"></script>
+    <script src="src/themeEarly.js?v=cd9defe92d"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
     <title data-i18n="cmui.pageTitle">Skeptium — комментаторы</title>
-    <link rel="stylesheet" href="styles.css?v=78dbe39118" />
+    <link rel="stylesheet" href="styles.css?v=cd9defe92d" />
   </head>
   <body class="nobs-cm-page">
     <header class="nobs-cm-header">
@@ -27,11 +27,11 @@
     </header>
     <main id="commentators"></main>
     <script type="module">
-      import { applyTheme } from "./src/settings.js?v=78dbe39118";
-      import { initUiLang, translatePage } from "./src/uiLang.js?v=78dbe39118";
-      import { t } from "./src/i18n.js?v=78dbe39118";
-      import "./src/stringsCommentators.js?v=78dbe39118";
-      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=78dbe39118";
+      import { applyTheme } from "./src/settings.js?v=cd9defe92d";
+      import { initUiLang, translatePage } from "./src/uiLang.js?v=cd9defe92d";
+      import { t } from "./src/i18n.js?v=cd9defe92d";
+      import "./src/stringsCommentators.js?v=cd9defe92d";
+      import { mountCommentatorsPage } from "./src/commentatorsPage.js?v=cd9defe92d";
       applyTheme(document);
       const lang = initUiLang();
       translatePage(document, lang);

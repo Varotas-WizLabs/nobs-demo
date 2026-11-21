@@ -2565,10 +2565,10 @@ button.nobs-scoop-verdict:hover {
 .nobs-logo-word::after {
   content: "*";
   display: inline-block;
-  margin-left: 0.02em;
+  margin-left: -0.04em;
   font-size: 0.95em;
   font-weight: 900;
-  vertical-align: 0.32em;
+  vertical-align: 0.24em;
   line-height: 0;
 }
 :root[data-theme="light"] .nobs-logo-frame,

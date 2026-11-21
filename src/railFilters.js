@@ -16,8 +16,8 @@
 // is then judged over the circles shown, and a hidden verdict is never kept
 // in the selection.
 
-import { t } from "./i18n.js?v=78dbe39118";
-import { allowedFlags, filterShown } from "./uiConfig.js?v=78dbe39118";
+import { t } from "./i18n.js?v=cd9defe92d";
+import { allowedFlags, filterShown } from "./uiConfig.js?v=cd9defe92d";
 
 export const RAIL_ORDER = ["green", "white", "insufficient", "pending", "failed", "yellow", "red"];
 

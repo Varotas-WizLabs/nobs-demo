@@ -2,7 +2,7 @@
 // Labels of the sources index (web/sources.html, srcui.*) and the trust
 // signals page (web/trust.html, trustui.*) in Russian and English.
 
-import { labelLanguage, registerStrings, t } from "./i18n.js?v=78dbe39118";
+import { labelLanguage, registerStrings, t } from "./i18n.js?v=cd9defe92d";
 
 /** t() with {name} placeholders filled from `vars`. */
 export function tf(key, vars = {}, lang = "ru") {
