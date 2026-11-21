@@ -9,13 +9,14 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=cd9defe92d";
-import { pickLang } from "./publicRequest.js?v=cd9defe92d";
-import { buildRequestForm, VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=cd9defe92d";
-import { loadAccountsConfig } from "./accountsConfig.js?v=cd9defe92d";
-import { createAccountsClient } from "./accountsClient.js?v=cd9defe92d";
-import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=cd9defe92d";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=cd9defe92d";
+import { t } from "./i18n.js?v=db20e9f4e2";
+import { pickLang } from "./publicRequest.js?v=db20e9f4e2";
+import { VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=db20e9f4e2";
+import { applyTheme, setSetting, themeSetting } from "./settings.js?v=db20e9f4e2";
+import { loadAccountsConfig } from "./accountsConfig.js?v=db20e9f4e2";
+import { createAccountsClient } from "./accountsClient.js?v=db20e9f4e2";
+import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=db20e9f4e2";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=db20e9f4e2";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
@@ -325,6 +326,27 @@ export function mountAccountPage({
     return el(doc, "section", { class: "nobs-account-card", id: "account-language-box" }, fieldset);
   }
 
+  // «Тема сайта»: dark / light / monochrome / system. Applies at once (no
+  // reload); the choice lives in the site settings (src/settings.js).
+  function buildThemeCard() {
+    const fieldset = el(doc, "fieldset", { class: "nobs-effort nobs-account-theme", id: "account-theme" },
+      el(doc, "legend", { text: tt("settings.theme") }));
+    const current = themeSetting();
+    for (const value of ["dark", "light", "monochrome", "system"]) {
+      const input = el(doc, "input", { type: "radio", name: "account-theme", value });
+      input.checked = value === current;
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        setSetting("theme", value);
+        applyTheme(doc);
+      });
+      fieldset.append(el(doc, "label", { class: "nobs-effort-option" }, input,
+        el(doc, "span", { class: "nobs-effort-text" }, el(doc, "strong", { text: tt(`settings.theme.${value}`) }))));
+    }
+    fieldset.append(el(doc, "small", { class: "nobs-account-note", text: tt("account.theme.hint") }));
+    return el(doc, "section", { class: "nobs-account-card", id: "account-theme-box" }, fieldset);
+  }
+
   // After sign-in: with no saved choice on this device, the profile's language applies.
   async function applyProfileLocale() {
     if (!state.client?.getLocale) return false;
@@ -436,6 +458,7 @@ export function mountAccountPage({
         el(doc, "p", { class: "nobs-tagline", text: tt("account.signInHint") }),
         invite, emailForm, sent, otpForm, google, error),
       buildLanguageCard(),
+      buildThemeCard(),
     );
     const step = otpStep.load();
     if (step) {
@@ -478,26 +501,6 @@ export function mountAccountPage({
       await redeem(code);
     });
 
-    ui.request = buildRequestForm(doc, {
-      lang,
-      storage: storages?.[1],
-      idPrefix: "account",
-      getClient: () => state.client,
-      showMessage: (text) => showMessage(text),
-      // A video already in «Мои видео» keeps its visibility: say so when the pick differs.
-      onCreated: async ({ id, asked }) => {
-        await refresh({ force: true });
-        const entry = state.videos.find((v) => v.video_id === id);
-        if (entry && VISIBILITIES.includes(entry.visibility) && entry.visibility !== asked) {
-          return tt("account.created.keptVisibility", { vis: tt(`account.vis.${entry.visibility}`) });
-        }
-        return "";
-      },
-    });
-    ui.effort = ui.request.ui.effort;
-    ui.requestError = ui.request.error;
-    const requestForm = ui.request.form;
-
     ui.list = el(doc, "div", { class: "nobs-account-videos", id: "account-videos" });
     ui.empty = el(doc, "p", { class: "nobs-account-note", id: "account-videos-empty", text: tt("account.videosEmpty"), hidden: true });
 
@@ -507,11 +510,10 @@ export function mountAccountPage({
         el(doc, "h2", { text: tt("account.balanceTitle") }), ui.balance, ui.expiry, ui.plan),
       el(doc, "section", { class: "nobs-account-card", id: "account-redeem-box" },
         el(doc, "h2", { text: tt("account.redeemTitle") }), redeemForm, ui.redeemResult),
-      el(doc, "section", { class: "nobs-account-card", id: "account-request" },
-        el(doc, "h2", { text: tt("account.requestTitle") }), requestForm, ui.requestError, ui.message),
       el(doc, "section", { class: "nobs-account-card", id: "account-my-videos" },
-        el(doc, "h2", { text: tt("account.videosTitle") }), ui.empty, ui.list),
+        el(doc, "h2", { text: tt("account.videosTitle") }), ui.message, ui.empty, ui.list),
       buildLanguageCard(),
+      buildThemeCard(),
     );
   }
 
@@ -535,7 +537,6 @@ export function mountAccountPage({
   function renderPlan() {
     if (!ui.plan) return;
     const plan = state.plan;
-    ui.request.setPlan(plan);
     if (!plan?.pro) {
       ui.plan.hidden = true;
       ui.plan.textContent = "";
@@ -548,10 +549,6 @@ export function mountAccountPage({
       : tt("account.pro.creditsNow");
     ui.plan.textContent = (until ? tt("account.pro.until", { date: until }) + " · " : "") + usage;
     ui.plan.hidden = false;
-  }
-
-  function renderPrice() {
-    if (ui.request) ui.request.setSettings(state.settings);
   }
 
   // Rebuilt only when the data changed, and not while the visitor is inside
@@ -766,7 +763,6 @@ export function mountAccountPage({
     const settings = await state.client.publicSettings();
     if (!settings.error) {
       state.settings = settings.data;
-      renderPrice();
     }
     // A code from the invite link: redeemed exactly once, after sign-in.
     const code = pendingCode();
@@ -799,6 +795,7 @@ export function mountAccountPage({
         el(doc, "p", { class: "nobs-account-off", text: tt("account.off") }),
         el(doc, "p", { class: "nobs-account-note", text: tt("account.offHint") })),
       buildLanguageCard(),
+      buildThemeCard(),
     );
   }
 

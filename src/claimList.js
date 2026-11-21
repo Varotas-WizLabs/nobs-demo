@@ -13,13 +13,13 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=cd9defe92d";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=cd9defe92d";
-import { t } from "./i18n.js?v=cd9defe92d";
-import { claimState, isUnchecked } from "./progress.js?v=cd9defe92d";
-import { frameLabels, isScreenClaim, safeThumb, screenLine } from "./frames.js?v=cd9defe92d";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=cd9defe92d";
-import { allowedFlags, filterShown } from "./uiConfig.js?v=cd9defe92d";
+import { formatTimecode } from "./claimSync.js?v=db20e9f4e2";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=db20e9f4e2";
+import { t } from "./i18n.js?v=db20e9f4e2";
+import { claimState, isUnchecked } from "./progress.js?v=db20e9f4e2";
+import { frameLabels, isScreenClaim, safeThumb, screenLine } from "./frames.js?v=db20e9f4e2";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=db20e9f4e2";
+import { allowedFlags, filterShown } from "./uiConfig.js?v=db20e9f4e2";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).

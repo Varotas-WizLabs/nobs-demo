@@ -9,10 +9,10 @@
 // player -- so it works while the video is still loading, or if it never
 // loads. All server-provided text is inserted with textContent.
 
-import { progressLine } from "./progress.js?v=cd9defe92d";
-import { formatUsage } from "./runStats.js?v=cd9defe92d";
-import { labelLanguage, t } from "./i18n.js?v=cd9defe92d";
-import "./stringsPlayer.js?v=cd9defe92d";
+import { progressLine } from "./progress.js?v=db20e9f4e2";
+import { formatUsage } from "./runStats.js?v=db20e9f4e2";
+import { labelLanguage, t } from "./i18n.js?v=db20e9f4e2";
+import "./stringsPlayer.js?v=db20e9f4e2";
 
 // The log's own labels: English, or the interface language when one is chosen.
 const LOG_LANG = "en";

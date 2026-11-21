@@ -2,7 +2,7 @@
 // Labels of the home page (web/request.html: src/homePage.js, src/homeSearch.js,
 // src/homeFilters.js) in Russian and English.
 
-import { labelLanguage, registerStrings, t } from "./i18n.js?v=cd9defe92d";
+import { labelLanguage, registerStrings, t } from "./i18n.js?v=db20e9f4e2";
 
 /** t() with {name} placeholders filled from `vars`. */
 export function th(key, vars = {}, lang = "ru") {

@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="src/demoShim.js?v=cd9defe92d"></script>
+    <script src="src/demoShim.js?v=db20e9f4e2"></script>
 
     <script src="src/uiLangEarly.js"></script>
     <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=cd9defe92d"></script>
+    <script src="src/themeEarly.js?v=db20e9f4e2"></script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
     <title>Skeptium</title>
-    <link rel="stylesheet" href="styles.css?v=cd9defe92d" />
+    <link rel="stylesheet" href="styles.css?v=db20e9f4e2" />
   </head>
   <body>
     <!-- Brand bar: the «Skeptium» logo, top left. -->
@@ -75,34 +75,34 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module">
-      import { initUiLang, translatePage } from "./src/uiLang.js?v=cd9defe92d";
-      import "./src/stringsPlayer.js?v=cd9defe92d";
-      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=cd9defe92d";
-      import { bootstrapPlayerPage } from "./src/main.js?v=cd9defe92d";
-      import { startProcessingLog } from "./src/processingLog.js?v=cd9defe92d";
-      import { mountNerdToggle } from "./src/nerdToggle.js?v=cd9defe92d";
-      import { startLibrary } from "./src/library.js?v=cd9defe92d";
-      import { buildShareControl, isSolo, watchShareUrl } from "./src/share.js?v=cd9defe92d";
-      import { renderClaimList } from "./src/claimList.js?v=cd9defe92d";
-      import { buildRailFilters } from "./src/railFilters.js?v=cd9defe92d";
-      import { fetchUiConfig } from "./src/uiConfig.js?v=cd9defe92d";
-      import { verdictKey } from "./src/popup.js?v=cd9defe92d";
-      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=cd9defe92d";
-      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=cd9defe92d";
-      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=cd9defe92d";
-      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=cd9defe92d";
-      import { t } from "./src/i18n.js?v=cd9defe92d";
-      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=cd9defe92d";
-      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=cd9defe92d";
-      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, isSystemVoiceId, piperSupported, resolveEngineId, systemSupported, systemVoiceIds, systemVoiceNames } from "./src/voiceEngines.js?v=cd9defe92d";
-      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=cd9defe92d";
-      import { createHoldIcon } from "./src/holdIcon.js?v=cd9defe92d";
-      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=cd9defe92d";
-      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=cd9defe92d";
-      import { createPlaybackGate } from "./src/playbackGate.js?v=cd9defe92d";
-      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=cd9defe92d";
-      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=cd9defe92d";
-      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=cd9defe92d";
+      import { initUiLang, translatePage } from "./src/uiLang.js?v=db20e9f4e2";
+      import "./src/stringsPlayer.js?v=db20e9f4e2";
+      import { buildControlBar, latestRunId, resolveVideoId, whenYouTubeApiReady } from "./src/controlBar.js?v=db20e9f4e2";
+      import { bootstrapPlayerPage } from "./src/main.js?v=db20e9f4e2";
+      import { startProcessingLog } from "./src/processingLog.js?v=db20e9f4e2";
+      import { mountNerdToggle } from "./src/nerdToggle.js?v=db20e9f4e2";
+      import { startLibrary } from "./src/library.js?v=db20e9f4e2";
+      import { buildShareControl, isSolo, watchShareUrl } from "./src/share.js?v=db20e9f4e2";
+      import { renderClaimList } from "./src/claimList.js?v=db20e9f4e2";
+      import { buildRailFilters } from "./src/railFilters.js?v=db20e9f4e2";
+      import { fetchUiConfig } from "./src/uiConfig.js?v=db20e9f4e2";
+      import { verdictKey } from "./src/popup.js?v=db20e9f4e2";
+      import { renderScoopList, seekToAnchor } from "./src/scoopList.js?v=db20e9f4e2";
+      import { filterTimelineItems, timelineItems } from "./src/tags.js?v=db20e9f4e2";
+      import { downloadIcon, listIcon, makePanelToggle, setCollapsed } from "./src/sidePanel.js?v=db20e9f4e2";
+      import { downloadMarkdown, downloadTranscript, printReport } from "./src/report.js?v=db20e9f4e2";
+      import { t } from "./src/i18n.js?v=db20e9f4e2";
+      import { showRunAction, withVisibleClaims } from "./src/progress.js?v=db20e9f4e2";
+      import { checkVoiceHealth, createNarrator, loadEnabled, normalizeLang, saveEnabled } from "./src/voice.js?v=db20e9f4e2";
+      import { createEngine, createSystemEngine, fetchVoiceEngines, findSystemVoice, isSystemVoiceId, piperSupported, resolveEngineId, systemSupported, systemVoiceIds, systemVoiceNames } from "./src/voiceEngines.js?v=db20e9f4e2";
+      import { countLines, effectivePersona, needsLines, unavailablePersonas, voiceStatusLines } from "./src/voiceStatus.js?v=db20e9f4e2";
+      import { createHoldIcon } from "./src/holdIcon.js?v=db20e9f4e2";
+      import { builtinProfiles, fetchCommentators, isParody, parodyCaption, parodyWord, personaLabel, resolvePersona } from "./src/commentators.js?v=db20e9f4e2";
+      import { createCommentatorMenu } from "./src/commentatorMenu.js?v=db20e9f4e2";
+      import { createPlaybackGate } from "./src/playbackGate.js?v=db20e9f4e2";
+      import { redirectTarget, runUrl, watchUpgrade } from "./src/effort.js?v=db20e9f4e2";
+      import { isMobileDevice, narratorLeadSec, personaVoiceAllowed, playerVars } from "./src/mobile.js?v=db20e9f4e2";
+      import { applyTheme, commentator, followPlayback, localVoiceIds, mountPanelSettings, onSettingsChange, seekTarget, setCommentators, setVoiceTester, setLocalVoices, setSetting, setSileroAvailable, showTagFilter, showTimelineFlags, voiceEngine, voiceRewindSec, voiceStyle, youtubeCaptions } from "./src/settings.js?v=db20e9f4e2";
       // Interface language (RU / EN switch in the top bar): every label follows it;
       // claims and spoken lines stay in the video's language.
       const uiLang = initUiLang();
