@@ -32,10 +32,10 @@
 // a muted «No analyses match …» note with a hint, then the «Search for» row
 // (the results view's empty state).
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { counted, th } from "./stringsHome.js?v=d9665ac097";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=d9665ac097";
-import { channelAvatar } from "./channelAvatar.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { counted, th } from "./stringsHome.js?v=1cfdace93f";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=1cfdace93f";
+import { channelAvatar } from "./channelAvatar.js?v=1cfdace93f";
 
 const MAX_TERMS = 8;
 const SPLIT_RE = /[\s.,;:!?"'«»„“”()[\]{}<>\/\\|+*=~`^#&%@]+/u;

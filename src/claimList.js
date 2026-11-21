@@ -13,13 +13,13 @@
 // out of the rows and the filters (the page redraws the list).
 // Built with DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=d9665ac097";
-import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=d9665ac097";
-import { t } from "./i18n.js?v=d9665ac097";
-import { claimState, isUnchecked } from "./progress.js?v=d9665ac097";
-import { frameLabels, isScreenClaim, safeThumb, screenLine } from "./frames.js?v=d9665ac097";
-import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=d9665ac097";
-import { allowedFlags, filterShown } from "./uiConfig.js?v=d9665ac097";
+import { formatTimecode } from "./claimSync.js?v=1cfdace93f";
+import { claimVerdictLabel, isQuote, isRef, verdictKey } from "./popup.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { claimState, isUnchecked } from "./progress.js?v=1cfdace93f";
+import { frameLabels, isScreenClaim, safeThumb, screenLine, thumbSrc } from "./frames.js?v=1cfdace93f";
+import { byTier, claimHasTag, claimTags, tagFilterOptions, tagLabel, tagTooltip, tierOf } from "./tags.js?v=1cfdace93f";
+import { allowedFlags, filterShown } from "./uiConfig.js?v=1cfdace93f";
 
 // Filter chips by verdict: the white flag splits into "not supported"
 // (checked, too little evidence) and "not checked" (opinion, prediction).
@@ -266,7 +266,7 @@ export function renderClaimList(root, run, { onSelect, onFilterChange, followPla
     const thumb = safeThumb(claim.frame_thumb);
     if (thumb) {
       const img = el(doc, "img", "nobs-claims-frame");
-      img.src = thumb;
+      img.src = thumbSrc(thumb, doc);
       img.alt = "";
       img.loading = "lazy";
       img.width = 64;

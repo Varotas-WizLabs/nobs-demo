@@ -1,4 +1,4 @@
-/* web/sources.html — the source index page. Uses the theme tokens of styles.css. */
+/* web/sources/index.html — the source index page. Uses the theme tokens of styles.css. */
 .nobs-src-page main {
   max-width: 1200px;
   margin: 0 auto;
@@ -208,7 +208,7 @@
   font-style: italic;
 }
 
-/* web/trust.html — trust-signal connectors (src/trustPage.js). */
+/* web/trust/index.html — trust-signal connectors (src/trustPage.js). */
 .nobs-trust-rules {
   margin: 0 0 12px;
   padding-left: 28px;

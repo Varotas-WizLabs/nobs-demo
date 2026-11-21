@@ -5,9 +5,10 @@
 // claim popup shows it under the verdict as «Второе мнение специалиста»,
 // and the sources page lists every opinion, disagreements first.
 
-import { labelLanguage, t as tr } from "./i18n.js?v=d9665ac097";
-import "./stringsPlayer.js?v=d9665ac097";
-import { topicLabel } from "./stringsSources.js?v=d9665ac097";
+import { labelLanguage, t as tr } from "./i18n.js?v=1cfdace93f";
+import "./stringsPlayer.js?v=1cfdace93f";
+import { topicLabel } from "./stringsSources.js?v=1cfdace93f";
+import { pageHref } from "./sitePaths.js?v=1cfdace93f";
 
 const FLAG_TEXT = {
   ru: { green: "верно", yellow: "неточно", red: "неверно", white: "не проверить" },
@@ -173,7 +174,7 @@ export function renderSpecialistSection(doc, data) {
     const li = el(doc, "li", { class: op.agrees ? "is-agree" : "is-disagree" });
     const t = Math.max(0, Math.floor(Number(op.start_sec) || 0));
     const link = el(doc, "a", {
-      href: `player.html?run_id=${encodeURIComponent(op.run_id)}&t=${t}`,
+      href: pageHref("player", `?run_id=${encodeURIComponent(op.run_id)}&t=${t}`, doc),
       target: "_blank",
       rel: "noopener",
       text: op.claim_text,

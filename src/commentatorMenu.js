@@ -11,10 +11,11 @@
 // menuitemradio entries; arrow keys move, Enter / Space pick, Escape or a
 // click outside closes and gives the focus back to the button.
 
-import { isParody, parodyWord, personaName, supportsLang } from "./commentators.js?v=d9665ac097";
-import { t } from "./i18n.js?v=d9665ac097";
+import { isParody, parodyWord, personaName, supportsLang } from "./commentators.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { PAGES, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
-export const MANAGE_HREF = "commentators.html";
+export const MANAGE_HREF = PAGES.commentators;
 
 /**
  * @param {{container: HTMLElement, anchor?: HTMLElement, onSelect: (id: string) => void,
@@ -126,7 +127,7 @@ export function createCommentatorMenu({ container, anchor = null, onSelect = () 
     const manage = doc.createElement("a");
     manage.className = "nobs-commentator-manage";
     manage.setAttribute("role", "menuitem");
-    manage.href = manageHref;
+    manage.href = siteHref(doc, manageHref);
     manage.target = "_blank";
     manage.rel = "noopener";
     manage.tabIndex = -1;

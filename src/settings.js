@@ -38,13 +38,14 @@
 // commentator: the narrator's persona id (src/commentators.js; default
 // "dushnila"). The dialog lists the personas the player loaded
 // (setCommentators) with a «(пародия)» mark, and links to the management
-// page (commentators.html). voiceStyle only concerns «душнила», so its field
+// page (commentators/). voiceStyle only concerns «душнила», so its field
 // («Душнила зачитывает») shows only while «душнила» is chosen.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=d9665ac097";
-import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=d9665ac097";
-import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { BUILTINS, DEFAULT_COMMENTATOR, isParody, personaLabel } from "./commentators.js?v=1cfdace93f";
+import { baseLang, defaultEnglishEngine, defaultHebrewEngine, isSystemVoiceId, localEngines, rankedSystemVoices } from "./voiceEngines.js?v=1cfdace93f";
+import { defaultRussianEngine, isMobileDevice } from "./mobile.js?v=1cfdace93f";
+import { PAGES, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 const KEY = "nobs.settings";
 
@@ -190,14 +191,14 @@ export function commentator() {
   return typeof value === "string" && value ? value : DEFAULT_COMMENTATOR;
 }
 
-/** Link to the commentator management page. */
-export const COMMENTATORS_PAGE = "commentators.html";
+/** The commentator management page, relative to the site root (siteHref resolves it). */
+export const COMMENTATORS_PAGE = PAGES.commentators;
 
-/** Link to the source reliability index page (web/sources.html). */
-export const SOURCES_PAGE = "sources.html";
+/** The source reliability index page (web/sources/index.html), relative to the site root. */
+export const SOURCES_PAGE = PAGES.sources;
 
-/** Link to the trust-signal connectors page (web/trust.html). */
-export const TRUST_PAGE = "trust.html";
+/** The trust-signal connectors page (web/trust/index.html), relative to the site root. */
+export const TRUST_PAGE = PAGES.trust;
 
 /** What the narrator reads: "casual" (default) or "normal". */
 export function voiceStyle() {
@@ -675,7 +676,7 @@ function adminEntryField(doc) {
   box.className = "nobs-settings-field nobs-settings-admin";
   const link = doc.createElement("a");
   link.className = "nobs-settings-link nobs-settings-admin-link";
-  link.href = adminEntry.href;
+  link.href = siteHref(doc, adminEntry.href);
   link.textContent = String((typeof adminEntry.label === "function" ? adminEntry.label() : adminEntry.label) || adminEntry.href);
   box.append(link);
   return box;
@@ -805,7 +806,7 @@ export async function mountQueueSettings(dialog, before, lang = "en", fetchImpl 
 
   const link = doc.createElement("a");
   link.className = "nobs-settings-link";
-  link.href = CODES_PAGE;
+  link.href = siteHref(doc, CODES_PAGE);
   link.target = "_blank";
   link.rel = "noopener";
   link.textContent = t("settings.manageCodes", lang);

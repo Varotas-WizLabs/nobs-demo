@@ -7,9 +7,10 @@
 // is a lead, never evidence: the popup says so when the original was not
 // found. Frames never change a flag.
 
-import { formatTimecode } from "./claimSync.js?v=d9665ac097";
-import { labelLanguage } from "./i18n.js?v=d9665ac097";
-import { speakerNote, speakerText } from "./speakers.js?v=d9665ac097";
+import { formatTimecode } from "./claimSync.js?v=1cfdace93f";
+import { labelLanguage } from "./i18n.js?v=1cfdace93f";
+import { speakerNote, speakerText } from "./speakers.js?v=1cfdace93f";
+import { siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 const LABELS = {
   ru: {
@@ -47,6 +48,11 @@ function safeUrl(url) {
   } catch {
     return null;
   }
+}
+
+/** The src of a safe thumbnail on this page: a demo file (data/frames/…) resolves from the site root. */
+export function thumbSrc(thumb, doc) {
+  return thumb && thumb.startsWith("data/") ? siteHref(doc, thumb) : thumb;
 }
 
 /** A thumbnail path the page may load: the API's own path or a demo file. */
@@ -137,7 +143,7 @@ export function screenBlockHtml(claim, lang = "ru") {
   const speaker = claim?.speaker;
   if (!thumb && !line && !isScreenClaim(claim) && !role && !speaker) return "";
   const parts = [];
-  if (thumb) parts.push(`<img class="claim-frame" src="${esc(thumb)}" alt="${esc(L.frameAlt)}" loading="lazy" width="160" height="90">`);
+  if (thumb) parts.push(`<img class="claim-frame" src="${esc(thumbSrc(thumb))}" alt="${esc(L.frameAlt)}" loading="lazy" width="160" height="90">`);
   const lines = [];
   if (isScreenClaim(claim)) lines.push(`<span class="claim-screen-badge">${esc(L.fromScreen)}</span>`);
   if (speaker) {

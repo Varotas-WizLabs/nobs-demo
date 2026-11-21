@@ -13,7 +13,8 @@
 //                       then shows a small «deeper version ready» notice (never swaps claims)
 // Built with DOM APIs and textContent only.
 
-import { labelLanguage } from "./i18n.js?v=d9665ac097";
+import { labelLanguage } from "./i18n.js?v=1cfdace93f";
+import { pageHref } from "./sitePaths.js?v=1cfdace93f";
 
 export const EFFORTS = ["light", "deep"];
 export const UPGRADE_POLL_MS = 30000;
@@ -181,7 +182,7 @@ export function runUrl(search, runId) {
   const params = new URLSearchParams(search);
   params.set("run_id", String(runId));
   params.delete("exact");
-  return `player.html?${params.toString()}`;
+  return pageHref("player", `?${params.toString()}`);
 }
 
 /**

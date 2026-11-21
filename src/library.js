@@ -16,12 +16,13 @@
 // is flat. This module knows only the source and the parameter; the
 // management links come from the source (pageHref, manage_href).
 
-import { formatCost, formatDuration } from "./runStats.js?v=d9665ac097";
-import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=d9665ac097";
-import { enableMenuSettings } from "./settings.js?v=d9665ac097";
-import { t } from "./i18n.js?v=d9665ac097";
-import { buildEffortBadge } from "./effort.js?v=d9665ac097";
-import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=d9665ac097";
+import { formatCost, formatDuration } from "./runStats.js?v=1cfdace93f";
+import { isCollapsed, libraryIcon, makePanelToggle, setCollapsed } from "./sidePanel.js?v=1cfdace93f";
+import { enableMenuSettings } from "./settings.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { buildEffortBadge } from "./effort.js?v=1cfdace93f";
+import { VIDEO_ID_RE as YOUTUBE_ID } from "./youtubeId.js?v=1cfdace93f";
+import { PAGES, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 const FLAG_ORDER = ["green", "yellow", "red", "white"];
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -130,7 +131,7 @@ function renderItem(doc, run, currentRunId, { playlistId = null, inFolder = null
   const runId = Number(run.run_id);
   const link = doc.createElement("a");
   link.className = "nobs-library-item";
-  link.href = `player.html?run_id=${runId}` + (playlistId != null ? `&playlist=${Number(playlistId)}` : "");
+  link.href = siteHref(doc, `${PAGES.player}?run_id=${runId}` + (playlistId != null ? `&playlist=${Number(playlistId)}` : ""));
   link.dataset.runId = String(runId);
   if (runId === Number(currentRunId)) {
     link.setAttribute("aria-current", "page");
@@ -192,7 +193,7 @@ function renderFolder(doc, folder, currentRunId, onEnter) {
   link.className = "nobs-library-item nobs-library-folder";
   link.dataset.type = "playlist";
   link.dataset.playlistId = String(id);
-  link.href = currentRunId != null ? `player.html?run_id=${Number(currentRunId)}&playlist=${id}` : `player.html?playlist=${id}`;
+  link.href = siteHref(doc, currentRunId != null ? `${PAGES.player}?run_id=${Number(currentRunId)}&playlist=${id}` : `${PAGES.player}?playlist=${id}`);
   link.appendChild(folderIcon(doc));
   const body = doc.createElement("div");
   body.className = "nobs-library-body";
@@ -266,7 +267,7 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
   label.className = "nobs-library-label";
   label.textContent = t("lib.label", "en");
   const newLink = doc.createElement("a");
-  newLink.href = "index.html";
+  newLink.href = siteHref(doc, PAGES.home);
   newLink.className = "nobs-library-new";
   newLink.textContent = t("lib.new", "en");
   // Settings: an entry of the account menu (signed in only), not a gear here.
@@ -304,7 +305,7 @@ export function renderLibrary(root, runs, currentRunId, options = {}) {
     if (folder.manage_href) {
       const manage = doc.createElement("a");
       manage.className = "nobs-library-manage";
-      manage.href = folder.manage_href;
+      manage.href = siteHref(doc, folder.manage_href);
       manage.textContent = t("lib.manage", "ru");
       sub.appendChild(manage);
     }

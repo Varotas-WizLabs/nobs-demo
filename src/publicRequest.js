@@ -1,7 +1,7 @@
 // web/src/publicRequest.js
 //
 // «Разобрать новое видео»: the public page (request.html; the public demo's
-// index.html) where a visitor with an invite code asks for a new analysis.
+// home, the site root) where a visitor with an invite code asks for a new analysis.
 //
 // 1. The video id is read from the link; a video the site already has opens
 //    at once (its run list, GET /runs -- the demo shim answers it from
@@ -18,8 +18,9 @@
 // The invite code may come in the link's fragment (#code=…, never sent to a
 // server); it pre-fills the field and is remembered for this visitor.
 
-import { interfaceLanguageOf, t } from "./i18n.js?v=d9665ac097";
-import { VIDEO_ID_RE, extractVideoId, youtubeVideoId } from "./youtubeId.js?v=d9665ac097";
+import { interfaceLanguageOf, t } from "./i18n.js?v=1cfdace93f";
+import { VIDEO_ID_RE, extractVideoId, youtubeVideoId } from "./youtubeId.js?v=1cfdace93f";
+import { pageHref, siteRootOf } from "./sitePaths.js?v=1cfdace93f";
 
 export const WORKER_URL = "https://nobs-queue.iopuki-6fa.workers.dev";
 export const POLL_MS = 10000;
@@ -178,7 +179,7 @@ export function mountRequestPage({
   }
 
   async function waitForPublished(playerUrl, runId) {
-    const dataUrl = withParam(new URL(`data/runs/${runId}.json`, playerUrl).toString(), "cb", now());
+    const dataUrl = withParam(new URL(`data/runs/${runId}.json`, siteRootOf(playerUrl)).toString(), "cb", now());
     try {
       const r = await fetchImpl(dataUrl, { cache: "no-store" });
       if (r.ok) {
@@ -262,7 +263,7 @@ export function mountRequestPage({
         if (r.ok) {
           const entry = findExistingEntry((await r.json()).runs, videoId);
           if (opensExisting(entry, mode)) {
-            navigate(`player.html?run_id=${Number(entry.run_id)}`);
+            navigate(pageHref("player", `?run_id=${Number(entry.run_id)}`, doc));
             return "existing";
           }
         }
@@ -326,7 +327,7 @@ export function renderRecent(root, runs, lang, limit = 12) {
   for (const run of (runs ?? []).slice(0, limit)) {
     const a = doc.createElement("a");
     a.className = "nobs-request-recent-item";
-    a.href = `player.html?run_id=${Number(run.run_id)}`;
+    a.href = pageHref("player", `?run_id=${Number(run.run_id)}`, doc);
     if (VIDEO_ID_RE.test(run.video_id ?? "")) {
       const img = doc.createElement("img");
       img.src = `https://i.ytimg.com/vi/${run.video_id}/mqdefault.jpg`;

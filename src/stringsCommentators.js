@@ -1,11 +1,11 @@
 // web/src/stringsCommentators.js
 //
-// Labels of the commentator management page (web/commentators.html,
+// Labels of the commentator management page (web/commentators/index.html,
 // src/commentatorsPage.js) and the profile validation messages
 // (src/commentators.js), in Russian and English. Persona line texts, opener
 // phrases and anything spoken stay as they are (content, not labels).
 
-import { registerStrings } from "./i18n.js?v=d9665ac097";
+import { registerStrings } from "./i18n.js?v=1cfdace93f";
 
 const ru = {
   "cmui.pageTitle": "Skeptium — Комментаторы",

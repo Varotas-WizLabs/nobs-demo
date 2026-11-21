@@ -1,16 +1,17 @@
 // web/src/sourcesPage.js
 //
-// «Индекс источников» (web/sources.html): every site the fact-checks used,
+// «Индекс источников» (web/sources/index.html, sources/): every site the fact-checks used,
 // how often, in which roles, how often what it said held up, and a 0-100
 // score (backend: nobs.sources, /sources API). Local app: live from the API.
 // Public demo (html[data-demo="1"]): a read-only snapshot, data/sources.json.
 //
 // The score is shown for reading only: it never decides a verdict.
 
-import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=d9665ac097";
-import { renderTrustRow } from "./trustPage.js?v=d9665ac097";
-import { tf, tl, topicLabel } from "./stringsSources.js?v=d9665ac097";
-import { t } from "./i18n.js?v=d9665ac097";
+import { EVIDENCE_LABELS, renderSpecialistSection } from "./specialist.js?v=1cfdace93f";
+import { renderTrustRow } from "./trustPage.js?v=1cfdace93f";
+import { tf, tl, topicLabel } from "./stringsSources.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { pageHref, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 // The weight of a corroboration / contradiction by the evidence behind it
 // (claims about research only; backend nobs.sources.evidence).
@@ -265,7 +266,7 @@ export function renderDetail(doc, detail) {
   for (const u of detail.uses ?? []) {
     const li = el(doc, "li", { class: `is-${u.outcome}` });
     const claim = el(doc, "a", {
-      href: `player.html?run_id=${encodeURIComponent(u.run_id)}`,
+      href: pageHref("player", `?run_id=${encodeURIComponent(u.run_id)}`, doc),
       target: "_blank",
       rel: "noopener",
       text: u.claim_text,
@@ -305,12 +306,12 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   const isDemo = demo ?? doc.documentElement?.dataset.demo === "1";
   let snapshot = null;
   let trustSnapshot = null;
-  // The trust-connector signals of one domain (web/trust.html): live from
+  // The trust-connector signals of one domain (web/trust/index.html): live from
   // /trust/signals, in the demo from data/trust.json. Optional.
   const trustOf = async (domain) => {
     if (isDemo) {
       if (!trustSnapshot) {
-        const r = await fetchImpl("data/trust.json");
+        const r = await fetchImpl(siteHref(doc, "data/trust.json"));
         trustSnapshot = r.ok ? await r.json() : {};
       }
       return trustSnapshot.signals?.[domain] ?? null;
@@ -322,7 +323,7 @@ export async function mountSourcesPage(root, { fetchImpl = globalThis.fetch, dem
   const getJson = async (path) => {
     if (isDemo) {
       if (!snapshot) {
-        const r = await fetchImpl("data/sources.json");
+        const r = await fetchImpl(siteHref(doc, "data/sources.json"));
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         snapshot = await r.json();
       }

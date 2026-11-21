@@ -81,7 +81,8 @@
 // for tests), so it is tested with a fake player, fake fetch and fake audio.
 
 
-import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=d9665ac097";
+import { RATE_BY_LEVEL, isParody, rateFor, selectStops, supportsLang } from "./commentators.js?v=1cfdace93f";
+import { siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 export { RATE_BY_LEVEL, selectStops };
 
@@ -290,13 +291,14 @@ export function speakAt(claim) {
 // if it cannot be), a synthesized click stands in. playKeyClick returns how
 // long to wait (ms) before going on; 0 when Web Audio is unavailable.
 export const CLICK_MS = 200;
+// Relative to the site root (the player is at player/).
 export const CLICK_URL = "sounds/key-spacebar.wav";
 let clickContext = null;
 let clickBuffer = null;
 let clickLoading = null;
 function loadClick(ctx) {
   if (clickBuffer || clickLoading || typeof fetch !== "function") return;
-  clickLoading = fetch(CLICK_URL)
+  clickLoading = fetch(siteHref(undefined, CLICK_URL))
     .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(`HTTP ${response.status}`))))
     .then((bytes) => ctx.decodeAudioData(bytes))
     .then((buffer) => {

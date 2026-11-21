@@ -6,8 +6,8 @@
 // processing line «Проанализировано 7:40 / 41:20 · 23 утверждения · 5
 // проверяются». Pure functions; no DOM.
 
-import { formatTimecode } from "./claimSync.js?v=d9665ac097";
-import { labelLanguage, t } from "./i18n.js?v=d9665ac097";
+import { formatTimecode } from "./claimSync.js?v=1cfdace93f";
+import { labelLanguage, t } from "./i18n.js?v=1cfdace93f";
 
 const STATES = new Set(["pending", "checking", "done", "failed", "superseded"]);
 
@@ -148,7 +148,7 @@ export function progressLine(status, lang = "en") {
 }
 
 /**
- * What the player does with a run handed to showRun (player.html):
+ * What the player does with a run handed to showRun (player/):
  * "finish" -- a run shown live completed: update in place, then what only a
  * finished run has; "settle" -- a run shown live failed: update the list in
  * place (its unfinished checks now failed) and drop the frontier, no export

@@ -291,7 +291,16 @@ main.bb {
 .bb-tile--white { background: var(--bb-void); border-color: #fff; fill: #fff; box-shadow: 0 0 0 6px var(--bb-void); }
 .bb-tile--paper { background: #fff; border-color: var(--bb-void); fill: var(--bb-void); box-shadow: 0 0 0 6px #fff, 0 0 0 7px #d4d4d4; }
 .bb-tile--greys { background: linear-gradient(120deg, #090909 0%, #383838 35%, #979797 75%, #d4d4d4 100%) border-box; border-color: #d4d4d4; fill: #fff; }
-.bb-tile--field { background: linear-gradient(135deg, #ef3442 0%, #f87b31 22%, #f8d46b 46%, #cde8c5 68%, #83dde4 100%) border-box; border-color: transparent; fill: #fff; }
+.bb-tile--field {
+  /* Deep, saturated ends (like the spectrum where it meets near-black) so the white mark keeps contrast;
+     the bright middle stays as the light point of the journey. */
+  background:
+    radial-gradient(120% 120% at 50% 50%, transparent 45%, rgba(5, 9, 11, 0.28) 100%) border-box,
+    linear-gradient(135deg, #a5121f 0%, #ef3442 20%, #f87b31 36%, #f8d46b 52%, #cde8c5 66%, #83dde4 80%, #1f8c99 100%) border-box;
+  border-color: transparent;
+  fill: #fff;
+}
+.bb-tile--field svg { filter: drop-shadow(0 1px 8px rgba(5, 9, 11, 0.28)); }
 .bb-tile--cyan { background: var(--bb-dark); border-color: #3f8fd8; fill: #3f8fd8; }
 .bb-tile--faded { opacity: 0.38; }
 .bb-tile--glow { filter: drop-shadow(0 0 10px #f87b31) drop-shadow(0 6px 10px rgba(131, 221, 228, 0.7)); }

@@ -33,18 +33,20 @@
 // Everything is built with DOM APIs and textContent: titles, channels and
 // claims come from YouTube and the analyses and are never parsed as HTML.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { counted, th } from "./stringsHome.js?v=d9665ac097";
-import { buildSearchIndex, highlightInto, mountSearchBox, queryTerms, search, snippet } from "./homeSearch.js?v=d9665ac097";
-import { chipsFor, filterRuns, mountChipScroller, renderChips, renderFilterMenu } from "./homeFilters.js?v=d9665ac097";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=d9665ac097";
-import { channelAvatar } from "./channelAvatar.js?v=d9665ac097";
-import { moreButton, mountCardMenu } from "./cardMenu.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { counted, th } from "./stringsHome.js?v=1cfdace93f";
+import { buildSearchIndex, highlightInto, mountSearchBox, queryTerms, search, snippet } from "./homeSearch.js?v=1cfdace93f";
+import { chipsFor, filterRuns, mountChipScroller, renderChips, renderFilterMenu } from "./homeFilters.js?v=1cfdace93f";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=1cfdace93f";
+import { channelAvatar } from "./channelAvatar.js?v=1cfdace93f";
+import { moreButton, mountCardMenu } from "./cardMenu.js?v=1cfdace93f";
+import { PAGES, pageHref } from "./sitePaths.js?v=1cfdace93f";
 
 const FLAGS = ["green", "yellow", "red", "white"];
 const DRAWER_QUERY = "(max-width: 1099px)";
 const TABBAR_QUERY = "(max-width: 760px)";
-const ACCOUNT_HREF = "account.html";
+// The account page (clean URL); the home is at the site root.
+const ACCOUNT_HREF = PAGES.account;
 
 /** "7:23", "1:05:09" for a length in seconds; "" when unknown. */
 export function formatVideoDuration(sec) {
@@ -73,7 +75,7 @@ export function formatCardDate(iso, lang = "ru", now = new Date()) {
 }
 
 export function playerHref(run) {
-  return `player.html?run_id=${Number(run.run_id)}`;
+  return pageHref("player", `?run_id=${Number(run.run_id)}`);
 }
 
 function el(doc, tag, cls, text) {

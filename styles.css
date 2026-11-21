@@ -2530,15 +2530,21 @@ button.nobs-scoop-verdict:hover {
   text-decoration: none;
   font-family: var(--nobs-font);
   font-weight: 800;
-  font-size: 19px;
+  /* One logo on every page (the home's top bar is the reference): the same
+     mark, word size, weight, gap and asterisk everywhere; phones below. */
+  font-size: 20px;
   letter-spacing: -0.02em;
   line-height: 1;
 }
 .nobs-logo-mark {
   flex: none;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   display: block;
+}
+@media (max-width: 760px) {
+  .nobs-logo { font-size: 18px; }
+  .nobs-logo-mark { width: 24px; height: 24px; }
 }
 .nobs-logo-frame {
   fill: none;
@@ -2985,7 +2991,7 @@ button.nobs-scoop-verdict:hover {
   }
 }
 
-/* ---- Commentator management page (commentators.html, src/commentatorsPage.js) ---- */
+/* ---- Commentator management page (commentators/, src/commentatorsPage.js) ---- */
 .nobs-cm-page {
   margin: 0;
   padding: 0 16px 48px;
@@ -3590,7 +3596,7 @@ button.nobs-scoop-verdict:hover {
   text-decoration: underline;
 }
 
-/* ---- Accounts (account.html, watch.html; src/accountPage.js, src/watchPage.js) ---- */
+/* ---- Accounts (account/, watch/; src/accountPage.js, src/watchPage.js) ---- */
 .nobs-account {
   padding-bottom: 48px;
 }
@@ -5738,8 +5744,6 @@ html.nobs-pseudo-fs-open body {
 }
 .nobs-hp-icon-button:hover { background: var(--nobs-hover); }
 .nobs-hp-icon-button:active { background: var(--nobs-pressed); }
-.nobs-hp-bar .nobs-logo { font-size: 20px; }
-.nobs-hp-bar .nobs-logo-mark { width: 28px; height: 28px; }
 .nobs-hp-search-open,
 .nobs-hp-search-back { display: none; }
 
@@ -7044,8 +7048,6 @@ html.nobs-pseudo-fs-open body {
     padding: 0 8px 0 4px;
   }
   .nobs-hp-start { gap: 4px; }
-  .nobs-hp-bar .nobs-logo { font-size: 18px; }
-  .nobs-hp-bar .nobs-logo-mark { width: 24px; height: 24px; }
   .nobs-hp-bar .nobs-hp-search { display: none; }
   .nobs-hp-bar .nobs-hp-search-open { display: inline-flex; margin-left: auto; }
   .nobs-hp-bar .nobs-hp-search-open + .nobs-account-menu,

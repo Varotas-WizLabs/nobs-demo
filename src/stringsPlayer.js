@@ -1,9 +1,9 @@
 // web/src/stringsPlayer.js
-// Labels of the public player and pages (player.html, index.html and the
+// Labels of the public player and pages (player/, index.html and the
 // modules they use) in Russian and English, reached through t() from i18n.js.
 // Content (claims, titles, server log lines, spoken lines) is never here.
 
-import { registerStrings } from "./i18n.js?v=d9665ac097";
+import { registerStrings } from "./i18n.js?v=1cfdace93f";
 
 registerStrings({
   en: {

@@ -1,44 +1,15 @@
 <!doctype html>
-<html lang="ru">
+<!-- Old address of web/watch/index.html (clean URL: watch/). Kept forever: forwards with the query and the fragment intact (e.g. sign-in returns ?code= / #access_token=, #code=NOBS-…). -->
+<html lang="en">
   <head>
-    <script src="src/demoShim.js?v=d9665ac097"></script>
-
-    <script src="src/uiLangEarly.js"></script>
-    <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=d9665ac097"></script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="brand/apple-touch-icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
+    <meta charset="utf-8" />
     <meta name="robots" content="noindex" />
-    <meta name="referrer" content="no-referrer" />
-    <title>Skeptium — разбор</title>
-    <link rel="stylesheet" href="styles.css?v=d9665ac097" />
-    <script src="vendor/supabase.js"></script>
+    <title>Skeptium</title>
+    <link rel="canonical" href="https://skeptium.com/watch/" />
+    <script>location.replace("watch/" + location.search + location.hash);</script>
+    <noscript><meta http-equiv="refresh" content="0; url=watch/" /></noscript>
   </head>
   <body>
-    <header class="nobs-topbar">
-      <a class="nobs-logo" href="index.html" aria-label="Skeptium">
-        <svg class="nobs-logo-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="nobs-logo-spectrum" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0"><stop offset="0%" stop-color="#EF3442"/><stop offset="22%" stop-color="#F87B31"/><stop offset="46%" stop-color="#F8D46B"/><stop offset="68%" stop-color="#CDE8C5"/><stop offset="100%" stop-color="#83DDE4"/></linearGradient></defs><rect class="nobs-logo-frame" x="4" y="4" width="92" height="92" rx="20" fill="none" stroke="url(#nobs-logo-spectrum)" stroke-width="7"/><path class="nobs-logo-ink" fill="url(#nobs-logo-spectrum)" d="M29.69 66.37Q25.72 66.37 22.75 65.19Q19.79 64.01 18.15 61.55Q16.51 59.09 16.49 55.25H24.36Q24.44 56.65 25.07 57.61Q25.7 58.58 26.83 59.07Q27.97 59.56 29.57 59.56Q30.9 59.56 31.81 59.23Q32.71 58.9 33.17 58.32Q33.63 57.74 33.63 56.98Q33.63 56.28 33.19 55.76Q32.75 55.23 31.75 54.8Q30.74 54.37 29.04 54.02L25.96 53.37Q21.92 52.51 19.59 50.42Q17.27 48.34 17.27 44.75Q17.27 41.84 18.85 39.66Q20.43 37.47 23.2 36.25Q25.98 35.03 29.61 35.03Q33.32 35.03 36.02 36.27Q38.72 37.51 40.18 39.76Q41.65 42.01 41.67 45H33.71Q33.61 43.5 32.62 42.67Q31.62 41.84 29.61 41.84Q28.34 41.84 27.52 42.14Q26.7 42.44 26.31 42.97Q25.92 43.5 25.92 44.18Q25.92 44.9 26.34 45.44Q26.76 45.98 27.67 46.38Q28.59 46.78 30.02 47.09L32.52 47.62Q35.05 48.16 36.86 49.04Q38.68 49.92 39.84 51.1Q40.99 52.28 41.54 53.76Q42.08 55.23 42.08 56.98Q42.08 59.99 40.59 62.09Q39.11 64.2 36.34 65.28Q33.57 66.37 29.69 66.37ZM51.91 60.59V50.78H53.05L58.59 43.07H67.86L58.55 55.09H56.21ZM44.52 66V35.44H52.77V66ZM58.67 66 53.42 56.94 58.8 51.07 68.07 66ZM78.64 34.17L78.64 50.13L74.81 50.13L74.81 34.17ZM84.59 39.82L70.77 47.80L68.85 44.48L82.67 36.50ZM70.77 36.50L84.59 44.48L82.67 47.80L68.85 39.82Z"/></svg>
-        <span class="nobs-logo-word">Skeptium</span>
-      </a>
-    </header>
-    <main class="nobs-home nobs-request nobs-account">
-      <div id="watch-root" class="nobs-account-card" aria-live="polite"></div>
-    </main>
-
-    <script type="module">
-      import { t } from "./src/i18n.js?v=d9665ac097";
-      import { initUiLang } from "./src/uiLang.js?v=d9665ac097";
-      import { runWatchPage } from "./src/watchPage.js?v=d9665ac097";
-
-      const lang = initUiLang();
-      document.title = t("watch.pageTitle", lang);
-      runWatchPage({ root: document.getElementById("watch-root"), lang });
-    </script>
-  <script type="module" src="src/accountMenuBoot.js"></script>
+    <p><a href="watch/">Skeptium</a></p>
   </body>
 </html>

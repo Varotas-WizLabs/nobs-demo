@@ -1,6 +1,6 @@
 // web/src/trustPage.js
 //
-// «Сигналы доверия» (web/trust.html): every connector NOBS checks a source
+// «Сигналы доверия» (web/trust/index.html, trust/): every connector NOBS checks a source
 // against -- ours and external, free and paid, active and only planned --
 // with whose judgement it is, its licence and known bias, and the owner's
 // switch whether it may move the score's prior (backend:
@@ -13,8 +13,9 @@
 // moves, capped; popularity never counts as reliability; disagreement is
 // flagged and widens the prior; verdicts are never touched.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { connText, signalLabel, tf, tl } from "./stringsSources.js?v=1cfdace93f";
+import { pageHref, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 // Labels of data values, in the interface language at draw time.
 export const kindLabel = (k) => tl(`trustui.kind.${k}`, k);
@@ -59,7 +60,10 @@ function fmtDate(iso) {
 
 function safeHref(url) {
   const u = String(url ?? "");
-  return /^https?:\/\//.test(u) || /^[a-z]+\.html(#.*)?$/.test(u) ? u : null;
+  if (/^https?:\/\//.test(u)) return u;
+  // A page of this site ("sources/", or an old "<name>.html" from an older snapshot): its folder, from the site root.
+  const m = u.match(/^([a-z]+)(?:\.html|\/)(#.*)?$/);
+  return m ? siteHref(undefined, `${m[1]}/${m[2] ?? ""}`) : null;
 }
 
 /** Group connectors by kind in the fixed order. */
@@ -235,7 +239,7 @@ export function renderLookup(doc, view, { editable = false, onLazy } = {}) {
 export function renderTrustRow(doc, entry) {
   if (!entry) return null;
   const box = el(doc, "div", { class: "nobs-trust-row" });
-  box.append(el(doc, "h3", {}, t("trustui.row.title", "ru"), el(doc, "a", { href: "trust.html", class: "nobs-trust-more", text: t("trustui.row.more", "ru") })));
+  box.append(el(doc, "h3", {}, t("trustui.row.title", "ru"), el(doc, "a", { href: pageHref("trust", "", doc), class: "nobs-trust-more", text: t("trustui.row.more", "ru") })));
   const signals = (entry.signals ?? []).filter((s) => s.connector !== "nobs_registry");
   if (!signals.length) {
     box.append(el(doc, "p", { class: "nobs-src-muted", text: t("trustui.row.none", "ru") }));
@@ -262,7 +266,7 @@ export async function mountTrustPage(root, { fetchImpl = globalThis.fetch, demo 
   let snapshot = null;
   const loadSnapshot = async () => {
     if (!snapshot) {
-      const r = await fetchImpl("data/trust.json");
+      const r = await fetchImpl(siteHref(root?.ownerDocument, "data/trust.json"));
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       snapshot = await r.json();
     }

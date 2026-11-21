@@ -1,6 +1,6 @@
 // web/src/watchPage.js
 //
-// watch.html?v=<video id>&t=<share token> (spec 2026-11-18-accounts §2a): the
+// watch/?v=<video id>&t=<share token> (spec 2026-11-18-accounts §2a): the
 // address of an Unlisted or Private analysis. Its files are not on the public
 // site; they sit in a private Supabase Storage bucket, and get_run_access()
 // hands out signed URLs to the owner (signed in) or to whoever has the
@@ -15,16 +15,17 @@
 // On the local server (no accounts config) the video's run comes straight
 // from the local run list.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { loadAccountsConfig } from "./accountsConfig.js?v=d9665ac097";
-import { createAccountsClient } from "./accountsClient.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { loadAccountsConfig } from "./accountsConfig.js?v=1cfdace93f";
+import { createAccountsClient } from "./accountsClient.js?v=1cfdace93f";
+import { PAGES, pageHref, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 export const WATCH_KEY_PREFIX = "nobs.watch.";
 const VIDEO_RE = /^[A-Za-z0-9_-]{11}$/;
 const TOKEN_RE = /^[0-9a-f]{32}$/;
 const FILE_RE = /^[A-Za-z0-9._-]{1,120}$/;
 
-/** {videoId, token} from watch.html's query (token null unless 32 hex). */
+/** {videoId, token} from watch/'s query (token null unless 32 hex). */
 export function parseWatchParams(search) {
   const q = new URLSearchParams(search ?? "");
   const v = (q.get("v") ?? "").trim();
@@ -48,7 +49,7 @@ function publicTarget(access) {
   const url = String(access?.player_url ?? "");
   if (/^https:\/\/(skeptium\.com|varotas-wizlabs\.github\.io\/nobs-demo)\//.test(url)) return url;
   const runId = Number(access?.run_id);
-  return Number.isInteger(runId) && runId > 0 ? `player.html?run_id=${runId}&solo=1` : null;
+  return Number.isInteger(runId) && runId > 0 ? pageHref("player", `?run_id=${runId}&solo=1`) : null;
 }
 
 /**
@@ -77,12 +78,12 @@ export async function runWatchPage({
     if (signIn) {
       const a = doc.createElement("a");
       a.className = "nobs-account-open";
-      // back to this video after sign-in (account.html accepts only a same-origin watch.html)
+      // back to this video after sign-in (account/ accepts only a same-origin watch/ address)
       const params = new URLSearchParams();
       if (lang === "en") params.set("lang", "en");
       if (location?.href) params.set("next", String(location.href));
       const q = params.toString();
-      a.href = q ? `account.html?${q}` : "account.html";
+      a.href = siteHref(doc, PAGES.account + (q ? `?${q}` : ""));
       a.textContent = t("watch.signIn", lang);
       actions.append(a);
     }
@@ -119,7 +120,7 @@ export async function runWatchPage({
       const match = runs.filter((run) => run.video_id === videoId);
       if (match.length) {
         const best = match.reduce((a, b) => (Number(b.run_id) > Number(a.run_id) ? b : a));
-        replace(`player.html?run_id=${Number(best.run_id)}`);
+        replace(siteHref(doc, `${PAGES.player}?run_id=${Number(best.run_id)}`));
         return "local";
       }
     } catch {
@@ -164,6 +165,6 @@ export async function runWatchPage({
     say("watch.error", { refresh: true });
     return "error";
   }
-  replace(`player.html?run_id=${manifest.run_id}&solo=1&watch=1`);
+  replace(siteHref(doc, `${PAGES.player}?run_id=${manifest.run_id}&solo=1&watch=1`));
   return "watch";
 }

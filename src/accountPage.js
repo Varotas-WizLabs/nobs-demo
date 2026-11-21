@@ -1,6 +1,6 @@
 // web/src/accountPage.js
 //
-// account.html (spec 2026-11-18-accounts §1, §2a, §6 P1; dark: nothing links
+// account/ (spec 2026-11-18-accounts §1, §2a, §6 P1; dark: nothing links
 // to it yet): sign-in by e-mail (a link and a 6-10 digit code from the same
 // e-mail), the balance, an invite-code box (a code that came in the link is
 // redeemed once after sign-in), the request form (Light / Deep, visibility
@@ -9,14 +9,15 @@
 // Supabase project through src/accountsClient.js; nothing here talks to the
 // local server's private API.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { pickLang } from "./publicRequest.js?v=d9665ac097";
-import { VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=d9665ac097";
-import { applyTheme, setSetting, themeSetting } from "./settings.js?v=d9665ac097";
-import { loadAccountsConfig } from "./accountsConfig.js?v=d9665ac097";
-import { createAccountsClient } from "./accountsClient.js?v=d9665ac097";
-import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=d9665ac097";
-import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { pickLang } from "./publicRequest.js?v=1cfdace93f";
+import { VISIBILITIES, accountErrorText, fill } from "./requestForm.js?v=1cfdace93f";
+import { applyTheme, setSetting, themeSetting } from "./settings.js?v=1cfdace93f";
+import { loadAccountsConfig } from "./accountsConfig.js?v=1cfdace93f";
+import { createAccountsClient } from "./accountsClient.js?v=1cfdace93f";
+import { LANG_KEY, reloadWithout, saveUiLang } from "./uiLang.js?v=1cfdace93f";
+import { captureInviteCode, clearPendingCode, pageUrlWithoutInvite, takePendingCode } from "./pendingCode.js?v=1cfdace93f";
+import { isPagePath } from "./sitePaths.js?v=1cfdace93f";
 
 export const DEMO_BASE = "https://skeptium.com/";
 export const POLL_ACTIVE_MS = 10000;
@@ -64,10 +65,23 @@ export function videoStatusText(request, lang) {
   }
 }
 
-/** The absolute Unlisted link to give out: watch.html?v=ID&t=TOKEN on the demo. */
+/** The absolute Unlisted link to give out: watch/?v=ID&t=TOKEN on the demo. */
 export function shareLink(videoId, token, base = DEMO_BASE) {
   if (!VIDEO_RE.test(videoId ?? "") || !TOKEN_RE.test(token ?? "")) return null;
-  return `${base}watch.html?v=${videoId}&t=${token}`;
+  return `${base}watch/?v=${videoId}&t=${token}`;
+}
+
+/**
+ * Where the e-mail / Google sign-in brings the visitor back: this page's
+ * address without the invite code, on the old account.html address. Supabase
+ * accepts only allowlisted redirect URLs and its list was made for
+ * account.html; that stub forwards to account/ with ?code= / #access_token=
+ * intact. Other pages keep their address.
+ */
+export function authRedirectUrl(href) {
+  const u = new URL(pageUrlWithoutInvite(href));
+  if (isPagePath(u.pathname, "account")) u.pathname = u.pathname.replace(/\/account(?:\.html|\/|\/index\.html)$/, "/account.html");
+  return u.toString();
 }
 
 /**
@@ -107,14 +121,14 @@ export function pkceCodeIn(href) {
 }
 
 /**
- * The page to go back to after sign-in (?next=, from watch.html's «Войти»):
- * only a same-origin watch.html address with a video id. null otherwise.
+ * The page to go back to after sign-in (?next=, from watch/'s «Войти»):
+ * only a same-origin watch page address (its folder or its old stub) with a video id. null otherwise.
  */
 export function safeNext(value, origin) {
   if (!value) return null;
   try {
     const u = new URL(String(value), origin);
-    if (u.origin !== origin || !/\/watch\.html$/.test(u.pathname)) return null;
+    if (u.origin !== origin || !isPagePath(u.pathname, "watch")) return null;
     if (!VIDEO_RE.test(u.searchParams.get("v") ?? "")) return null;
     const t = u.searchParams.get("t");
     if (t != null && !TOKEN_RE.test(t)) return null;
@@ -228,7 +242,7 @@ export function mountAccountPage({
     }
   })();
 
-  // ?next= (watch.html's «Войти»): remembered in localStorage for 1 h (the
+  // ?next= (watch/'s «Войти»): remembered in localStorage for 1 h (the
   // e-mail link opens a new tab) and removed from the address, so it never
   // rides along in the sign-in link; used once after sign-in.
   const origin = (() => {
@@ -750,7 +764,7 @@ export function mountAccountPage({
     if (state.mode === "signedIn" && state.user?.id === user.id) return;
     state.user = user;
     otpStep.clear();
-    // Came from watch.html's «Войти»: back to that video.
+    // Came from watch/'s «Войти»: back to that video.
     const next = nextStore.take();
     if (next) {
       if (!pendingCode()) {
@@ -803,7 +817,7 @@ export function mountAccountPage({
     let c = client;
     if (!c) {
       const cfg = config !== undefined ? config : await loadAccountsConfig();
-      c = cfg ? createAccountsClient(cfg, { createClient: createClient ?? globalThis.supabase?.createClient, redirectTo: pageUrlWithoutInvite(pageHref) }) : null;
+      c = cfg ? createAccountsClient(cfg, { createClient: createClient ?? globalThis.supabase?.createClient, redirectTo: authRedirectUrl(pageHref) }) : null;
     }
     if (!c) return renderOff();
     state.client = c;

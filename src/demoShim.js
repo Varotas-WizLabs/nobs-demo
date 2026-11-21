@@ -7,6 +7,16 @@
 // refused locally -- the demo talks to no backend and accepts nothing.
 (function () {
   const realFetch = window.fetch.bind(window);
+  // The site root: the folder above this script (<root>/src/demoShim.js). The data
+  // files (data/...) are fetched from there, whichever page folder (player/,
+  // watch/, sources/...) loaded the shim.
+  const SITE_ROOT = (() => {
+    try {
+      return new URL("../", document.currentScript.src).href;
+    } catch {
+      return "";
+    }
+  })();
   const json = (body, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
@@ -29,17 +39,17 @@
   });
 
   // A run just published by the public request queue (the request page
-  // opens player.html?run_id=N&v=<time>): GitHub Pages lets files be cached
+  // opens player/?run_id=N&v=<time>): GitHub Pages lets files be cached
   // ~10 min and its servers update one by one, so with `v` every data file
   // is asked for with that cache-busting query, and the run's own files
   // are retried for a while on a 404 (not every server has them yet).
-  // An Unlisted / Private analysis opened through watch.html (accounts, spec
-  // 2026-11-18-accounts §2a): player.html?run_id=N&solo=1&watch=1, with the
+  // An Unlisted / Private analysis opened through watch/ (accounts, spec
+  // 2026-11-18-accounts §2a): player/?run_id=N&solo=1&watch=1, with the
   // manifest {run_id, files: {"N.json": <signed URL>, …}, expires_at, back}
-  // that watch.html put in sessionStorage. That run's data files come from
+  // that watch/ put in sessionStorage. That run's data files come from
   // the signed Storage URLs (never from data/: they are not on this site).
   // An expired manifest, or a signed URL the bucket refuses, goes back to
-  // watch.html (it checks access again and signs anew) -- at most once a
+  // watch/ (it checks access again and signs anew) -- at most once a
   // minute, so a refused link cannot loop.
   const query = new URLSearchParams(window.location.search);
   const watch = (() => {
@@ -59,7 +69,7 @@
       if (Date.now() - last < 60000) return;
       window.sessionStorage.setItem(key, String(Date.now()));
       const back = new URL(String(watch.back ?? ""), window.location.href);
-      if (back.origin === window.location.origin && /\/watch\.html$/.test(back.pathname)) window.location.replace(back.toString());
+      if (back.origin === window.location.origin && /\/watch(?:\.html|\/|\/index\.html)$/.test(back.pathname)) window.location.replace(back.toString());
     } catch {
       // no way back: the page shows what it could load
     }
@@ -83,7 +93,8 @@
   const fresh = freshParam && /^\d{1,16}$/.test(freshParam) ? freshParam : null;
   function dataFetch(path, tries = fresh ? 8 : 1) {
     if (watch && path.startsWith(`data/runs/${watch.run_id}.`)) return watchFetch(path);
-    const url = fresh ? `${path}?v=${fresh}${tries < 8 ? `-${tries}` : ""}` : path;
+    const file = SITE_ROOT + path;
+    const url = fresh ? `${file}?v=${fresh}${tries < 8 ? `-${tries}` : ""}` : file;
     return realFetch(url).then((r) =>
       r.status === 404 && tries > 1 ? new Promise((ok) => setTimeout(ok, 4000)).then(() => dataFetch(path, tries - 1)) : r,
     );

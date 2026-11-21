@@ -14,10 +14,11 @@
 // hypotheses and the audience / agenda / persona map (collapsed), and a
 // totals line (passes, time, cost, models). DOM APIs and textContent only.
 
-import { formatTimecode } from "./claimSync.js?v=d9665ac097";
-import { labelLanguage, t } from "./i18n.js?v=d9665ac097";
-import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=d9665ac097";
-import { seekTarget } from "./settings.js?v=d9665ac097";
+import { formatTimecode } from "./claimSync.js?v=1cfdace93f";
+import { labelLanguage, t } from "./i18n.js?v=1cfdace93f";
+import { formatCost, formatDuration, modelLabel } from "./runStats.js?v=1cfdace93f";
+import { seekTarget } from "./settings.js?v=1cfdace93f";
+import { pageHref } from "./sitePaths.js?v=1cfdace93f";
 
 /**
  * Play `player` from a scoop anchor at `sec`, the seek lead-in earlier
@@ -333,7 +334,7 @@ export function renderScoopList(root, run, response, { onSeek, lang: langOption,
       li.appendChild(meta);
       if (anchor.run_id != null) {
         const runLink = el(doc, "a", "nobs-scoop-anchor-run", t("scoop.sourceRun", lang));
-        runLink.href = `player.html?run_id=${encodeURIComponent(anchor.run_id)}`;
+        runLink.href = pageHref("player", `?run_id=${encodeURIComponent(anchor.run_id)}`, doc);
         li.appendChild(doc.createTextNode(" · "));
         li.appendChild(runLink);
       }

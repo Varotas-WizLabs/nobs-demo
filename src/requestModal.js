@@ -5,8 +5,9 @@
 // modal dialog. Esc, the backdrop and the close button close it and focus goes
 // back to the button that opened it; the page underneath stays where it was.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { buildRequestForm, fill } from "./requestForm.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { buildRequestForm, fill } from "./requestForm.js?v=1cfdace93f";
+import { PAGES, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
@@ -21,7 +22,7 @@ function el(doc, tag, attrs = {}, text = "") {
  * Open the lightbox. `client` is the accounts client (myPlan, publicSettings,
  * createRequest). Returns {close, root, form}. Only one is open at a time.
  */
-export function openRequestModal({ doc = globalThis.document, client, lang = "ru", opener = null, accountHref = "account.html", storage = globalThis.localStorage } = {}) {
+export function openRequestModal({ doc = globalThis.document, client, lang = "ru", opener = null, accountHref = siteHref(doc, PAGES.account), storage = globalThis.localStorage } = {}) {
   doc.querySelector(".nobs-modal-backdrop")?.remove();
   const tt = (key, values) => fill(t(key, lang), values ?? {});
   const backdrop = el(doc, "div", { class: "nobs-modal-backdrop" });

@@ -1,44 +1,15 @@
 <!doctype html>
-<html lang="ru">
+<!-- Old address of web/sources/index.html (clean URL: sources/). Kept forever: forwards with the query and the fragment intact (e.g. sign-in returns ?code= / #access_token=, #code=NOBS-…). -->
+<html lang="en">
   <head>
-    <script src="src/demoShim.js?v=d9665ac097"></script>
-
-    <script src="src/uiLangEarly.js"></script>
-    <!-- Theme before first paint (settings: dark / light / monochrome / system). -->
-    <script src="src/themeEarly.js?v=d9665ac097"></script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="brand/apple-touch-icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" />
-    <title>Skeptium — индекс источников</title>
-    <link rel="stylesheet" href="styles.css?v=d9665ac097" />
-    <link rel="stylesheet" href="sources.css" />
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Skeptium</title>
+    <link rel="canonical" href="https://skeptium.com/sources/" />
+    <script>location.replace("sources/" + location.search + location.hash);</script>
+    <noscript><meta http-equiv="refresh" content="0; url=sources/" /></noscript>
   </head>
-  <body class="nobs-cm-page nobs-src-page">
-    <header class="nobs-cm-header">
-      <div class="nobs-src-topline"><a class="nobs-cm-back" href="index.html">← Skeptium</a></div>
-      <h1 data-i18n="srcui.title">Индекс источников</h1>
-      <p class="nobs-src-header-links"><a class="nobs-settings-link" href="trust.html" data-i18n="srcui.trustLink">Сигналы доверия: все коннекторы →</a></p>
-      <p class="nobs-cm-lead" data-i18n="srcui.lead">
-        Все сайты, на которые опирались проверки: сколько раз использованы, в какой роли, как часто сказанное ими подтвердилось,
-        и оценка надёжности 0–100. Нажмите на источник, чтобы увидеть оценки по темам, использования и что меняло оценку.
-      </p>
-    </header>
-    <main id="sources"></main>
-    <script type="module">
-      import { applyTheme } from "./src/settings.js?v=d9665ac097";
-      import { t } from "./src/i18n.js?v=d9665ac097";
-      import { initUiLang, translatePage } from "./src/uiLang.js?v=d9665ac097";
-      import "./src/stringsSources.js?v=d9665ac097";
-      import { mountSourcesPage } from "./src/sourcesPage.js?v=d9665ac097";
-      applyTheme(document);
-      const lang = initUiLang();
-      translatePage(document, lang);
-      document.title = t("srcui.docTitle", lang);
-      mountSourcesPage(document.getElementById("sources"), { fetchImpl: fetch });
-    </script>
+  <body>
+    <p><a href="sources/">Skeptium</a></p>
   </body>
 </html>

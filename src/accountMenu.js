@@ -2,13 +2,13 @@
 //
 // The account corner of the top bar on every public page: signed in, the
 // user's picture (Google avatar, else the first letter) opens a menu with
-// «Настройки аккаунта» (account.html) and «Выход»; signed out, a «Войти»
-// button (account.html). Signed in, a «Question a video» button sits just left
+// «Настройки аккаунта» (account/) and «Выход»; signed out, a «Войти»
+// button (account/). Signed in, a «Question a video» button sits just left
 // of the picture (the old «+ Analyse a video» link of the library panel). Nothing is shown when accounts are not configured.
 //
 // It reads the Supabase session that supabase-js keeps in localStorage
 // (key sb-<project ref>-auth-token) instead of loading supabase-js on every
-// page; account.html, which does load it, refreshes the session. «Выход»
+// page; account/, which does load it, refreshes the session. «Выход»
 // revokes the session on Supabase (best effort) and forgets it locally.
 //
 // «Брендбук» (brand/, web/brand/index.html) is in the menu only for the roles in BRAND_ROLES
@@ -16,10 +16,11 @@
 // supabase-js; never shown on an error) and in the owner's local app (where
 // «Настройки админа» is shown).
 
-import { loadAccountsConfig } from "./accountsConfig.js?v=d9665ac097";
-import { UI_LANGUAGES, t as tr } from "./i18n.js?v=d9665ac097";
-import { createAccountsClient } from "./accountsClient.js?v=d9665ac097";
-import { openRequestModal } from "./requestModal.js?v=d9665ac097";
+import { loadAccountsConfig } from "./accountsConfig.js?v=1cfdace93f";
+import { UI_LANGUAGES, t as tr } from "./i18n.js?v=1cfdace93f";
+import { createAccountsClient } from "./accountsClient.js?v=1cfdace93f";
+import { openRequestModal } from "./requestModal.js?v=1cfdace93f";
+import { PAGES, rootPrefix, siteHref } from "./sitePaths.js?v=1cfdace93f";
 
 /** sb-<ref>-auth-token for a https://<ref>.supabase.co project URL. */
 export function storageKeyFor(url) {
@@ -78,36 +79,11 @@ export async function signOut(config, storage, fetchImpl) {
   }
 }
 
-// The site root is the folder above this module (<root>/src/accountMenu.js), wherever the site
-// is served (127.0.0.1:8742/, skeptium.com/, a demo under a sub-path).
-const SITE_ROOT = new URL("../", import.meta.url);
-
-/**
- * "../" per folder between the page and the site root ("" on a page at the root, "../" on
- * /brand/ or /brand/index.html), so relative menu links work from every page. "" when the page
- * is not under the root (another origin, tests).
- */
-export function rootPrefix(doc, root = SITE_ROOT) {
-  let page;
-  try {
-    page = new URL(doc?.baseURI ?? doc?.location?.href ?? "");
-  } catch {
-    return "";
-  }
-  const base = new URL(root);
-  if (page.origin !== base.origin || !page.pathname.startsWith(base.pathname)) return "";
-  const depth = page.pathname.slice(base.pathname.length).split("/").length - 1;
-  return "../".repeat(Math.max(0, depth));
-}
-
-/** A site-root-relative page path ("account.html", "brand/") as an href for this page. */
-export function siteHref(doc, path, root = SITE_ROOT) {
-  if (/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(path)) return path;
-  return rootPrefix(doc, root) + path;
-}
+// Links resolve from the site root (src/sitePaths.js), so the menu works on every page.
+export { rootPrefix, siteHref };
 
 /** The brand book (web/brand/index.html), relative to the site root. */
-export const BRAND_PAGE = "brand/";
+export const BRAND_PAGE = PAGES.brand;
 
 /** Roles that see the «Брендбук» link. */
 export const BRAND_ROLES = new Set(["admin", "master_admin"]);
@@ -140,7 +116,7 @@ export function pageLang(doc) {
 }
 
 /** Render the corner into `bar` (the .nobs-topbar). Returns the root node. */
-export function renderAccountMenu(doc, bar, { session, accountHref = siteHref(doc, "account.html"), askHref = null, onAsk = null, onSignOut, showBrand = false }) {
+export function renderAccountMenu(doc, bar, { session, accountHref = siteHref(doc, PAGES.account), askHref = null, onAsk = null, onSignOut, showBrand = false }) {
   bar.querySelector(".nobs-account-menu")?.remove();
   const root = el(doc, "div", { class: "nobs-account-menu" });
   const lang = pageLang(doc);
@@ -159,7 +135,7 @@ export function renderAccountMenu(doc, bar, { session, accountHref = siteHref(do
     title: t("menu.askTitle"),
   });
   ask.append(el(doc, "span", { class: "nobs-account-ask-plus", "aria-hidden": "true" }, "+"), el(doc, "span", { class: "nobs-account-ask-text" }, t("menu.ask")));
-  // With JS the link opens the lightbox; the plain link (account.html) is the fallback.
+  // With JS the link opens the lightbox; the plain link (account/) is the fallback.
   if (onAsk) {
     ask.addEventListener("click", (e) => {
       if (e.defaultPrevented || e.button > 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -232,7 +208,7 @@ export function renderAccountMenu(doc, bar, { session, accountHref = siteHref(do
   return root;
 }
 
-/** supabase-js is loaded by account.html only; other pages load it on demand. */
+/** supabase-js is loaded by account/ only; other pages load it on demand. */
 export function ensureSupabase(doc, src = siteHref(doc, "vendor/supabase.js")) {
   if (globalThis.supabase?.createClient) return Promise.resolve(true);
   return new Promise((resolve) => {
@@ -264,8 +240,8 @@ export async function mountAccountMenu({
   // The lightbox needs the accounts client; when it cannot be made, go to the account page.
   const onAsk = async (opener, lang) => {
     if (!client && (await loadSupabase())) client = makeClient(config);
-    if (!client) return navigate(siteHref(doc, "account.html"));
-    openRequestModal({ doc, client, lang, opener, storage, accountHref: siteHref(doc, "account.html") });
+    if (!client) return navigate(siteHref(doc, PAGES.account));
+    openRequestModal({ doc, client, lang, opener, storage, accountHref: siteHref(doc, PAGES.account) });
   };
   // The caller's role (my_role()) for the «Брендбук» link: asked once per access token, after the
   // corner is drawn; any failure (no supabase-js, offline, an old database) leaves it hidden.
@@ -305,7 +281,7 @@ export async function mountAccountMenu({
     return node;
   };
   const root = draw();
-  // Signed in or out in another tab (or on account.html): follow it.
+  // Signed in or out in another tab (or on account/): follow it.
   globalThis.addEventListener?.("storage", (e) => {
     if (e.key === storageKeyFor(config.url)) draw();
   });

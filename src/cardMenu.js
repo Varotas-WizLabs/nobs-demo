@@ -9,11 +9,12 @@
 // screens a popover under the button (styles.css .nobs-hp-cardmenu).
 //
 // The link is the public one (src/share.js): on the public site the page's
-// own player.html, in the local app the public site's address.
+// own player/, in the local app the public site's address.
 
-import { t } from "./i18n.js?v=d9665ac097";
-import { shareUrl } from "./share.js?v=d9665ac097";
-import { VIDEO_ID_RE } from "./youtubeId.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { shareUrl } from "./share.js?v=1cfdace93f";
+import { PAGES, siteRootOf } from "./sitePaths.js?v=1cfdace93f";
+import { VIDEO_ID_RE } from "./youtubeId.js?v=1cfdace93f";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -63,7 +64,7 @@ export function moreButton(doc, run, lang = "ru") {
 export function cardLink(run, doc) {
   const demo = doc?.documentElement?.dataset.demo === "1";
   const href = doc?.defaultView?.location?.href;
-  return shareUrl(Number(run.run_id), { demoHref: demo && href ? new URL("player.html", href).href : null });
+  return shareUrl(Number(run.run_id), { demoHref: demo && href ? new URL(PAGES.player, siteRootOf(href)).href : null });
 }
 
 /** The original video's address, or "" when the id is not a video id. */

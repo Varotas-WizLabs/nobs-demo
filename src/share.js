@@ -9,9 +9,12 @@
 // whether this run is published there and says so if not yet. Inside the
 // demo itself the link is the current page's own address.
 
-import { t } from "./i18n.js?v=d9665ac097";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { isPagePath } from "./sitePaths.js?v=1cfdace93f";
 
-export const PUBLIC_PLAYER = "https://skeptium.com/player.html";
+/** The public site (the home) and its player page (clean URL, skeptium.com/player/). */
+export const PUBLIC_SITE = "https://skeptium.com/";
+export const PUBLIC_PLAYER = `${PUBLIC_SITE}player/`;
 
 /** Whether the page was opened as a single-video link (`?solo=1`). */
 export function isSolo(search) {
@@ -20,16 +23,16 @@ export function isSolo(search) {
 
 /** The public single-video link for `runId`. `demoHref`: the demo page's own URL when inside the demo. */
 export function shareUrl(runId, { demoHref = null } = {}) {
-  const base = demoHref ? demoHref.split(/[?#]/)[0] : PUBLIC_PLAYER;
+  const base = demoHref ? demoHref.split(/[?#]/)[0].replace(/index\.html$/, "") : PUBLIC_PLAYER;
   return `${base}?run_id=${encodeURIComponent(runId)}&solo=1`;
 }
 
 /**
- * In watch mode (an Unlisted / Private analysis opened through watch.html:
+ * In watch mode (an Unlisted / Private analysis opened through watch/:
  * `?run_id=N&solo=1&watch=1`) the public link would not work: the run is not
- * on the public site. The link to give is the watch.html address the viewer
- * came from (the manifest's `back`: `watch.html?v=ID`, plus `&t=TOKEN` when it
- * had one). Same origin and watch.html only; null otherwise.
+ * on the public site. The link to give is the watch/ address the viewer
+ * came from (the manifest's `back`: `watch/?v=ID`, plus `&t=TOKEN` when it
+ * had one). Same origin and the watch page only (its folder or its old stub); null otherwise.
  */
 export function watchShareUrl(search, storage, origin) {
   try {
@@ -38,7 +41,7 @@ export function watchShareUrl(search, storage, origin) {
     if (query.get("watch") !== "1" || !/^\d{1,10}$/.test(runId ?? "")) return null;
     const manifest = JSON.parse(storage?.getItem(`nobs.watch.${runId}`) || "null");
     const back = new URL(String(manifest?.back ?? ""), origin);
-    if (back.origin !== origin || !/\/watch\.html$/.test(back.pathname)) return null;
+    if (back.origin !== origin || !isPagePath(back.pathname, "watch")) return null;
     const v = back.searchParams.get("v");
     if (!/^[A-Za-z0-9_-]{11}$/.test(v ?? "")) return null;
     const out = new URL(back.pathname, origin);
@@ -54,8 +57,7 @@ export function watchShareUrl(search, storage, origin) {
 /** Whether the public demo has this run (its data file exists). null when it cannot tell. */
 export async function isPublished(runId, fetchImpl = fetch) {
   try {
-    const base = PUBLIC_PLAYER.slice(0, PUBLIC_PLAYER.lastIndexOf("/") + 1);
-    const response = await fetchImpl(`${base}data/runs/${encodeURIComponent(runId)}.json`, { method: "HEAD", cache: "no-store" });
+    const response = await fetchImpl(`${PUBLIC_SITE}data/runs/${encodeURIComponent(runId)}.json`, { method: "HEAD", cache: "no-store" });
     return response.ok;
   } catch {
     return null;
@@ -102,7 +104,7 @@ async function copyText(doc, input, text) {
 /**
  * The share control: a button and its popup. `getRunId()` gives the current
  * run; `demo` is true inside the public demo; `watchUrl` (watch mode, see
- * watchShareUrl) replaces the public link with the watch.html one. Returns
+ * watchShareUrl) replaces the public link with the watch/ one. Returns
  * the wrapper element.
  */
 export function buildShareControl(doc, { getRunId, lang = "en", demo = false, fetchImpl = fetch, watchUrl = null }) {

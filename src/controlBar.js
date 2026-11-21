@@ -1,11 +1,11 @@
 // YouTube IFrame API player states (YT.PlayerState), duplicated here so this
 // module stays testable without the real API loaded.
 
-import { seekTarget } from "./settings.js?v=d9665ac097";
-import { t } from "./i18n.js?v=d9665ac097";
-import "./stringsPlayer.js?v=d9665ac097";
-import { claimState, isUnchecked } from "./progress.js?v=d9665ac097";
-import { canFullscreen } from "./mobile.js?v=d9665ac097";
+import { seekTarget } from "./settings.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=1cfdace93f";
+import "./stringsPlayer.js?v=1cfdace93f";
+import { claimState, isUnchecked } from "./progress.js?v=1cfdace93f";
+import { canFullscreen } from "./mobile.js?v=1cfdace93f";
 export const PLAYER_STATE = Object.freeze({
   UNSTARTED: -1,
   ENDED: 0,
@@ -583,7 +583,7 @@ export function whenYouTubeApiReady(win, callback) {
   }
 }
 
-// The run to open when player.html has neither `run_id` nor `video_id`:
+// The run to open when player/ has neither `run_id` nor `video_id`:
 // the most recently created analysis in the library (GET /runs, which lists
 // the served run per video). Null when the library is empty.
 export function latestRunId(payload) {
@@ -603,9 +603,9 @@ export function latestRunId(payload) {
   return best ? best.run_id : null;
 }
 
-// Resolve the YouTube video id to play from player.html's query string.
+// Resolve the YouTube video id to play from player/'s query string.
 //
-// Every link into player.html that the app produces (the submit page's
+// Every link into player/ that the app produces (the submit page's
 // existing-run links and its redirects after submitting a URL or
 // triggering a fresh run) only ever carries `run_id` -- `video_id` is not
 // appended anywhere. So when `video_id` is absent, we resolve it from
@@ -620,7 +620,7 @@ export async function resolveVideoId(params, fetchImpl) {
 
   const runId = params.get("run_id");
   if (!runId) {
-    throw new Error("player.html requires a video_id or run_id query parameter");
+    throw new Error("player/ requires a video_id or run_id query parameter");
   }
 
   const response = await fetchImpl(`/runs/${runId}`);

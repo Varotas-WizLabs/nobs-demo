@@ -1,12 +1,13 @@
 // web/src/popup.js
-import { screenBlockHtml } from "./frames.js?v=d9665ac097";
-import { formatConfidence, formatTimecode } from "./claimSync.js?v=d9665ac097";
-import { isPlayerActive } from "./controlBar.js?v=d9665ac097";
-import { t } from "./i18n.js?v=d9665ac097";
-import { claimState, isUnchecked } from "./progress.js?v=d9665ac097";
-import { seekTarget } from "./settings.js?v=d9665ac097";
-import { specialistBlockHtml } from "./specialist.js?v=d9665ac097";
-import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=d9665ac097";
+import { screenBlockHtml } from "./frames.js?v=1cfdace93f";
+import { formatConfidence, formatTimecode } from "./claimSync.js?v=1cfdace93f";
+import { isPlayerActive } from "./controlBar.js?v=1cfdace93f";
+import { t } from "./i18n.js?v=1cfdace93f";
+import { claimState, isUnchecked } from "./progress.js?v=1cfdace93f";
+import { seekTarget } from "./settings.js?v=1cfdace93f";
+import { specialistBlockHtml } from "./specialist.js?v=1cfdace93f";
+import { renderTagChipsHtml, renderVerdictReasonsHtml, wireTagInteractions } from "./tags.js?v=1cfdace93f";
+import { pageHref } from "./sitePaths.js?v=1cfdace93f";
 
 function closeButtonMarkup(lang) {
   return `<button data-action="close">${escapeHtml(t("close", lang))}</button>`;
@@ -145,7 +146,7 @@ export function refBlockHtml(claim, lang = "en") {
   const source = ref.source_claim;
   if (source && FLAGS.includes(source.flag)) {
     const runLink = source.run_id != null
-      ? ` <a class="claim-ref-run" href="player.html?run_id=${encodeURIComponent(source.run_id)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("ref.sourceRun", lang))}</a>`
+      ? ` <a class="claim-ref-run" href="${escapeHtml(pageHref("player", `?run_id=${encodeURIComponent(source.run_id)}`))}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("ref.sourceRun", lang))}</a>`
       : "";
     parts.push(
       `<p class="claim-ref-source-verdict">${escapeHtml(t("ref.sourceVerdict", lang))}: <span class="claim-ref-chip" data-flag="${escapeHtml(source.flag)}">${escapeHtml(t(`verdict.${source.flag}`, lang))}</span>${runLink}</p>`
